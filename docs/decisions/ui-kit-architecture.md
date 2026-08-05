@@ -49,6 +49,14 @@ with elastic margins rather than a separate tablet design.
 10. The success notice adapts node `153:75`'s desktop composition to smaller
     widths by allowing its existing content block to shrink inside the shared
     elastic container. No separate mobile composition is inferred.
+11. Until approved production case assets and image descriptions arrive,
+    `CaseCard` renders a decorative CSS placeholder rather than a Figma export
+    or invented image. Its API already accepts a local image source, alternative
+    text and Figma-verified focal metadata for the future replacement.
+12. Product data marks destinations as internal or external. Internal links
+    stay in the current tab; external links use a new tab with
+    `rel="noopener noreferrer"`. The six currently reviewed case destinations
+    are approved external HTTPS root URLs.
 
 ## Consequences
 
@@ -67,3 +75,8 @@ with elastic margins rather than a separate tablet design.
   public product surface or SEO contract.
 - The desktop success layout remains visually consistent on mobile while
   avoiding an unsupported tablet or mobile variant API.
+- Temporary CaseCard previews preserve truthful accessibility and repository
+  asset rules, but visual parity for real project imagery remains a follow-up
+  when approved assets arrive.
+- Link safety is consistent without making the whole card a second competing
+  interactive target.

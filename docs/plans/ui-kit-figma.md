@@ -1,6 +1,6 @@
 # Figma UI kit implementation plan
 
-Status: Epic 3 complete; Epic 4 not started
+Status: Epic 4 complete; Epic 5 not started
 
 Last updated: 2026-08-05
 
@@ -402,15 +402,138 @@ menu, validate data or call a backend.
 
 ### Epic 4 — CaseCard product component
 
-- [ ] Implement a data-driven `CaseCard` API for title, description, tags,
-      destination label/URL, image and accessible image text.
-- [ ] Implement the 820×440 desktop composition from node `154:246`.
-- [ ] Implement the 350 px mobile composition from node `144:955`, using the
-      approved elastic outer margins and preserving the Figma content order.
-- [ ] Treat the six Cases frames as data variations of one component rather
-      than six component implementations.
-- [ ] Download only the approved production assets needed by the reviewed Case
-      fixtures and record their source/licence status.
+Goal: implement the approved product-specific `CaseCard` once, with the six
+Figma Cases frames represented as data. Do not compose a Cases section or a
+public product page in this epic.
+
+#### Execution plan
+
+1. [x] Confirm the temporary content and asset contract before writing code.
+   - The owner authorises decorative CSS placeholders until production image
+     sources, rights and meaningful alternatives are supplied. Figma export
+     URLs remain short-lived handoff data and are not committed as previews.
+   - The six visible domains are approved as their HTTPS root URLs and external
+     destinations. They open in a new tab with `noopener noreferrer`; a future
+     internal case destination stays in the current tab.
+
+2. [x] Define the smallest product data boundary under
+       `app/components/product/cases/`.
+   - Add `CaseCard.vue` plus a feature-private typed fixture/config module;
+     keep the data out of `app/components/ui/` and do not create a global store
+     or shared types package.
+   - The card receives title, description, tags, destination label/URL and an
+     image object with `src`, `alt` and the Figma-verified crop/focal metadata
+     required by an individual case. The crop metadata is fixture data, not a
+     new generic image framework.
+   - Render the destination as one semantic external link with the Figma arrow
+     asset; decide `target`/`rel` only from the approved destination policy.
+     Do not make the whole card a second competing link without a supplied
+     interaction design.
+
+3. [x] Reproduce the desktop master `154:246` at its 820×440 reference size.
+   - Keep the deep-blue surface, 40 px inset, 338 px text column, 20 px copy
+     gaps, 4 px tag gap, 40 px bottom link line and the 482×360 overflow-clipped
+     image placement beginning at x=428.
+   - Reuse `UiTypography` and existing font tokens: H3 treatment for title,
+     IBM Plex Sans body at 20 px/70% opacity, Manrope 12 px outlined tags and
+     Manrope 16 px underlined destination. Export and commit Figma's arrow
+     bytes rather than drawing a substitute.
+
+4. [x] Reproduce mobile master `144:955` and derive elastic intermediate widths.
+   - At the 350 px reference, use 20 px inline and 40 px top padding; preserve
+     source order title → description → tags → destination → image, 20 px inner
+     gaps and the 40 px gap before the image.
+   - Use H4/mobile typography (28 px title), 16 px/80% body and a full-width
+     image at the Figma 679:507 aspect ratio. Let content grow for long titles,
+     tags and descriptions; do not crop text or force the 546 px reference
+     height onto all six data variations.
+   - Use a single CSS breakpoint/layout switch only where the two Figma
+     compositions differ. Between 390 px and 1440 px retain the existing
+     elastic container margins; no tablet design or separate mobile component.
+
+5. [x] Populate and verify all six Figma variants with one component.
+   - Use desktop master `154:246` for QuantumReady and instances `154:248`,
+     `154:265`, `154:282`, `154:299`, `154:316` for Modernistes, QM Fund, John
+     Lilic, Cafe Cosmos Game and Potok.Digital.
+   - Verify each title, description, tags and destination label against its
+     exact node. Production image crop and alternative text remain explicitly
+     deferred with the owner-approved placeholders; do not duplicate Vue markup
+     or branch on a case name.
+
+6. [x] Add only development-only visual coverage; keep production routes unchanged.
+   - Extend the approved `/__ui-kit` development fixture with all six data
+     variations and their decorative placeholders. It remains a development
+     review surface, not a Cases page.
+   - Do not add a Cases page, collection, navigation item or sitemap entry in
+     this epic. Keep the fixture dynamically registered only in development and
+     preserve the production-route absence check.
+
+7. [x] Close Epic 4 with component, browser and production evidence.
+   - Add Nuxt tests for semantic article/link/image markup, tags, long content,
+     non-duplicated link focus order and all six fixture data objects. Add
+     Playwright coverage for the development fixture at desktop and mobile.
+   - Run the standard static/dependency suite, production build and dev-route
+     absence check. Inspect 390 px, 768 px and 1440 px in the local browser,
+     including keyboard focus and image crop. Compare desktop to `154:246` and
+     mobile to `144:955` before marking the epic complete.
+
+#### Figma evidence gathered for planning
+
+- Desktop node `154:246`: 820×440, copy at 40×40 in a 338 px column, 36 px
+  title, 20 px description at 70% opacity, 12 px Manrope pills and 16 px
+  underlined destination with a 20 px arrow. The visual image viewport is
+  482×360 and deliberately overflows the right card edge under clipping.
+- Mobile node `144:955`: 350×546 reference with 20 px horizontal / 40 px top
+  inset, 28 px title, 16 px description at 80% opacity, destination before the
+  image and 40 px content-to-image gap. The image uses a 679:507 viewport ratio.
+- `154:247` contains one master plus five desktop instances. Their copy/tag
+  data changes while the composition stays shared, proving one data-driven
+  component. Image scaling/crop differs per instance, so per-fixture focal
+  metadata is necessary for visual fidelity.
+
+#### Approved Epic 4 inputs
+
+1. Use decorative CSS placeholders until production image sources/rights and
+   meaningful alternatives arrive. Replace them before product use; Figma only
+   supplies temporary exports and no accessibility descriptions.
+2. Treat the six visible domains as external HTTPS root URLs and open them in a
+   new tab with `rel="noopener noreferrer"`; internal destinations open in the
+   current tab.
+
+#### Epic 4 evidence
+
+- `app/components/product/cases/CaseCard.vue` is the single product-specific
+  implementation. `case-card.config.ts` holds six typed data variations; no
+  Cases page, collection, navigation item, global store or UI-kit primitive was
+  added.
+- The desktop card is exactly 820×440 with a 482×360 image viewport, while the
+  390 px mobile inspection gives a 335 px card with a 295 px image viewport
+  inside the elastic container. At 768 px its mobile-flow card is 669.8 px wide
+  with a 629.8 px image viewport; desktop switches at the existing 64 rem
+  boundary without a tablet-specific layout.
+- All six Figma data variations are present: QuantumReady (`154:246`),
+  Modernistes (`154:248`), QM Fund (`154:265`), John Lilic (`154:282`), Cafe
+  Cosmos Game (`154:299`) and Potok.Digital (`154:316`). Their approved external
+  HTTPS root URLs open with `_blank` and `noopener noreferrer`; the component
+  keeps any future internal destination in the current tab.
+- The exact 20 px Figma external-arrow export from node `154:226` is committed
+  under `app/assets/icons/cases/`. Project screenshots remain deliberately
+  absent: the owner approved decorative CSS placeholders until production assets
+  and meaningful alternatives are provided. The API is ready for their local
+  `src`, `alt` and focal position, which remains the only visual-fidelity gap.
+- Nuxt runtime coverage now has 24 assertions in six files, including semantic
+  article/link/tag output, external/internal link policy, supplied image alt,
+  long content and six data records. The development-only fixture exposes all
+  six cards; all eight desktop/mobile Playwright scenarios pass.
+- Browser inspection at 390 px, 768 px and 1440 px confirms source order,
+  single-link focus targets, responsive widths, bottom-aligned desktop link and
+  non-overlapping placeholder viewport. A desktop overlap found during browser
+  review was fixed before closing the epic.
+- Full gate passed under Node 24.16.0: format, lint (seven non-blocking
+  Prettier/`vue/html-self-closing` convention warnings only), Stylelint,
+  typecheck, unit/runtime tests, dependency-cruiser, Madge, Knip, Playwright,
+  production build and the production dev-route absence check. The prior mobile
+  sitemap E2E flake passed on a clean retry; no code change was made for it.
 
 ### Epic 5 — hardening and handoff
 
@@ -429,7 +552,7 @@ menu, validate data or call a backend.
 | R1        | Tokens, fonts, elastic container and test surface | R0                             | Complete |
 | R2        | Typography and layout primitives                  | R1                             | Complete |
 | R3        | Native control primitives and success notice      | R2                             | Complete |
-| R4        | Responsive CaseCard                               | R3                             | Pending  |
+| R4        | Responsive CaseCard                               | R3                             | Complete |
 | R5        | Visual, accessibility and reviewed handoff        | R4                             | Pending  |
 
 ## Verification

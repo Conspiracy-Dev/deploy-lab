@@ -1,3 +1,8 @@
+<script setup lang="ts">
+import CaseCard from '~/components/product/cases/CaseCard.vue'
+import { caseCardFixtures } from '~/components/product/cases/case-card.config'
+</script>
+
 <template>
   <UiContainer as="main" class="ui-kit-fixture">
     <UiTypography variant="h1">UI kit controls</UiTypography>
@@ -36,6 +41,13 @@
       description="Thanks for getting in touch. Our team will review your information and respond promptly."
       title="Submitted successfully!"
     />
+
+    <section class="ui-kit-fixture__section" aria-labelledby="case-card-title">
+      <UiTypography id="case-card-title" as="h2" variant="h4">CaseCard</UiTypography>
+      <div class="ui-kit-fixture__cards">
+        <CaseCard v-for="caseCard in caseCardFixtures" :key="caseCard.title" v-bind="caseCard" />
+      </div>
+    </section>
   </UiContainer>
 </template>
 
@@ -62,5 +74,11 @@
 .ui-kit-fixture__menu-states {
   display: flex;
   gap: var(--space-3);
+}
+
+.ui-kit-fixture__cards {
+  display: grid;
+  gap: var(--space-6);
+  inline-size: 100%;
 }
 </style>

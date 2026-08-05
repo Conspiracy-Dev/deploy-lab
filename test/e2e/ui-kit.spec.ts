@@ -31,4 +31,12 @@ test('exposes UI-kit states only from the development fixture route', async ({ p
   await expect(
     page.getByRole('status').filter({ hasText: 'Submitted successfully!' }),
   ).toContainText('Submitted successfully!')
+
+  await expect(page.getByRole('heading', { name: 'CaseCard' })).toBeVisible()
+  await expect(page.locator('.case-card')).toHaveCount(6)
+  await expect(page.getByRole('link', { name: /quantumready\.info/ })).toHaveAttribute(
+    'target',
+    '_blank',
+  )
+  await expect(page.getByTestId('case-card-placeholder')).toHaveCount(6)
 })
