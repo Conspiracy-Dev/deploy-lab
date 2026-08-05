@@ -1,3 +1,5 @@
+import { resolve } from 'node:path'
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-08-04',
   devtools: { enabled: true },
@@ -61,6 +63,19 @@ export default defineNuxtConfig({
   content: {
     experimental: {
       sqliteConnector: 'native',
+    },
+  },
+  hooks: {
+    'pages:extend'(pages) {
+      if (process.env.NODE_ENV !== 'development') {
+        return
+      }
+
+      pages.push({
+        name: 'ui-kit-dev',
+        path: '/__ui-kit',
+        file: resolve('app/components/dev/UiKitFixture.vue'),
+      })
     },
   },
   nitro: {

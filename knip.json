@@ -8,5 +8,6 @@
     "scripts/contour/knowledge-check.mjs",
     "scripts/tooling/install-gitleaks.mjs"
   ],
+  "ignore": ["app/components/dev/UiKitFixture.vue"],
   "ignoreDependencies": ["vue-tsc"]
 }

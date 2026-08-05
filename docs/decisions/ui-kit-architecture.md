@@ -43,6 +43,12 @@ with elastic margins rather than a separate tablet design.
    publishing require separate approval.
 8. No component-explorer, state-management or alternate CSS framework is added
    unless implementation evidence establishes a need and the owner approves it.
+9. The visual UI-kit fixture is registered as `/__ui-kit` only while Nuxt runs
+   with `NODE_ENV=development`. It is not part of the production route output,
+   sitemap or prerender set; it exists solely for local component-state review.
+10. The success notice adapts node `153:75`'s desktop composition to smaller
+    widths by allowing its existing content block to shrink inside the shared
+    elastic container. No separate mobile composition is inferred.
 
 ## Consequences
 
@@ -57,3 +63,7 @@ with elastic margins rather than a separate tablet design.
 - `focus-visible` and `disabled` states are part of the accepted accessibility
   contract; error/invalid styling is deliberately deferred rather than
   invented.
+- The review fixture provides repeatable browser evidence without widening the
+  public product surface or SEO contract.
+- The desktop success layout remains visually consistent on mobile while
+  avoiding an unsupported tablet or mobile variant API.

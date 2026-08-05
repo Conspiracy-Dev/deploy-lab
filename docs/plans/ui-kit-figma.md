@@ -1,6 +1,6 @@
 # Figma UI kit implementation plan
 
-Status: Epic 2 complete; Epic 3 not started
+Status: Epic 3 complete; Epic 4 not started
 
 Last updated: 2026-08-05
 
@@ -282,21 +282,123 @@ primitives without composing a new product page or adding a public test route.
 
 ### Epic 3 — control primitives
 
-- [ ] Implement `UiButton` with the Figma Default and Hover states plus the
-      approved `focus-visible` and `disabled` states.
-- [ ] Implement `UiInput` with Placeholder, Filled and Focused states; support
-      single-line and multiline rendering without form submission logic, plus
-      the approved `focus-visible` and `disabled` states.
-- [ ] Implement `UiCheckbox` with unchecked and checked states using a native
-      checkbox contract, plus the approved `focus-visible` and `disabled`
-      states.
-- [ ] Implement `UiMenuToggle` with burger and close states and an accessible
-      name supplied by the consumer, plus the approved `focus-visible` and
-      `disabled` states.
-- [ ] Implement the success notice with its decorative icon hidden from the
-      accessibility tree and its message exposed semantically.
-- [ ] Test every approved control state; do not implement error/invalid visuals
-      without a separate approved design.
+Goal: implement the Figma control primitives as native, keyboard-accessible
+Vue components. The task remains visual only: it does not submit forms, open a
+menu, validate data or call a backend.
+
+1. [x] Download and commit only the required Figma SVG assets before component
+       code uses them.
+   - Obtain the checked-checkbox, close-menu and success icons from UI-kit
+     nodes `144:1450`, `144:1451` and `153:75`; store their exact exported
+     bytes under `app/assets/icons/ui/` with source-node evidence in this plan.
+   - Keep the burger's two Figma rectangles as CSS geometry; do not redraw or
+     substitute exported cross/check/success artwork. Do not retain temporary
+     MCP URLs in code.
+
+2. [x] Add `UiButton` as a native `<button>`.
+   - Public API: `type?: 'button' | 'reset' | 'submit'`, `disabled?: boolean`,
+     default slot. It has no `href`, loading state or request behavior.
+   - Reproduce the 16 px IBM Plex Mono bold label, 32×12 px padding, black
+     surface, white Default border/text and green Hover border/text from nodes
+     `143:105` and `144:1270`.
+   - Use the approved green `:focus-visible` outline and a derived disabled
+     treatment that preserves native disabled semantics; do not add error or
+     validation variants.
+
+3. [x] Add `UiInput` as a native single-line field or native `<textarea>`.
+   - Public API: `modelValue?: string`, `multiline?: boolean`, `rows?: number`,
+     `disabled?: boolean`; emit `update:modelValue`; forward native input and
+     ARIA attributes. Consumers provide a visible `<label>` or accessible name.
+   - Support the Figma Placeholder, Filled and Focused states from
+     `144:1384`, `144:1427`, `144:1423`: 20×16 px inner padding, white bottom
+     border, 570 px desktop maximum width, `rgba(0,0,0,.2)` default surface,
+     `rgba(255,255,255,.2)` focus surface and 50% placeholder opacity.
+   - Use `width: 100%` within the consumer's layout so the exact desktop
+     maximum does not cause mobile overflow. Do not add label, error or helper
+     text markup that Figma does not specify.
+
+4. [x] Add `UiCheckbox` and `UiMenuToggle` with native button/input behavior.
+   - `UiCheckbox` API: `modelValue?: boolean`, `disabled?: boolean`; emit
+     `update:modelValue` and forward native attributes. Keep the native
+     checkbox focusable at 20×20 px, use Figma's `#010067` unchecked field with
+     white bottom edge, and use only the exported checked asset when selected.
+   - `UiMenuToggle` API: `modelValue?: boolean`, `label: string`,
+     `disabled?: boolean`; emit `update:modelValue`; render a 40×40 native
+     button with `aria-pressed`. `label` is the consumer-supplied accessible
+     name, while visual state switches only burger/close artwork.
+   - Both controls receive the approved focus-visible and disabled states; no
+     global menu state, keyboard-trap, navigation panel or form logic is added.
+
+5. [x] Add the static `UiSuccessNotice`.
+   - Public API: `title: string`, `description: string`. Render a semantic
+     status/message boundary with Figma's 60 px padding, 128 px decorative icon
+     hidden from the accessibility tree, 40 px outer and 20 px text gap, and
+     the confirmed H3/body typography.
+   - The supplied Figma node `153:75` is desktop-only: preserve its 506 px text
+     block as a maximum and allow it to shrink with the existing container. Do
+     not invent a distinct mobile composition without an approved mobile node.
+
+6. [x] Prove component contracts and all approved states.
+   - Add Nuxt runtime tests for native semantics, `v-model` updates, disabled
+     behavior, checkbox/menu state changes, input/textarea selection and
+     success-icon accessibility. Test slot text and long values without adding
+     truncation behavior.
+   - Use a browser-only fixture surface to inspect Default/Hover/Focused/Filled/
+     Checked/Closed/Success visuals, keyboard focus and reduced motion at 390,
+     768 and 1440 px. Its route/exposure requires owner approval first; do not
+     create it as an implicit public page.
+   - Run the full static, dependency, build and existing Playwright checks. Do
+     not implement error/invalid visuals without a separate approved design.
+
+#### Epic 3 component API
+
+| Component         | Public props                                  | Events / slots      | Responsibility                        |
+| ----------------- | --------------------------------------------- | ------------------- | ------------------------------------- |
+| `UiButton`        | `type`, `disabled`                            | default slot        | Native visual action control          |
+| `UiInput`         | `modelValue`, `multiline`, `rows`, `disabled` | `update:modelValue` | Native input/textarea presentation    |
+| `UiCheckbox`      | `modelValue`, `disabled`                      | `update:modelValue` | Native binary field                   |
+| `UiMenuToggle`    | `modelValue`, `label`, `disabled`             | `update:modelValue` | Accessible visual burger/close toggle |
+| `UiSuccessNotice` | `title`, `description`                        | —                   | Static success feedback               |
+
+### Epic 3 evidence
+
+- Exact Figma exports are committed as `checkbox-checked.svg`, `menu-close.svg`
+  and `success-multiple-filled.svg` in `app/assets/icons/ui/`, sourced from
+  nodes `144:1450`, `144:1451` and `153:75` respectively. The burger remains
+  the two CSS rectangles from node `144:1451`; no temporary Figma URL is kept.
+- `UiButton`, `UiInput`, `UiCheckbox`, `UiMenuToggle` and `UiSuccessNotice`
+  are native semantic controls/status markup with only the approved disabled,
+  focus-visible and Figma-drawn states. Form submission, errors, validation,
+  a menu panel and backend calls remain absent.
+- The local fixture at `/__ui-kit` is registered only in development through
+  `pages:extend`. It exposes default/disabled input and button states, native
+  checkbox interaction, closed/open menu artwork and the success notice;
+  `knip.json` explicitly ignores this dynamically registered development-only
+  component. A production build contains no `__ui-kit` string.
+- Nuxt runtime coverage now contains 21 assertions across five files, including
+  native semantics, attribute forwarding, long textarea copy, controlled
+  checkbox/menu emissions, disabled states and decorative success artwork.
+  Playwright passes all eight desktop/mobile scenarios, including the fixture.
+- Browser review on local `/__ui-kit` at 390 px, 768 px and 1440 px confirms
+  responsive containment, visible keyboard focus, default/checked/open states
+  and success composition. At 768 px and desktop the input retains its 570 px
+  Figma maximum; the success content shrinks fluidly below its 506 px text
+  maximum. No console or network errors were observed.
+- Full gate passed under Node 24.16.0: formatting, lint (five non-blocking
+  Prettier/`vue/html-self-closing` convention warnings only), Stylelint,
+  typecheck, unit/runtime tests, dependency-cruiser, Madge, Knip, Playwright,
+  production build and the production dev-route absence check. Existing
+  non-blocking Nuxt build warnings remain: large client chunk, esbuild/OXC
+  option overlap, OG-image SSR setting, Rollup annotation and Sharp target.
+
+#### Approved Epic 3 decisions
+
+1. The browser fixture is a development-only `/__ui-kit` route. Nuxt registers
+   it only when `NODE_ENV=development`; it is absent from the production route
+   output, sitemap and prerender configuration.
+2. The owner approved adapting the desktop-only success node `153:75` without
+   a separate mobile design. Its 506 px text block remains a maximum and
+   shrinks naturally inside the shared elastic container.
 
 ### Epic 4 — CaseCard product component
 
@@ -321,14 +423,14 @@ primitives without composing a new product page or adding a public test route.
 
 ### Roadmap
 
-| Milestone | Deliverable                                         | Dependency                     | Status   |
-| --------- | --------------------------------------------------- | ------------------------------ | -------- |
-| R0        | Exact Figma inventory and approved scope            | Professional MCP editor access | Complete |
-| R1        | Tokens, fonts, elastic container and test surface   | R0                             | Complete |
-| R2        | Typography and layout primitives                    | R1                             | Complete |
-| R3        | Responsive CaseCard                                 | R2                             | Pending  |
-| R4        | Visual, accessibility and architecture hardening    | R3                             | Pending  |
-| R5        | Reviewed documentation and uncommitted handoff diff | R4                             | Pending  |
+| Milestone | Deliverable                                       | Dependency                     | Status   |
+| --------- | ------------------------------------------------- | ------------------------------ | -------- |
+| R0        | Exact Figma inventory and approved scope          | Professional MCP editor access | Complete |
+| R1        | Tokens, fonts, elastic container and test surface | R0                             | Complete |
+| R2        | Typography and layout primitives                  | R1                             | Complete |
+| R3        | Native control primitives and success notice      | R2                             | Complete |
+| R4        | Responsive CaseCard                               | R3                             | Pending  |
+| R5        | Visual, accessibility and reviewed handoff        | R4                             | Pending  |
 
 ## Verification
 
