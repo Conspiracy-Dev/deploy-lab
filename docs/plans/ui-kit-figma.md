@@ -1,6 +1,6 @@
 # Figma UI kit implementation plan
 
-Status: approved scope and plan, implementation not started
+Status: Epic 0 in progress; canonical Figma source changed, Professional connector verification pending
 
 Last updated: 2026-08-05
 
@@ -11,11 +11,13 @@ Nuxt 4 and Vue 3, plus the explicitly approved reusable `CaseCard` product
 component. Preserve the existing SSR, accessibility, Core Web Vitals and static
 deployment contracts.
 
-Canonical design targets:
+Canonical design source:
 
-- [UI KIT / node 141:98](https://www.figma.com/design/5qHpOup4UcfQ39IeNs3GoM/DeployLab?node-id=141-98)
-- [Cases / node 154:247](https://www.figma.com/design/5qHpOup4UcfQ39IeNs3GoM/DeployLab?node-id=154-247)
-- [Case component / node 154:246](https://www.figma.com/design/5qHpOup4UcfQ39IeNs3GoM/DeployLab?node-id=154-246)
+- [DeployLab — Copy / root node 0:1](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=0-1&p=f&m=dev)
+
+The node IDs from the previous Figma file are historical only and must not be
+reused. Epic 0 discovers the exact UI kit and Cases nodes in this copy after
+the configured Figma MCP account has editor access.
 
 ## Non-goals
 
@@ -43,8 +45,13 @@ Canonical design targets:
 - Use the existing `@nuxt/fonts`, `@nuxt/icon`, `@nuxt/image`, Playwright,
   Vitest, Stylelint and architecture checks before adding packages.
 - Use Node.js 24 and pnpm 11 as declared by the repository.
-- Figma MCP Starter-plan limits may delay additional variable or screenshot
-  reads; temporary asset URLs are not production sources.
+- The owner has reconnected the Figma connector to the Professional account
+  with Dev Mode. Verify the refreshed connector can read the canonical copy
+  before inferring design values or starting implementation.
+- Use read-only Professional/Dev Mode capabilities: design context, variables,
+  metadata, high-resolution screenshots and any existing Code Connect map.
+  Do not publish Code Connect mappings or write to Figma.
+- Temporary Figma asset URLs are not production sources.
 
 ## Ownership seam
 
@@ -62,16 +69,20 @@ Canonical design targets:
 
 ### Epic 0 — design contract and baseline
 
-- [x] Connect the authenticated Figma plugin read-only.
-- [x] Locate the exact UI kit and Cases nodes.
-- [x] Read structured context for desktop/mobile typography, burger/cross,
-      checkbox, input, button, success notice and the base Case component.
+- [ ] Verify the reconnected Professional Figma connector has Editor access to
+      `0dto2dTdI7m3yyEelxxgDz` through a read-only root inventory. The previous
+      connector lacked that access.
+- [ ] Read design context for root node `0:1`; if it is too large, use
+      `get_metadata` to record node-specific links for the UI kit, Cases,
+      desktop CaseCard and mobile CaseCard. Do not carry node IDs over from the
+      previous file.
+- [ ] For each recorded target, read design context, variable definitions,
+      high-resolution screenshots and any existing Code Connect map. Read
+      remaining Case overrides as data variations, not separate components.
 - [x] Record the owner-approved scope decisions in the UI kit ADR.
-- [ ] Read Figma variable definitions and remaining Case overrides after the
-      Starter-plan MCP call limit resets.
-- [ ] Capture explicit high-resolution screenshots for the UI kit and desktop/
-      mobile Case variants after the call limit resets.
-- [ ] Re-run the full Node 24 baseline immediately before implementation.
+- [ ] Immediately before Epic 1, run the Node 24 baseline: `pnpm setup:doctor`,
+      `pnpm format:check`, `pnpm quality:static`, `pnpm build` and
+      `pnpm test:e2e` through `nvm exec 24.16.0 corepack`.
 
 ### Epic 1 — tokens, fonts and test surface
 
@@ -135,14 +146,14 @@ Canonical design targets:
 
 ### Roadmap
 
-| Milestone | Deliverable                                         | Dependency              | Status                                     |
-| --------- | --------------------------------------------------- | ----------------------- | ------------------------------------------ |
-| R0        | Exact Figma inventory and approved scope            | Authenticated Figma MCP | In progress: rate limit blocks final reads |
-| R1        | Tokens, fonts, elastic container and test surface   | R0                      | Pending                                    |
-| R2        | Typography and control primitives                   | R1                      | Pending                                    |
-| R3        | Responsive CaseCard                                 | R2                      | Pending                                    |
-| R4        | Visual, accessibility and architecture hardening    | R3                      | Pending                                    |
-| R5        | Reviewed documentation and uncommitted handoff diff | R4                      | Pending                                    |
+| Milestone | Deliverable                                         | Dependency                     | Status                                            |
+| --------- | --------------------------------------------------- | ------------------------------ | ------------------------------------------------- |
+| R0        | Exact Figma inventory and approved scope            | Professional MCP editor access | In progress: refreshed connector must be verified |
+| R1        | Tokens, fonts, elastic container and test surface   | R0                             | Pending                                           |
+| R2        | Typography and control primitives                   | R1                             | Pending                                           |
+| R3        | Responsive CaseCard                                 | R2                             | Pending                                           |
+| R4        | Visual, accessibility and architecture hardening    | R3                             | Pending                                           |
+| R5        | Reviewed documentation and uncommitted handoff diff | R4                             | Pending                                           |
 
 ## Verification
 
@@ -168,7 +179,8 @@ Stop and request owner direction when:
 
 - a required visible state other than the approved `focus-visible` and
   `disabled` states is absent from Figma;
-- the remaining Figma variable/context reads are blocked when exact values are
+- the Professional Figma connector cannot be verified with editor access, or a
+  required variable/context/screenshot read is blocked when exact values are
   required;
 - Case assets have unclear production rights or only temporary MCP URLs;
 - an implementation requires a new runtime dependency, public route, Figma

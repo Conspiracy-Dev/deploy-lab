@@ -3,12 +3,12 @@
 - **Status:** Accepted
 - **Date:** 2026-08-05
 - **Decision owner:** Igor Shavlovsky
-- **Design source:** [DeployLab UI KIT / node 141:98](https://www.figma.com/design/5qHpOup4UcfQ39IeNs3GoM/DeployLab?node-id=141-98)
+- **Design source:** [DeployLab — Copy / root node 0:1](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=0-1&p=f&m=dev)
 
 ## Context
 
 The repository currently has tokens and a smoke-page scene but no reusable UI
-component layer. The Figma file contains a UI kit, full product screens and a
+component layer. The canonical Figma copy contains a UI kit, full product screens and a
 separate Cases section. Implementing every screen in one task would mix
 product, widget and primitive responsibilities and make review unnecessarily
 large.
@@ -49,8 +49,8 @@ with elastic margins rather than a separate tablet design.
   of the UI-kit boundary.
 - Future page/widget tasks can compose these components without reopening this
   scope decision.
-- Exact Figma values and assets must be obtained before implementing each
-  affected component; visual gaps are not filled by guesswork.
+- Exact Figma values and assets must be obtained from the canonical copy before
+  implementing each affected component; visual gaps are not filled by guesswork.
 - `focus-visible` and `disabled` states are part of the accepted accessibility
   contract; error/invalid styling is deliberately deferred rather than
   invented.

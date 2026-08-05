@@ -10,7 +10,7 @@ alwaysApply: false
 - Require a node-specific Figma URL for implementation work. Start read-only:
   request design context, inspect existing components and tokens, then map the
   result to this project's Nuxt, UnoCSS, native CSS, SSR, SEO, and CWV patterns.
-- The default project handoff is [DeployLab / node 144:1370](https://www.figma.com/design/5qHpOup4UcfQ39IeNs3GoM/DeployLab?node-id=144-1370&t=XMJSqptKe7uHjPsu-1).
+- The default project handoff is [DeployLab — Copy / root node 0:1](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=0-1&p=f&m=dev).
   It is a read-only source unless the user names an exact Figma write operation.
 - Prefer existing project components and tokens. Preserve semantic HTML and
   rendering strategy; do not add `ClientOnly`, client-only design libraries,
