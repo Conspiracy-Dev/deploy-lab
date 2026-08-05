@@ -1,6 +1,6 @@
 # Figma UI kit implementation plan
 
-Status: Epic 0 in progress; canonical Figma source changed, Professional connector verification pending
+Status: Epic 0 in progress; canonical Figma source changed, Professional connector tool registration pending
 
 Last updated: 2026-08-05
 
@@ -46,8 +46,9 @@ the configured Figma MCP account has editor access.
   Vitest, Stylelint and architecture checks before adding packages.
 - Use Node.js 24 and pnpm 11 as declared by the repository.
 - The owner has reconnected the Figma connector to the Professional account
-  with Dev Mode. Verify the refreshed connector can read the canonical copy
-  before inferring design values or starting implementation.
+  with Dev Mode. The current Codex session returns `Unknown tool` for the
+  refreshed connector; refresh its tool registration, then verify it can read
+  the canonical copy before inferring design values or starting implementation.
 - Use read-only Professional/Dev Mode capabilities: design context, variables,
   metadata, high-resolution screenshots and any existing Code Connect map.
   Do not publish Code Connect mappings or write to Figma.
@@ -70,8 +71,9 @@ the configured Figma MCP account has editor access.
 ### Epic 0 — design contract and baseline
 
 - [ ] Verify the reconnected Professional Figma connector has Editor access to
-      `0dto2dTdI7m3yyEelxxgDz` through a read-only root inventory. The previous
-      connector lacked that access.
+      `0dto2dTdI7m3yyEelxxgDz` through a read-only root inventory after its
+      tools are registered in the active Codex session. The previous connector
+      lacked that access.
 - [ ] Read design context for root node `0:1`; if it is too large, use
       `get_metadata` to record node-specific links for the UI kit, Cases,
       desktop CaseCard and mobile CaseCard. Do not carry node IDs over from the
@@ -146,14 +148,14 @@ the configured Figma MCP account has editor access.
 
 ### Roadmap
 
-| Milestone | Deliverable                                         | Dependency                     | Status                                            |
-| --------- | --------------------------------------------------- | ------------------------------ | ------------------------------------------------- |
-| R0        | Exact Figma inventory and approved scope            | Professional MCP editor access | In progress: refreshed connector must be verified |
-| R1        | Tokens, fonts, elastic container and test surface   | R0                             | Pending                                           |
-| R2        | Typography and control primitives                   | R1                             | Pending                                           |
-| R3        | Responsive CaseCard                                 | R2                             | Pending                                           |
-| R4        | Visual, accessibility and architecture hardening    | R3                             | Pending                                           |
-| R5        | Reviewed documentation and uncommitted handoff diff | R4                             | Pending                                           |
+| Milestone | Deliverable                                         | Dependency                     | Status                                          |
+| --------- | --------------------------------------------------- | ------------------------------ | ----------------------------------------------- |
+| R0        | Exact Figma inventory and approved scope            | Professional MCP editor access | In progress: connector tools must be registered |
+| R1        | Tokens, fonts, elastic container and test surface   | R0                             | Pending                                         |
+| R2        | Typography and control primitives                   | R1                             | Pending                                         |
+| R3        | Responsive CaseCard                                 | R2                             | Pending                                         |
+| R4        | Visual, accessibility and architecture hardening    | R3                             | Pending                                         |
+| R5        | Reviewed documentation and uncommitted handoff diff | R4                             | Pending                                         |
 
 ## Verification
 
@@ -179,9 +181,9 @@ Stop and request owner direction when:
 
 - a required visible state other than the approved `focus-visible` and
   `disabled` states is absent from Figma;
-- the Professional Figma connector cannot be verified with editor access, or a
-  required variable/context/screenshot read is blocked when exact values are
-  required;
+- the Professional Figma connector tools are unavailable, it cannot be
+  verified with editor access, or a required variable/context/screenshot read
+  is blocked when exact values are required;
 - Case assets have unclear production rights or only temporary MCP URLs;
 - an implementation requires a new runtime dependency, public route, Figma
   write, backend behavior or product/widget scope;
