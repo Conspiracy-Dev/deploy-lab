@@ -1,0 +1,43 @@
+---
+description: Use for Vue single-file components, layouts, pages, or composables. Do not use for server-only TypeScript with no Vue reactivity or template.
+globs:
+  - "app/components/**/*.vue"
+  - "app/layouts/**/*.vue"
+  - "app/pages/**/*.vue"
+  - "app/composables/**/*.ts"
+alwaysApply: false
+---
+
+- Use `<script setup lang="ts">` with typed `defineProps<{ ... }>()` and
+  `defineEmits<{ ... }>()`; do not fall back to the runtime prop-object form or
+  the Options API in this Composition-API-only codebase.
+- Keep data flow one-way: props down, events up. Never mutate a prop inside the
+  component that receives it; the props/emits shape is the component's public
+  contract.
+- Prefer `computed` for a value derived from other reactive state; reserve
+  `watch`/`watchEffect` for an actual side effect (fetch, DOM measurement,
+  external subscription). A `watch` that only recomputes a value is a signal to
+  use `computed` instead.
+- Keep templates declarative: extract a non-trivial expression, multi-step
+  transformation, or repeated inline condition into a `computed` or a named
+  method rather than writing it inline in the template.
+- Never destructure a reactive object or the `props` object directly; reactivity
+  is lost silently. Use `toRefs`/`toRef`, or keep the whole reference and access
+  fields through it. This is a common source of a bug that a non-programmer
+  reviewer cannot spot by reading the rendered page.
+- Give every `v-for` a stable, identity-based `:key`; never key on the array
+  index when items can be reordered, inserted, or removed.
+- Name composables `use<Noun>`, keep one clear responsibility per composable,
+  and touch the DOM or browser APIs only inside a lifecycle hook
+  (`onMounted`, `onUnmounted`) so the composable stays SSR-safe. Mirror
+  `useSceneLifecycle.ts` for the isolation pattern used by 3D scenes.
+- Keep component-local UI state local; lift it to a composable or parent only
+  when a second independent consumer needs the same state (same threshold as
+  `.cursor/rules/architecture-refactoring.mdc`).
+- Use `ref()` for a primitive value and `reactive()` only for a genuine object
+  whose properties are read together; do not mix the two for the same piece of
+  state.
+- Reuse an existing design token from `app/assets/styles/tokens.css`, a native
+  CSS feature, or a Reka UI primitive before adding component-scoped styling
+  that hardcodes a colour, spacing, or breakpoint value already expressed as a
+  token.

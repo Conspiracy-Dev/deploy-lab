@@ -1,0 +1,29 @@
+---
+description: Use when building or reviewing UI markup and styling for accessibility, responsiveness, and interaction-state coverage. Do not use for Vue reactivity/composition specifics (see vue-component-patterns.mdc) or token values themselves (see design-tokens.mdc).
+globs:
+  - "app/components/**/*.vue"
+  - "app/layouts/**/*.vue"
+  - "app/pages/**/*.vue"
+  - "app/assets/styles/**/*.css"
+alwaysApply: false
+---
+
+DeployLab's own brief is "vivid interfaces without trading away SEO,
+accessibility, or Core Web Vitals" — this rule is what makes that concrete.
+
+- Start from semantic, keyboard-operable, labelled markup (`button`, `a`,
+  `nav`, headings in document order) before reaching for ARIA; ARIA fills a
+  genuine gap, it does not replace the right element.
+- Build responsive by construction, mobile-first: prefer fluid `clamp()`
+  type/space and intrinsic Grid/Flexbox layouts that reflow without a
+  breakpoint, matching the pattern already used in `app/pages/index.vue`. Add
+  an explicit breakpoint only where the design genuinely changes shape.
+- Drive colour, spacing, type scale, and radii from
+  `app/assets/styles/tokens.css` (see `design-tokens.mdc`); never hardcode a
+  value the token system already expresses.
+- Cover loading, empty, error, disabled, and focus states for an interactive
+  component, not only the happy path; gate motion behind
+  `prefers-reduced-motion`, matching the existing hero fallback pattern.
+- Meet WCAG contrast and never convey meaning by colour alone; treat
+  accessibility as a requirement built in from the start, not a pass at the
+  end.

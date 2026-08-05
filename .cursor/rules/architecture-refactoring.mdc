@@ -43,3 +43,15 @@ alwaysApply: false
   boundary with an explicit need.
 - Keep 3D scenes isolated under `app/components/scenes/` and preserve their
   semantic, non-canvas fallback and lifecycle controls.
+- Refactor only under a passing test; if coverage is thin, add a
+  characterization test first rather than restructuring blind.
+- Never mix a refactor with a behaviour change or a bug fix in the same step;
+  a refactor's diff must stay behaviour-neutral so the narrow verification
+  chain can be trusted.
+- Move in the smallest reversible steps, re-running the narrow verification
+  chain after each one, rather than one large restructure verified only at
+  the end.
+- Preserve the existing public surface (names, signatures, props/emits)
+  unless changing it is the explicit, requested goal of the task.
+- Tighten a type as part of a refactor; never loosen one, add `as any`, or
+  suppress the type checker to force a move through.

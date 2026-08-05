@@ -1,0 +1,31 @@
+---
+description: Use before adding a new abstraction, dependency, layer, or design pattern in app/, server/, or shared/. Do not use for an ordinary component or composable decomposition with no new abstraction — see architecture-refactoring.mdc for that.
+globs:
+  - "app/**/*"
+  - "server/**/*"
+  - "shared/**/*"
+alwaysApply: false
+---
+
+- Before adding an abstraction, layer, dependency, or design pattern, answer
+  four questions: what problem it solves, why the obvious simpler alternative
+  does not, what it makes harder, and what breaks if the codebase or its usage
+  grows several times over. If you cannot answer all four, the abstraction is
+  not ready.
+- A design pattern is a named solution to a recurring change problem; adopt one
+  only when that change is real and repeated, never to give code a familiar
+  shape. A `switch`/`if` you touch rarely is fine; a strategy object with one
+  strategy is not.
+- Judge a new dependency between modules by three factors: how strongly they
+  are coupled (a shared contract or type is cheaper than shared internals), how
+  far apart they are (a cross-module edge costs more than a same-file one), and
+  how often the dependency changes. Avoid combining high strength, high
+  distance, and high volatility on the same edge; `server/integrations/<vendor>/`
+  exists precisely to isolate a volatile external dependency behind a stable
+  contract.
+- Promote a helper, type, or component to a shared module on its second real,
+  independent use, not in anticipation of one.
+- This rule decides *whether* to add an abstraction; see
+  `.cursor/rules/architecture-refactoring.mdc` for the accompanying
+  decomposition mechanics and the "Architecture boundaries" invariant in
+  `AGENTS.md` for the inward-dependency rule this all serves.

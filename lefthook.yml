@@ -9,6 +9,10 @@ pre-commit:
       run: pnpm lint
     styles:
       run: pnpm lint:styles
+    slop:
+      run: pnpm slop-scan
+    local-files:
+      run: pnpm guard-local-files
     secrets:
       run: pnpm secrets:check
 

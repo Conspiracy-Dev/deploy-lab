@@ -32,3 +32,8 @@ output
 .env
 .env.*
 !.env.example
+
+# Personal, per-developer knowledge file (see KNOWLEDGE.local.md.template).
+# The template is versioned; the filled-in file is not. guard-local-files.mjs
+# blocks it at commit time if it is ever staged despite this ignore rule.
+*.local.md

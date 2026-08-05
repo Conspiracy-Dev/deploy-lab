@@ -1,0 +1,24 @@
+---
+description: Use when writing or changing README.md, CONTRIBUTING.md, or a file under docs/. Do not use for code comments or doc-comments (see typescript-clean-code.mdc) or for an AI-contour decision entry, which follows docs/decisions/ai-contour.md's own format.
+globs:
+  - "README.md"
+  - "CONTRIBUTING.md"
+  - "docs/**/*"
+alwaysApply: false
+---
+
+- Document behaviour, not aspiration: verify a claim against the current code
+  before writing it. A doc that describes what the code used to do, or what it
+  was meant to do, is worse than no doc at all.
+- Keep a doc next to the code it describes and update it in the same change as
+  the behaviour it documents; a doc that moves separately from the code drifts.
+- Match the doc to the reader's need instead of blending purposes in one page:
+  a quick-start step is not the place for design rationale, and a decision's
+  *why* belongs in `docs/decisions/ai-contour.md` for a contour decision, or a
+  similarly dated, append-only record for a product or architecture decision
+  outside the contour — not scattered across a README paragraph.
+- Write from the reader's side: name things as a reader recognises them, use a
+  concrete example over an abstract description, and state the *why*, not the
+  obvious *what* the code already shows.
+- Prune a doc section that no longer matches reality instead of leaving it to
+  mislead the next reader or agent.

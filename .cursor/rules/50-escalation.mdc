@@ -1,0 +1,10 @@
+---
+description: Enforces the escalation protocol for infeasible, unsafe, or shortcut-requiring requests; use for all repository work.
+alwaysApply: true
+---
+Apply the "Escalation" invariant in `AGENTS.md`.
+This stays always-on because a silent shortcut is invisible to a reviewer who
+cannot read the diff or evaluate the trade-off themselves.
+Explain the constraint in plain language, offer one or two concrete
+alternatives, and wait for the user's choice instead of silently choosing a
+fragile, unsafe, or hook-bypassing path.

@@ -1,0 +1,53 @@
+<!--
+  LOCAL KNOWLEDGE — personal, per-developer, NEVER committed.
+
+  Copy this file to `KNOWLEDGE.local.md` (drop the `.template` suffix) and
+  fill it in. `KNOWLEDGE.local.md` is gitignored and a pre-commit guard
+  (scripts/contour/guard-local-files.mjs) blocks it if it is ever staged
+  anyway — keep it that way.
+
+  This file is read into the AI agent's context, which is sent to the LLM
+  provider. Do NOT put secrets here: no tokens, API keys, passwords, or
+  cookies. Internal stand URLs, decisions, and gotchas are fine; credentials
+  are not.
+
+  Add an entry only if ALL hold (the admission test):
+    - durable      -- true beyond the current task or session
+    - non-obvious  -- NOT derivable from code, git history, docs/**, or the
+                      AI contour; if it is in the repo already, it does not
+                      belong here
+    - reusable     -- it changes what you (or the next session) would do, or
+                      is a pointer you will reference again
+    - right section -- see below
+
+  What does NOT belong: restating how code works - current-task TODOs (that
+  is the commit message or PR description) - secrets of any kind - "might be
+  useful someday" speculation. When in doubt, do not write; a short,
+  high-signal file beats a long one nobody trusts.
+
+  Full policy and how the agent works with this file: the
+  deploy-lab-local-knowledge Skill (see AGENTS.md).
+-->
+
+# Local knowledge — <your name>
+
+## Personal
+
+<!-- Your environment: local ports, machine-specific setup, personal
+     shortcuts. Example:
+     - Local dev runs on port 3001, not 3000, because of a conflicting app. -->
+
+## Project
+
+<!-- Non-obvious facts about THIS repository that have no committed home yet:
+     a decision's rationale, a cross-team gotcha, "why it's like this".
+     Example:
+     - The hero SVG fallback is intentionally always rendered, not dead code
+       — it is the non-canvas path for reduced-motion and pre-hydration. -->
+
+## Agent notes
+
+<!-- Maintained by the agent across sessions: what it discovered worth
+     carrying forward, each with a short why. The agent may prune or correct
+     its own entries here when they go stale or are contradicted by the
+     code. -->

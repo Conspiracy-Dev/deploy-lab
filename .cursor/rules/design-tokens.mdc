@@ -1,0 +1,23 @@
+---
+description: Use when writing or changing component or page CSS, including scoped <style> blocks in a .vue file. Do not use for pure layout/markup changes with no new style declaration, or for UnoCSS utility class selection covered by existing usage.
+globs:
+  - "app/assets/styles/**/*.css"
+  - "app/components/**/*.vue"
+  - "app/layouts/**/*.vue"
+  - "app/pages/**/*.vue"
+alwaysApply: false
+---
+
+- Reuse an existing custom property from `app/assets/styles/tokens.css` for a
+  colour, spacing, radius, or font value before writing a literal (a raw hex
+  code, an arbitrary `px`/`rem` value, or a bespoke font stack).
+- If a value genuinely has no matching token, add it to `tokens.css` as a named
+  custom property first, then consume it — do not introduce a one-off literal
+  in component-scoped CSS that duplicates or drifts from an existing token.
+- When implementing a specific Figma frame or component, cite the Figma node
+  ID in a CSS comment next to the rule it drove (for example
+  `/* Figma 144:1370 */`), so a later reviewer can trace the value back to the
+  design source without a Figma MCP round-trip.
+- Preserve `prefers-reduced-motion` and existing breakpoint conventions already
+  used in `app/pages/index.vue` rather than inventing a new breakpoint value or
+  animation approach for a single component.

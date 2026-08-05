@@ -30,6 +30,14 @@ const blockedReason = [
     /(?:^|[;&|]\s*)(?:rmdir|remove-item)\b[^\n]*(?:\s+\/s\b|\s+-recurse\b)[^\n]*(?:\s+[a-z]:\\?\s*$|\s+\\\\\?\\[a-z]:\\?\s*$)/,
     'recursive deletion targets a drive root',
   ],
+  [
+    /\bgit\s+\S+[^\n]*--no-verify\b/,
+    '--no-verify bypasses the repository commit or push safety hooks',
+  ],
+  [
+    /\b(?:cat|type|more|less|get-content)\b[^\n]*\.env\b(?!\.example)/,
+    'printing .env risks exposing secrets into the transcript',
+  ],
 ].find(([pattern]) => pattern.test(normalizedCommand))?.[1]
 
 if (!blockedReason) {

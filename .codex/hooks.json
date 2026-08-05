@@ -11,6 +11,13 @@
             "commandWindows": "powershell.exe -NoProfile -Command \"$root = git rev-parse --show-toplevel; node (Join-Path $root 'scripts/contour/agent-command-guard.mjs') --provider=codex\"",
             "timeout": 5,
             "statusMessage": "Checking command safety"
+          },
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/contour/agent-commit-gate.mjs\" --provider=codex",
+            "commandWindows": "powershell.exe -NoProfile -Command \"$root = git rev-parse --show-toplevel; node (Join-Path $root 'scripts/contour/agent-commit-gate.mjs') --provider=codex\"",
+            "timeout": 120,
+            "statusMessage": "Checking commit readiness"
           }
         ]
       }

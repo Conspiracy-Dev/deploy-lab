@@ -1,0 +1,22 @@
+---
+description: Use when deciding what a new or changed test should cover, or reviewing whether an existing test proves the right thing. Do not use for Playwright/Vitest configuration or CI wiring — see verification-git.mdc for that.
+globs:
+  - "test/**/*"
+alwaysApply: false
+---
+
+- Test observable behaviour through the public seam — rendered output, a
+  composable's returned value, a route's response — not an internal
+  implementation detail. A test that mirrors internals breaks on every
+  refactor and proves nothing about correctness.
+- Pick the smallest seam that proves the change: prefer a fast Vitest unit
+  test over a Playwright E2E test whenever a unit test can prove the same
+  thing. Reserve E2E for a real user-facing path (rendering, navigation,
+  interaction) that a unit test cannot observe.
+- Mock or stub only at a real I/O or time boundary (a fetch call, a server
+  integration); never mock the unit under test itself.
+- Give each test one assertion cluster and a name in the form
+  `condition → expected outcome`, not a vague "works" description.
+- A good test is fast, isolated, repeatable, and self-validating. A flaky or
+  order-dependent test is a liability, not coverage — fix or remove it rather
+  than retrying past it.

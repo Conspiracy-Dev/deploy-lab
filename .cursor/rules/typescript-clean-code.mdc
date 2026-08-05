@@ -1,0 +1,34 @@
+---
+description: Use when writing or reviewing TypeScript in app/, server/, or shared/ — type safety, naming, comments, and magic values. Do not use for Vue template/reactivity specifics (see vue-component-patterns.mdc) or for scripts/ tooling and test files.
+globs:
+  - "app/**/*.ts"
+  - "server/**/*.ts"
+  - "shared/**/*.ts"
+alwaysApply: false
+---
+
+- Never cast with `any`. At an external boundary (route input, content
+  frontmatter, third-party response), validate with `zod` — already a
+  dependency — or narrow from `unknown`; do not assert past the type checker.
+- Prefer a discriminated union over a set of independent boolean flags when
+  only some combinations are valid; it makes an illegal state unrepresentable
+  instead of checked at runtime.
+- Prefer `satisfies` to a type assertion, and a narrowing `if`/type guard to
+  the non-null `!` operator; both keep the compiler's inference intact.
+- Use `interface` for an object shape and `type` for a union or composed
+  utility type; use `import type` for a type-only import.
+- Default to `const` and `readonly`; do not mutate a parameter, a prop, or an
+  object passed by reference.
+- Follow naming convention: `camelCase` for variables and functions,
+  `PascalCase` for components, types, and interfaces, `UPPER_SNAKE_CASE` for a
+  module-level constant, and `is`/`has`/`can`/`should` for a boolean.
+- Replace a magic number or string used mid-expression with a named constant;
+  the meaning belongs in the name, and the value gets one place to change.
+- Comment the *why*, not the *what*: a non-obvious constraint, a workaround, or
+  a link to context. Delete a comment that only restates the code, or that no
+  longer matches it.
+- Give an exported function, composable, or type a one-line doc comment when
+  its contract is not obvious from its name and signature; do not add the same
+  ceremony to an unexported local helper.
+- Never leave commented-out code; Git history is the record of what used to be
+  there.

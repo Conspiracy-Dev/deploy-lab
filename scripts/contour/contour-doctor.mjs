@@ -19,6 +19,8 @@ const REQUIRED_SCRIPTS = [
   'deps:check',
   'deps:cycles',
   'secrets:check',
+  'slop-scan',
+  'guard-local-files',
   'hooks:version',
   'setup',
   'setup:doctor',
@@ -47,6 +49,8 @@ const TOOL_SCRIPTS = [
   'deps:check',
   'deps:cycles',
   'secrets:check',
+  'slop-scan',
+  'guard-local-files',
   'hooks:version',
   'test:onboarding',
 ]
@@ -69,6 +73,7 @@ const REPOSITORY_BASELINE_FILES = [
   'docs/onboarding/prompts/review.md',
   'docs/onboarding/examples/verified-task-plan.md',
   'commitlint.config.mjs',
+  'KNOWLEDGE.local.md.template',
   '.github/PULL_REQUEST_TEMPLATE.md',
   '.github/ISSUE_TEMPLATE/bug_report.yml',
   '.github/ISSUE_TEMPLATE/feature_request.yml',
@@ -537,6 +542,11 @@ async function checkToolConfiguration(reporter) {
     'scripts/onboarding/task-intake-check.test.mjs',
     'scripts/tooling/install-gitleaks.mjs',
     'scripts/tooling/run-gitleaks.mjs',
+    'scripts/contour/agent-command-guard.mjs',
+    'scripts/contour/agent-commit-gate.mjs',
+    'scripts/contour/agent-stop-guard.mjs',
+    'scripts/contour/guard-local-files.mjs',
+    'scripts/contour/knowledge-check.mjs',
   ]
 
   for (const file of requiredFiles) {

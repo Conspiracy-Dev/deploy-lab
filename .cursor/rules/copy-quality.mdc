@@ -1,0 +1,25 @@
+---
+description: Use when writing or changing user-visible text — a page heading, description, button label, or Nuxt Content field. Do not use for code comments, commit messages, or internal documentation.
+globs:
+  - "app/pages/**/*.vue"
+  - "app/layouts/**/*.vue"
+  - "app/components/**/*.vue"
+  - "content/**/*"
+alwaysApply: false
+---
+
+- Match the existing brand voice in `app/pages/index.vue`: direct, sentence
+  case, no exclamation marks, no filler adjectives ("amazing", "revolutionary").
+- Keep a label short enough to read at a glance; a button or link label states
+  the action or destination, not a generic "Click here" or "Learn more" with no
+  context.
+- Do not invent a product claim, statistic, or capability that the task did not
+  provide; ask instead of guessing wording that reads as a factual claim.
+- Keep `title`/`description` SEO metadata and on-page copy consistent — a page
+  should not promise something in its meta description that the visible
+  content does not say.
+- This project has no content-manifest or copy-drift check yet because there is
+  no populated `content/` collection to protect (see `docs/decisions/ai-contour.md`).
+  If real page count and copy volume grow enough that copy silently drifting
+  from its source becomes a real risk, revisit adding one instead of relying on
+  this rule alone.

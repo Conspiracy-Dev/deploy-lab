@@ -7,9 +7,10 @@ disable-model-invocation: true
 ## Instructions
 
 1. Определи минимальную цепочку по изменённой поверхности; не подменяй её только успешной статической проверкой.
-2. Запусти `pnpm format:check`, `pnpm lint`, `pnpm lint:styles`, `pnpm typecheck` и `pnpm test:unit`.
+2. Запусти `pnpm format:check`, `pnpm lint`, `pnpm lint:styles`, `pnpm slop-scan`, `pnpm typecheck` и `pnpm test:unit`.
 3. При изменении UI запусти затронутый `pnpm test:e2e` и получи browser proof; при изменении границ также запусти `pnpm deps:check` и `pnpm deps:cycles`.
 4. Запусти `pnpm secrets:check`, затем `git diff --check` и проверь `git status --short` на непреднамеренные файлы.
-5. Проверь diff на AI slop: `TODO` без `TODO(<ref>):`, забытый `console.log`, `implement later` и скопированный без переименования код.
+5. `pnpm slop-scan` покрывает generic-имена файлов, `as any`/`@ts-ignore`/`@ts-expect-error`, пустой `catch`, `console.log` и TODO/FIXME без `TODO(<ref>):`; отдельно проверь diff на то, что скрипт не ловит: скопированный без переименования код, `implement later` и полуготовые заглушки.
 6. Не объявляй задачу завершённой при падении проверки: исправь причину или явно зафиксируй, почему проверка неприменима либо была заблокирована до начала задачи.
 7. Выведи фактические команды, результаты, оставшийся риск и следующий шаг.
+8. Если задача видима пользователю (страница, копирайт, layout, интерактивность), после этого технического отчёта примени `deploy-lab-plain-language-handoff`; для чисто внутренних изменений (конфиг, тулинг, тесты) этот технический отчёт самодостаточен.

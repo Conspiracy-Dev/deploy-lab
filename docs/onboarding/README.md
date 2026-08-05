@@ -38,13 +38,14 @@ the owning code and tests before acting.
 
 ## Context by role
 
-| Role           | Read first                                           | Do not do by default                                 |
-| -------------- | ---------------------------------------------------- | ---------------------------------------------------- |
-| Implementation | `AGENTS.md`, owning path rule, focused code and test | Invent abstractions or edit neighbouring modules     |
-| SEO/CWV        | Nuxt SEO/CWV rule, route, metadata and browser proof | Replace SSR/prerendering with client-only rendering  |
-| Figma handoff  | Figma rule and supplied file/node                    | Write, publish, or sync Figma without exact approval |
-| Reviewer       | Diff, public contracts, relevant focused checks      | Refactor the diff during a read-only review          |
-| Delivery       | `CONTRIBUTING.md`, `OWNERS.md`, delivery Skill       | Commit or push without owner authorisation           |
+| Role                      | Read first                                                                                                                                    | Do not do by default                                                                   |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Implementation            | `AGENTS.md`, owning path rule, focused code and test                                                                                          | Invent abstractions or edit neighbouring modules                                       |
+| SEO/CWV                   | Nuxt SEO/CWV rule, route, metadata and browser proof                                                                                          | Replace SSR/prerendering with client-only rendering                                    |
+| Figma handoff             | Figma rule and supplied file/node                                                                                                             | Write, publish, or sync Figma without exact approval                                   |
+| Reviewer                  | Diff, public contracts, relevant focused checks                                                                                               | Refactor the diff during a read-only review                                            |
+| Delivery                  | `CONTRIBUTING.md`, `OWNERS.md`, delivery Skill                                                                                                | Commit or push without owner authorisation                                             |
+| Non-technical stakeholder | The plain-language handoff at the end of a task (URL, one-sentence summary, look-and-tell checklist) from `deploy-lab-plain-language-handoff` | Read the diff, the technical plan, or command output to judge whether the work is done |
 
 ## Prompt templates
 

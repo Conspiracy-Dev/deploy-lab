@@ -3,7 +3,9 @@
     "content.config.ts",
     "lighthouserc.cjs",
     "scripts/contour/agent-command-guard.mjs",
+    "scripts/contour/agent-commit-gate.mjs",
     "scripts/contour/agent-stop-guard.mjs",
+    "scripts/contour/knowledge-check.mjs",
     "scripts/tooling/install-gitleaks.mjs"
   ],
   "ignoreDependencies": ["vue-tsc"]

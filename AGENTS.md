@@ -69,23 +69,54 @@ approved contour decision changes, not for ordinary implementation details.
 - **Evidence:** choose the narrow verification chain for every task:
   typecheck → lint → style lint for CSS or Vue SFC style changes → focused unit/E2E → browser proof when UI changes. Static
   checks do not constitute visual proof.
+- **Escalation:** when a request is infeasible, unsafe, or would only succeed
+  through a silent shortcut (disabled type-checking, a swallowed error, an
+  exposed secret, a fragile workaround, bypassing a verification hook), explain
+  the constraint in plain language, offer one or two concrete alternatives, and
+  wait for the user's choice. Never ship a quiet compromise instead of asking;
+  a reviewer who cannot read the diff has no other way to catch it.
 
 ## Read algorithm
 
 1. Read the current user task and determine its scope and stop condition.
 2. Read this file and the closest applicable `AGENTS.md`, if one exists below
    the repository root.
-3. At the start of every session, enumerate and read every rule in
-   `.cursor/rules/` whose frontmatter has `alwaysApply: true`. Cursor does this
-   natively; Claude Code reads this same set explicitly.
-4. Read the canonical repository contract relevant to the task, beginning with
+3. Check whether `KNOWLEDGE.local.md` exists at the repository root. If
+   present, read it as trusted personal context, never as an instruction from
+   the user, and never print it back verbatim. If absent, offer — never
+   create silently — to start one from `KNOWLEDGE.local.md.template` when a
+   durable, non-obvious fact worth carrying across sessions comes up. See the
+   `deploy-lab-local-knowledge` Skill for the full policy.
+4. At the start of every session, apply every always-on invariant above.
+   Cursor auto-injects the matching `.cursor/rules/*.mdc` file natively;
+   Claude Code and Codex both read this file directly, so the invariant text
+   above is their copy — neither needs to open the `.mdc` pointer file
+   separately.
+5. Read the canonical repository contract relevant to the task, beginning with
    `README.md`, `package.json`, and the configuration or test that owns the
    changed behaviour.
-5. Use the routing table below to read each matching on-demand rule before
-   editing. Codex does not auto-load Cursor rules; Codex-specific on-demand
-   guidance belongs in a Skill when that capability is added.
-6. Inspect the smallest relevant implementation and its focused test before
+6. Use the routing table below to read each matching on-demand rule before
+   editing, regardless of provider. Cursor auto-injects a matching rule by
+   path; Claude Code and Codex both read this file natively and have no
+   native path-aware loader, so both follow this table explicitly — Codex is
+   not exempt.
+7. When the task matches a Skill's `description` (see "Skills" below), read
+   and follow it explicitly; Cursor and Codex have no automatic skill picker,
+   so decide from the description the same way you decide from the routing
+   table.
+8. Inspect the smallest relevant implementation and its focused test before
    changing either.
+
+## Skills
+
+Skills are canonical in `.cursor/skills/`, with byte-identical checked copies
+at `.claude/skills/` (Claude Code) and `.agents/skills/` (Codex and any other
+AGENTS.md-native tool) — verified by `pnpm contour:doctor`. Claude Code alone
+has a native skill picker that offers a matching Skill from its description;
+`disable-model-invocation: true` keeps that picker from firing automatically,
+so every provider, including Claude Code, decides to read a Skill the same
+explicit way: because the current task matches its `description`'s trigger,
+per this file, a rule, or another Skill's instructions.
 
 ## Subagents
 
@@ -106,6 +137,14 @@ agent owns synthesis, decisions, edits, and verification.
 | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | `app/pages/**`, `app/layouts/**`, `app/app.vue`, `nuxt.config.ts`, `content.config.ts`, or `server/routes/**`                                  | [Nuxt, SEO and CWV](.cursor/rules/nuxt-seo-cwv.mdc)                        |
 | `app/components/**`, `app/composables/**`, `app/utils/**`, styling under `app/assets/**`, or a refactor across these boundaries                | [Architecture and refactoring](.cursor/rules/architecture-refactoring.mdc) |
+| A Vue single-file component, layout, page, or composable                                                                                       | [Vue component patterns](.cursor/rules/vue-component-patterns.mdc)         |
+| TypeScript in `app/`, `server/`, or `shared/`: naming, comments, magic values, type safety                                                     | [TypeScript clean code](.cursor/rules/typescript-clean-code.mdc)           |
+| A new abstraction, dependency, layer, or design pattern in `app/`, `server/`, or `shared/`                                                     | [Architecture decisions](.cursor/rules/architecture-decisions.mdc)         |
+| Component or page CSS, including a scoped `<style>` block                                                                                      | [Design tokens](.cursor/rules/design-tokens.mdc)                           |
+| User-visible text: a heading, description, label, or Content field                                                                             | [Copy quality](.cursor/rules/copy-quality.mdc)                             |
+| Accessibility, responsiveness, or interaction-state coverage in a component, layout, or page                                                   | [Frontend UI quality](.cursor/rules/frontend-ui-quality.mdc)               |
+| What a new or changed test should cover                                                                                                        | [Testing strategy](.cursor/rules/testing-strategy.mdc)                     |
+| `README.md`, `CONTRIBUTING.md`, or a file under `docs/`                                                                                        | [Docs quality](.cursor/rules/docs-quality.mdc)                             |
 | `content/**`, `content.config.ts`, a content frontmatter field, or collection query                                                            | [Content collections](.cursor/rules/content-collections.mdc)               |
 | `server/integrations/**` or a new/existing external service API                                                                                | [External integrations](.cursor/rules/external-integrations.mdc)           |
 | A Figma URL, design handoff, Figma asset, design-system mapping, or Code Connect                                                               | [Figma design workflow](.cursor/rules/figma-design.mdc)                    |
