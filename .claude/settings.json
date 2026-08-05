@@ -1,0 +1,32 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/contour/agent-command-guard.mjs\" --provider=claude",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/contour/agent-stop-guard.mjs\" --provider=claude",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/contour/contour-doctor.mjs\" --no-tools",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

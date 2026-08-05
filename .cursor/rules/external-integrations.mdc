@@ -1,0 +1,15 @@
+---
+description: Use when adding or changing a third-party API, SDK, webhook, or external data service. Do not use for same-origin Nuxt route calls with no external dependency.
+globs:
+  - "server/integrations/**/*"
+  - "server/api/**/*"
+alwaysApply: false
+---
+
+- Put each external service behind `server/integrations/<vendor>/`; do not call
+  that service directly from UI code with `$fetch`.
+- Define and validate explicit input and output schemas at the integration
+  boundary. Translate vendor failures into an intentional application result.
+- Read the vendor's current official documentation before relying on an API,
+  SDK option, or security behaviour; keep credentials in environment variables.
+- Add focused tests for success, invalid input, and the relevant failure path.

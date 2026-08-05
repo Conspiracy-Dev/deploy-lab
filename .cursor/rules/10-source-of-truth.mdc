@@ -1,0 +1,8 @@
+---
+description: Enforces the canonical source-of-truth order for every task; use for all repository work.
+alwaysApply: true
+---
+Apply the “Source of truth” invariant in `AGENTS.md`.
+This stays always-on because every task must resolve conflicts consistently.
+Resolve conflicts with the higher-ranked contract; a Skill, lint rule, or local
+convention cannot lower that precedence.

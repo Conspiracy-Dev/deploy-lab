@@ -1,0 +1,16 @@
+---
+description: Use when a task prepares repository documentation, a commit, a push, a pull request, ownership, licensing, or contribution policy. Do not use for implementation-only work that will not be delivered in this task.
+alwaysApply: false
+---
+
+- Read `CONTRIBUTING.md`, `SECURITY.md`, `OWNERS.md`, and the active task scope
+  before changing delivery or governance files. Obtain any missing GitHub
+  handle, legal entity, security email, repository URL, or release policy from
+  the owner rather than inferring it.
+- Use `deploy-lab-git-delivery` before preparing a commit or push. A Skill
+  guides the agent; Commitlint and Lefthook are the deterministic enforcement.
+- Use Conventional Commits: `type(optional-scope): imperative summary`. Commit
+  only the approved file scope; commit and push require explicit user approval.
+- Keep third-party legal text verbatim. Update `NOTICE` when adding distributable
+  third-party attributions; do not add a governance, changelog, or release
+  process without an actual project need.

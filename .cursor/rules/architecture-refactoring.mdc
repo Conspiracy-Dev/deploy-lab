@@ -1,0 +1,45 @@
+---
+description: Use for component, composable, utility, style, dependency-boundary, or non-trivial refactoring work. Do not use for a localized copy, metadata, or assertion change with no boundary impact.
+globs:
+  - "app/components/**/*"
+  - "app/composables/**/*"
+  - "app/utils/**/*"
+  - "app/assets/**/*"
+  - "server/**/*"
+  - "shared/**/*"
+  - "test/**/*"
+  - "eslint.config.mjs"
+  - ".dependency-cruiser.cjs"
+alwaysApply: false
+---
+
+- Keep UI components focused on rendering and local interaction. Keep reusable
+  transformation logic in utilities, browser lifecycle concerns in composables,
+  and HTTP delivery at Nitro route boundaries.
+- Treat roughly 200–300 lines as a signal to find an ownership seam, not as a
+  mechanical split threshold. Document debt and change only the active surface.
+- At a feature or package boundary, expose an intentional named public surface
+  through an entry point or barrel. Keep feature-private modules direct and do
+  not imply that every unmarked export is public.
+- Keep imports directional and acyclic: use `pnpm deps:check` for declared
+  boundaries and `pnpm deps:cycles` as an independent cycle check.
+- Make a file's role clear from its path and name (`entity`, `repository`,
+  `adapter`, `facade`, `service`, or feature-private `*.config`), not from a
+  reader reverse-engineering its implementation.
+- Keep a helper local until two independent callers need a framework-neutral,
+  stable input/output contract; then move it to an explicit shared module.
+- Put tuning and business constants in a feature-private `*.config` module or
+  an intentional repository-level configuration module rather than scattering
+  them inline through control flow.
+- Make the data path visible in signatures: input → transformation → output.
+  Keep side effects at rendering, route, or integration boundaries rather than
+  hidden inside transformations.
+- Verify cyclomatic complexity with ESLint (limit 8) and cognitive complexity
+  with SonarJS (limit 15); introduce the cognitive rule as a warning in an
+  existing codebase, then promote it only after reviewing the baseline. Reduce
+  a function by ownership and control-flow seams, not cosmetic extraction.
+- Reuse the smallest existing abstraction that fits. Introduce a global store,
+  manager, provider, dependency, or architectural layer only for a real shared
+  boundary with an explicit need.
+- Keep 3D scenes isolated under `app/components/scenes/` and preserve their
+  semantic, non-canvas fallback and lifecycle controls.

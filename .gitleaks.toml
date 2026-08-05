@@ -1,0 +1,7 @@
+title = "DeployLab Gitleaks configuration"
+
+[allowlist]
+description = "Generated and dependency artifacts are scanned by their own supply chain controls."
+paths = [
+  '''(^|/)(\.cache|\.data|\.nitro|\.nuxt|\.output|dist|node_modules|playwright-report|test-results)/''',
+]

@@ -1,0 +1,31 @@
+---
+description: Use for Nuxt rendering, routes, metadata, structured data, robots, sitemap, content, or Core Web Vitals work. Do not use for isolated formatting or pure test-only changes unrelated to these contracts.
+globs:
+  - "app/pages/**/*.vue"
+  - "app/layouts/**/*.vue"
+  - "app/app.vue"
+  - "server/routes/**/*"
+  - "nuxt.config.ts"
+  - "content.config.ts"
+  - "package.json"
+alwaysApply: false
+---
+
+- Make the rendering mode explicit. Prefer SSR or prerendering for indexable
+  content; use `ClientOnly` or islands only around browser-only enhancement.
+- Preserve semantic HTML, stable metadata, canonical URLs, `robots.txt`, and
+  `sitemap.xml`. Keep site-origin handling through public runtime config and
+  validate any generated SEO output with focused tests.
+- Use Nuxt composables such as `useSeoMeta` and `useHead` for page metadata.
+  Keep essential text, links, controls, and metadata in an SSR/prerendered
+  boundary.
+- Protect Core Web Vitals: use the smallest necessary client JavaScript,
+  reserve visual space, defer non-essential 3D, and honour reduced-motion
+  preferences. The
+  SVG fallback beside a scene is part of the rendered experience, not dead code.
+- Add `ClientOnly`, `ssr: false`, a dependency, or an external script only with
+  a stated reason, relevant verification, and a record in the active task.
+  Prefer the smallest Nuxt rendering boundary that preserves indexable content
+  and interaction.
+- Change a route's rendering strategy, crawlability, or public SEO contract
+  only with evidence and an explicit task requirement.

@@ -1,0 +1,34 @@
+pre-commit:
+  parallel: false
+  commands:
+    contour:
+      run: pnpm contour:doctor -- --no-tools
+    format:
+      run: pnpm format:check
+    lint:
+      run: pnpm lint
+    styles:
+      run: pnpm lint:styles
+    secrets:
+      run: pnpm secrets:check
+
+commit-msg:
+  commands:
+    conventional-commit:
+      run: pnpm exec commitlint --edit {1}
+
+pre-push:
+  parallel: false
+  commands:
+    typecheck:
+      run: pnpm typecheck
+    unit:
+      run: pnpm test:unit
+    dead-code:
+      run: pnpm dead-code
+    dependencies:
+      run: pnpm deps:check
+    cycles:
+      run: pnpm deps:cycles
+    secrets:
+      run: pnpm secrets:check

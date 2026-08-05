@@ -1,0 +1,7 @@
+---
+description: Enforces repository-wide TypeScript hygiene and explicit error handling; use for all code changes.
+alwaysApply: true
+---
+Apply the “Code integrity” invariant in `AGENTS.md`.
+This stays always-on because unsafe escapes and silent failures can arise in any code path.
+Use a specific file name and explicit failure handling instead of a generic container or silence.

@@ -1,0 +1,7 @@
+---
+description: Enforces scoped verification and evidence for every completed task; use for all repository work.
+alwaysApply: true
+---
+Apply the “Evidence” invariant in `AGENTS.md`.
+This stays always-on because every task needs a proportional, observable completion claim.
+Treat static success as insufficient visual evidence when the UI changed.

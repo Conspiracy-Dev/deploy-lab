@@ -1,0 +1,51 @@
+# This project is trusted by its existing global [projects] entry. Keep only
+# project-scoped MCP configuration here; no server needs credentials.
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+startup_timeout_sec = 20
+tool_timeout_sec = 45
+default_tools_approval_mode = "auto"
+
+[mcp_servers.playwright]
+command = "npx"
+args = [
+  "-y",
+  "@playwright/mcp@latest",
+  "--isolated",
+  "--allowed-origins",
+  "http://127.0.0.1:3000;http://localhost:3000",
+]
+startup_timeout_sec = 30
+tool_timeout_sec = 45
+default_tools_approval_mode = "approve"
+
+[mcp_servers.chrome-devtools]
+command = "npx"
+args = [
+  "-y",
+  "chrome-devtools-mcp@latest",
+  "--isolated",
+  "--no-usage-statistics",
+  "--no-performance-crux",
+]
+startup_timeout_sec = 30
+tool_timeout_sec = 45
+default_tools_approval_mode = "approve"
+
+[mcp_servers.sequential-thinking]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-sequential-thinking@0.6.2"]
+startup_timeout_sec = 20
+tool_timeout_sec = 30
+default_tools_approval_mode = "auto"
+
+# Official remote MCP. OAuth credentials are stored by the client, never here.
+# Read tools use the authorised Figma scope; non-read-only tools require approval.
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+auth = "oauth"
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+default_tools_approval_mode = "writes"

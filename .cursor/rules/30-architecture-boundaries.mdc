@@ -1,0 +1,7 @@
+---
+description: Enforces inward dependencies and the external-integration boundary; use for all architectural changes.
+alwaysApply: true
+---
+Apply the “Architecture boundaries” invariant in `AGENTS.md`.
+This stays always-on because an inverted dependency is costly to unwind once merged.
+Keep external APIs behind a server integration boundary and preserve inward imports.

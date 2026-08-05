@@ -1,0 +1,7 @@
+---
+description: Directs every Cursor task to the canonical DeployLab rules; use for all repository work.
+alwaysApply: true
+---
+The canonical source of repository rules is `AGENTS.md` in the repository root.
+Read it before acting, then follow its path routing.
+All other doctrine lives in neighbouring `.cursor/rules/*.mdc` files.

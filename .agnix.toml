@@ -1,0 +1,23 @@
+# The contour keeps the common Agent Skills frontmatter identical across
+# Claude Code, Cursor, and Codex checked-copy mirrors.
+tools = ["claude-code", "cursor", "codex"]
+
+[tool_versions]
+claude_code = "2.1.210"
+codex = "0.146.0"
+
+# These are intentional repository-relative provider paths, not machine paths.
+[[overrides]]
+paths = ["AGENTS.md", "CLAUDE.md"]
+disabled_rules = ["AGM-005", "XP-003"]
+
+# Checked-copy skills retain Claude's explicit invocation guard in every mirror.
+# Codex safely ignores it; removing it only from its mirror would break the
+# required byte-identical checked-copy contract.
+[[overrides]]
+paths = [".claude/skills/**/SKILL.md", ".cursor/skills/**/SKILL.md", ".agents/skills/**/SKILL.md"]
+disabled_rules = ["XP-SK-001"]
+
+[[overrides]]
+paths = [".agents/skills/**/SKILL.md"]
+disabled_rules = ["CX-SK-001"]

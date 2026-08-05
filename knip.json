@@ -1,0 +1,10 @@
+{
+  "entry": [
+    "content.config.ts",
+    "lighthouserc.cjs",
+    "scripts/contour/agent-command-guard.mjs",
+    "scripts/contour/agent-stop-guard.mjs",
+    "scripts/tooling/install-gitleaks.mjs"
+  ],
+  "ignoreDependencies": ["vue-tsc"]
+}

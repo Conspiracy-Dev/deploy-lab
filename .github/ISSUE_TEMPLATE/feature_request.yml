@@ -1,0 +1,24 @@
+name: Feature request
+description: Propose a scoped outcome with an observable success condition.
+title: 'feat: '
+labels: [feature]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Intended outcome
+      description: Describe the user or business result, not a preferred implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints and affected contracts
+      description: List SEO, CWV, accessibility, public API, or architecture constraints.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Acceptance evidence
+      description: State the narrowest test, browser proof, or measurement that will prove success.
+    validations:
+      required: true

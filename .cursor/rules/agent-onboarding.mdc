@@ -1,0 +1,19 @@
+---
+description: Use for clean-clone setup, onboarding, agent task intake, prompt templates, or onboarding scripts. Do not use for an ordinary scoped implementation task.
+globs:
+  - "docs/onboarding/**/*"
+  - "scripts/onboarding/**/*"
+  - "scripts/tooling/**/*"
+  - "package.json"
+alwaysApply: false
+---
+
+- Keep first-start commands shell-neutral: Node and package-manager scripts may
+  orchestrate work; PowerShell-, Bash-, Homebrew-, Scoop-, or OS-specific docs
+  cannot be the only path.
+- `pnpm setup` may create an ignored `.env` only from `.env.example`; it must
+  preserve an existing local file, never mutate global Git configuration, and
+  report a concrete failure when a prerequisite cannot be proved.
+- Use `deploy-lab-task-intake` before an unclear or high-impact change. The
+  intake check validates a saved plan's shape, never replaces code inspection,
+  contract reading, or explicit approval to implement.

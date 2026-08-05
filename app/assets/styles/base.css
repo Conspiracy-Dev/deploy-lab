@@ -1,0 +1,44 @@
+@layer reset, tokens, base, components, utilities;
+
+@layer reset {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    background: var(--color-canvas);
+    font-family: var(--font-body);
+  }
+
+  body {
+    min-width: 20rem;
+    margin: 0;
+    background: var(--color-canvas);
+    color: var(--color-text);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  a {
+    color: inherit;
+  }
+}
+
+@layer base {
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-canvas);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+}

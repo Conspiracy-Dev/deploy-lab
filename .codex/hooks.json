@@ -1,0 +1,32 @@
+{
+  "description": "DeployLab deterministic agent safety and diff-integrity gates.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/contour/agent-command-guard.mjs\" --provider=codex",
+            "commandWindows": "powershell.exe -NoProfile -Command \"$root = git rev-parse --show-toplevel; node (Join-Path $root 'scripts/contour/agent-command-guard.mjs') --provider=codex\"",
+            "timeout": 5,
+            "statusMessage": "Checking command safety"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/contour/agent-stop-guard.mjs\" --provider=codex",
+            "commandWindows": "powershell.exe -NoProfile -Command \"$root = git rev-parse --show-toplevel; node (Join-Path $root 'scripts/contour/agent-stop-guard.mjs') --provider=codex\"",
+            "timeout": 10,
+            "statusMessage": "Checking diff integrity"
+          }
+        ]
+      }
+    ]
+  }
+}

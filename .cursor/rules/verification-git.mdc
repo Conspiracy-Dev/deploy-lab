@@ -1,0 +1,26 @@
+---
+description: Use for tests, linting, builds, Lighthouse, CI-adjacent configuration, staging, commits, or final task verification. Do not use as a replacement for a product-specific Nuxt or architecture rule.
+globs:
+  - "test/**/*"
+  - "eslint.config.mjs"
+  - "lighthouserc.cjs"
+  - "playwright.config.ts"
+  - "package.json"
+  - "pnpm-lock.yaml"
+alwaysApply: false
+---
+
+- Start with the narrowest chain that covers the changed surface: typecheck,
+  `pnpm lint`, `pnpm lint:styles` for CSS or Vue SFC style changes, then a targeted unit or E2E test. Use `pnpm quality:static`,
+  `pnpm build`, `pnpm generate`, and `pnpm lighthouse` only when their broader
+  proof is relevant.
+- Read command output before reporting success. Pair static checks with browser
+  evidence for rendering changes; capture a screenshot or perform a browser
+  check. Interpret Lighthouse and E2E as focused signals rather than complete
+  proof of interaction or SEO correctness.
+- Before completion inspect `git diff --check` and `git status --short`. Keep
+  the diff scoped, preserve pre-existing user changes, and report them rather
+  than cleaning or staging them.
+- Commit, push, publish, deploy, or alter release state only with the user's
+  explicit request. Report changed files, checks, remaining risk, and next step
+  concisely.

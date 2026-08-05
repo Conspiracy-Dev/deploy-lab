@@ -1,0 +1,27 @@
+---
+description: Use when a task references a Figma URL, a design handoff, exported Figma assets, Figma design-system mappings, or Code Connect. Do not use for ordinary Nuxt implementation without Figma context.
+alwaysApply: false
+---
+
+- Use the official provider Figma skills rather than copied or forked vendor
+  skills. For design-to-code, load `figma-design-to-code` before requesting
+  design context; treat generated reference code as input to adapt to Nuxt and
+  this repository, never as code to paste verbatim.
+- Require a node-specific Figma URL for implementation work. Start read-only:
+  request design context, inspect existing components and tokens, then map the
+  result to this project's Nuxt, UnoCSS, native CSS, SSR, SEO, and CWV patterns.
+- The default project handoff is [DeployLab / node 144:1370](https://www.figma.com/design/5qHpOup4UcfQ39IeNs3GoM/DeployLab?node-id=144-1370&t=XMJSqptKe7uHjPsu-1).
+  It is a read-only source unless the user names an exact Figma write operation.
+- Prefer existing project components and tokens. Preserve semantic HTML and
+  rendering strategy; do not add `ClientOnly`, client-only design libraries,
+  external scripts, or layout shifts merely to match a canvas.
+- Download exported Figma assets promptly and commit exact source assets only
+  when their licence and repository need are clear; temporary MCP asset URLs
+  are not production asset URLs. Verify changed UI in a real local browser.
+- Figma reads are limited to the user-supplied design target. Any Figma write,
+  delete, publish, capture, or code-to-canvas synchronisation requires the
+  user's explicit approval for that file and operation, and must report the
+  affected node IDs.
+- Keep Code Connect and `@figma/code-connect` out of scope until this repository
+  has stable reusable components and agreed Figma component mappings; at that
+  point, use its official CLI and environment-only credentials.

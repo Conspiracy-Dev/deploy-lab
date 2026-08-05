@@ -1,0 +1,29 @@
+name: Bug report
+description: Report a reproducible defect in DeployLab.
+title: 'bug: '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: 'Do not include secrets, private URLs, personal data, or security vulnerabilities.'
+  - type: textarea
+    id: summary
+    attributes:
+      label: Expected and actual behaviour
+      description: State the user-visible result and the observed result.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: Give precise steps, route, and input needed to reproduce.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and evidence
+      description: Include browser or Node/pnpm version and safe relevant logs.
+    validations:
+      required: true

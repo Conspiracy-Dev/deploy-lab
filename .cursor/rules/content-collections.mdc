@@ -1,0 +1,17 @@
+---
+description: Use for Nuxt Content collections, content files, frontmatter fields, or collection queries. Do not use for non-content UI or server-route changes.
+globs:
+  - "content/**/*"
+  - "content.config.ts"
+  - "app/pages/**/*.vue"
+alwaysApply: false
+---
+
+- Define every new content field in the owning collection's `schema` in
+  `content.config.ts` before adding it to a content file. Nuxt Content uses a
+  collection schema for validation and TypeScript inference.
+- Keep a field's validation, type, query use, and content fixture aligned; add
+  a focused test when the contract has executable behaviour.
+- Preserve a collection's explicit source boundary. Make each document match
+  one collection, or define an explicit exclusion strategy before overlap.
+- Reference: https://content.nuxt.com/docs/collections/define
