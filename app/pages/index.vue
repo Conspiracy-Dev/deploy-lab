@@ -26,14 +26,16 @@ useSchemaOrg([
 </script>
 
 <template>
-  <main class="page-shell">
+  <UiContainer as="main">
     <section class="hero">
       <div class="hero__copy">
-        <p class="hero__brand">DeployLab</p>
-        <h1>Full-cycle web and mobile development.</h1>
-        <p class="hero__description">
+        <UiTypography variant="uptitle" class="hero__brand">DeployLab</UiTypography>
+        <UiTypography variant="h1" class="hero__title">
+          Full-cycle web and mobile development.
+        </UiTypography>
+        <UiTypography variant="body" muted class="hero__description">
           The technical foundation is ready for a distinctive, accessible, and fast product site.
-        </p>
+        </UiTypography>
       </div>
       <div class="hero__scene" data-testid="hero-scene">
         <svg class="hero__fallback" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
@@ -47,15 +49,10 @@ useSchemaOrg([
         </ClientOnly>
       </div>
     </section>
-  </main>
+  </UiContainer>
 </template>
 
 <style scoped>
-.page-shell {
-  width: min(100% - 2.5rem, var(--content-width));
-  margin-inline: auto;
-}
-
 .hero {
   display: grid;
   align-items: center;
@@ -72,26 +69,16 @@ useSchemaOrg([
 
 .hero__brand {
   margin: 0 0 var(--space-8);
-  color: var(--color-accent);
-  font-family: var(--font-display);
-  font-size: 0.75rem;
 }
 
-h1 {
+.hero__title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(2.5rem, 7vw, 6.5rem);
-  line-height: 0.95;
-  letter-spacing: -0.06em;
   text-wrap: balance;
 }
 
 .hero__description {
   max-width: 36rem;
   margin: var(--space-8) 0 0;
-  color: var(--color-text-muted);
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  line-height: 1.55;
 }
 
 .hero__scene {

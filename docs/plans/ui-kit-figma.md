@@ -1,6 +1,6 @@
 # Figma UI kit implementation plan
 
-Status: Epic 1 complete; Epic 2 not started
+Status: Epic 2 complete; Epic 3 not started
 
 Last updated: 2026-08-05
 
@@ -195,11 +195,90 @@ do not build any UI-kit primitive in this epic.
 
 ### Epic 2 — typography and layout primitives
 
-- [ ] Implement uptitle, H1, H2, H3, H4 and body styles for desktop and mobile.
-- [ ] Implement the elastic container: 20 px mobile gutter, 80 px desktop
-      gutter, fluid interpolation between the approved endpoints and a stable
-      maximum content width.
-- [ ] Verify wrapping, long content, semantic heading usage and font loading.
+Goal: expose the confirmed typography and elastic layout as small, reusable
+primitives without composing a new product page or adding a public test route.
+
+1. [x] Add `UiContainer` at `app/components/ui/UiContainer.vue` as the single
+       owner of `--layout-gutter` and `--content-width`.
+   - Render one semantic wrapper supplied by an `as` prop (default `div`), with
+     a default slot; it must not contain page spacing, navigation or content
+     decisions.
+   - Center the container and set its width to the lesser of the content
+     maximum and the viewport minus twice the elastic gutter. The existing 390
+     px and 1440 px endpoints therefore resolve to a 350 px and 1280 px
+     content width.
+   - Migrate the existing home `page-shell` consumer to `UiContainer` and
+     delete its page-local rule. This is a boundary migration only; do not
+     change hero copy, scene ownership, metadata or route behavior.
+
+2. [x] Add one token-backed `UiTypography` primitive at
+       `app/components/ui/UiTypography.vue`.
+   - Support the explicit variants `uptitle`, `h1`, `h2`, `h3`, `h4` and
+     `body`; map their default semantic elements to `p`, `h1`, `h2`, `h3`,
+     `h4` and `p` respectively. Allow `as` only for a consumer's valid document
+     outline use; the component supplies presentation, not heading hierarchy.
+   - Use the approved IBM Plex Mono bold/medium, IBM Plex Sans regular, font
+     sizes, 1.1 heading line-height and -4% heading tracking from Figma. At the
+     390 px endpoint select the mobile size tokens; at 1440 px select desktop
+     size tokens. Do not invent a tablet composition.
+   - Keep text colour consumer-controlled except for the green uptitle default;
+     support `muted` body copy only through the confirmed semantic muted token.
+     Do not introduce truncation, rich-text parsing, a text scale API or a
+     second typography framework.
+
+3. [x] Keep primitive public contracts deliberate and typed.
+   - Define local literal-union props in each SFC; do not add a shared types
+     package until a second independent consumer proves the need.
+   - Use scoped component CSS and existing custom properties. Do not re-add the
+     Uno `page-shell` shortcut, add Tailwind, a global store or a dependency.
+   - Record a short component API table in this plan during implementation;
+     amend the existing ADR only if the approved ownership seam changes.
+
+4. [x] Add focused Nuxt runtime tests under `test/nuxt/`.
+   - Assert `UiContainer` preserves slot content and an explicit semantic tag.
+   - Assert each `UiTypography` variant renders its default semantic element,
+     applies the stable variant class and permits only the tested `as` override.
+   - Add one long-content test per primitive: unbroken/long text must remain in
+     the normal document flow; wrapping and layout are browser assertions, not
+     string snapshots. Keep the existing Node tests and Playwright setup.
+
+5. [x] Close Epic 2 with full visual and accessibility evidence.
+   - Run the accepted static, Nuxt-runtime, dependency and browser verification
+     flow. Inspect the migrated home at 390 px, 768 px and 1440 px; capture
+     screenshot evidence and check console/network output.
+   - Verify heading semantics, keyboard focus remains visible on the current
+     page, reduced-motion scene fallback still works and IBM Plex Sans/Mono
+     resolve. Compare typography values against Figma nodes `143:158` and
+     `143:159` rather than page-local legacy values.
+   - Update task status, component API table and roadmap only after every check
+     is green; do not start control primitives from Epic 3.
+
+#### Epic 2 component API
+
+| Component      | Public props                                                                                                                             | Slots   | Responsibility                                      |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------------- |
+| `UiContainer`  | `as?: 'article' \| 'div' \| 'main' \| 'section'`                                                                                         | default | Elastic outer gutters and content maximum           |
+| `UiTypography` | `variant?: 'uptitle' \| 'h1' \| 'h2' \| 'h3' \| 'h4' \| 'body'`, `as?: 'h1' \| 'h2' \| 'h3' \| 'h4' \| 'p' \| 'span'`, `muted?: boolean` | default | Figma typography presentation and default semantics |
+
+### Epic 2 evidence
+
+- `UiContainer` is now the only reusable container owner. The smoke-page root
+  migrates from its local `page-shell` rule to `<UiContainer as="main">`
+  without changing its route, SEO metadata, copy or scene lifecycle.
+- `UiTypography` exposes all six approved variants, defaults to semantic
+  elements, and limits muted treatment to body copy. The existing page uses it
+  only as a consumer for uptitle, H1 and body text; it does not introduce a new
+  product composition.
+- Nuxt runtime tests cover semantic output, variant classes, the tested `as`
+  override and long slot/text content. No public test route or dependency was
+  added.
+- Browser evidence at 390 px, 768 px and 1440 px confirms container widths of
+  350 px, 684.8 px and 1280 px. At the design endpoints, H1 resolves to 40 px
+  / 64 px with -1.6 px / -2.56 px tracking, body to 16 px / 20 px, and the
+  required IBM Plex fonts are loaded. The local page has no interactive UI-kit
+  controls in this epic; the existing global `:focus-visible` rule remains the
+  contract for the later control primitives. Reduced-motion fallback remains
+  covered by the existing Playwright scenario.
 
 ### Epic 3 — control primitives
 
@@ -246,7 +325,7 @@ do not build any UI-kit primitive in this epic.
 | --------- | --------------------------------------------------- | ------------------------------ | -------- |
 | R0        | Exact Figma inventory and approved scope            | Professional MCP editor access | Complete |
 | R1        | Tokens, fonts, elastic container and test surface   | R0                             | Complete |
-| R2        | Typography and control primitives                   | R1                             | Pending  |
+| R2        | Typography and layout primitives                    | R1                             | Complete |
 | R3        | Responsive CaseCard                                 | R2                             | Pending  |
 | R4        | Visual, accessibility and architecture hardening    | R3                             | Pending  |
 | R5        | Reviewed documentation and uncommitted handoff diff | R4                             | Pending  |
