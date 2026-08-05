@@ -1,6 +1,6 @@
 # Figma UI kit implementation plan
 
-Status: Epic 0 in progress; canonical Figma source changed, Professional connector tool registration pending
+Status: Epic 0 complete; Epic 1 not started
 
 Last updated: 2026-08-05
 
@@ -14,10 +14,10 @@ deployment contracts.
 Canonical design source:
 
 - [DeployLab — Copy / root node 0:1](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=0-1&p=f&m=dev)
-
-The node IDs from the previous Figma file are historical only and must not be
-reused. Epic 0 discovers the exact UI kit and Cases nodes in this copy after
-the configured Figma MCP account has editor access.
+- [UI KIT / 141:98](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=141-98&p=f&m=dev)
+- [Cases / 154:247](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=154-247&p=f&m=dev)
+- [CaseCard desktop / 154:246](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=154-246&p=f&m=dev)
+- [CaseCard mobile / 144:955](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=144-955&p=f&m=dev)
 
 ## Non-goals
 
@@ -45,13 +45,14 @@ the configured Figma MCP account has editor access.
 - Use the existing `@nuxt/fonts`, `@nuxt/icon`, `@nuxt/image`, Playwright,
   Vitest, Stylelint and architecture checks before adding packages.
 - Use Node.js 24 and pnpm 11 as declared by the repository.
-- The owner has reconnected the Figma connector to the Professional account
-  with Dev Mode. The current Codex session returns `Unknown tool` for the
-  refreshed connector; refresh its tool registration, then verify it can read
-  the canonical copy before inferring design values or starting implementation.
+- The Figma connector is verified against a Professional Dev seat with
+  read-only access to the canonical copy. Its root inventory exposes `Page 1`
+  and `trash`; the exact target nodes are recorded above.
 - Use read-only Professional/Dev Mode capabilities: design context, variables,
-  metadata, high-resolution screenshots and any existing Code Connect map.
-  Do not publish Code Connect mappings or write to Figma.
+  metadata and high-resolution screenshots. Code Connect was checked but is
+  unavailable on the current Professional plan because Figma requires an
+  Organization or Enterprise plan; it is not an Epic 0 dependency. Do not
+  publish mappings or write to Figma.
 - Temporary Figma asset URLs are not production sources.
 
 ## Ownership seam
@@ -70,21 +71,36 @@ the configured Figma MCP account has editor access.
 
 ### Epic 0 — design contract and baseline
 
-- [ ] Verify the reconnected Professional Figma connector has Editor access to
-      `0dto2dTdI7m3yyEelxxgDz` through a read-only root inventory after its
-      tools are registered in the active Codex session. The previous connector
-      lacked that access.
-- [ ] Read design context for root node `0:1`; if it is too large, use
-      `get_metadata` to record node-specific links for the UI kit, Cases,
-      desktop CaseCard and mobile CaseCard. Do not carry node IDs over from the
-      previous file.
-- [ ] For each recorded target, read design context, variable definitions,
-      high-resolution screenshots and any existing Code Connect map. Read
-      remaining Case overrides as data variations, not separate components.
+- [x] Verify the Professional Figma connector has Editor access to
+      `0dto2dTdI7m3yyEelxxgDz` through a read-only root inventory.
+- [x] Attempt design context for root node `0:1`; Figma cannot select the root,
+      so use metadata to record node-specific links for the UI kit, Cases,
+      desktop CaseCard and mobile CaseCard.
+- [x] Read context, variable definitions and high-resolution screenshots for
+      the recorded targets. Check Code Connect availability (unavailable on
+      this plan). Record remaining Case overrides as data variations, not
+      separate components.
 - [x] Record the owner-approved scope decisions in the UI kit ADR.
-- [ ] Immediately before Epic 1, run the Node 24 baseline: `pnpm setup:doctor`,
+- [x] Before Epic 1, run the Node 24 baseline: `pnpm setup:doctor`,
       `pnpm format:check`, `pnpm quality:static`, `pnpm build` and
       `pnpm test:e2e` through `nvm exec 24.16.0 corepack`.
+
+### Epic 0 evidence
+
+- Confirmed UI-kit groups: desktop typography `143:158`, mobile typography
+  `143:159`, menu toggle `144:1451`, checkbox `144:1450`, input states
+  `144:1455`, button states `144:1456` and success notice `153:75`.
+- Confirmed type contract: IBM Plex Mono (headings and controls), IBM Plex Sans
+  (body/copy), and Manrope (CaseCard tags/link). The visible palette includes
+  deep blue `#010081`, white `#FFFFFF`, green `#0AC400` and black control
+  surfaces.
+- The CaseCard desktop master is 820×440; the mobile reference is 350×546.
+  The master and five instances are one data-driven component: QuantumReady,
+  Modernistes, QM Fund, John Lilic, Cafe Cosmos Game and Potok.Digital.
+- Node 24.16.0 baseline passed: setup doctor, formatting, static quality,
+  production build and six Playwright E2E scenarios. Existing non-blocking
+  build warnings are recorded for follow-up only: a large client chunk,
+  esbuild/OXC notice, generated OG secret and platform-specific Sharp binary.
 
 ### Epic 1 — tokens, fonts and test surface
 
@@ -148,14 +164,14 @@ the configured Figma MCP account has editor access.
 
 ### Roadmap
 
-| Milestone | Deliverable                                         | Dependency                     | Status                                          |
-| --------- | --------------------------------------------------- | ------------------------------ | ----------------------------------------------- |
-| R0        | Exact Figma inventory and approved scope            | Professional MCP editor access | In progress: connector tools must be registered |
-| R1        | Tokens, fonts, elastic container and test surface   | R0                             | Pending                                         |
-| R2        | Typography and control primitives                   | R1                             | Pending                                         |
-| R3        | Responsive CaseCard                                 | R2                             | Pending                                         |
-| R4        | Visual, accessibility and architecture hardening    | R3                             | Pending                                         |
-| R5        | Reviewed documentation and uncommitted handoff diff | R4                             | Pending                                         |
+| Milestone | Deliverable                                         | Dependency                     | Status   |
+| --------- | --------------------------------------------------- | ------------------------------ | -------- |
+| R0        | Exact Figma inventory and approved scope            | Professional MCP editor access | Complete |
+| R1        | Tokens, fonts, elastic container and test surface   | R0                             | Pending  |
+| R2        | Typography and control primitives                   | R1                             | Pending  |
+| R3        | Responsive CaseCard                                 | R2                             | Pending  |
+| R4        | Visual, accessibility and architecture hardening    | R3                             | Pending  |
+| R5        | Reviewed documentation and uncommitted handoff diff | R4                             | Pending  |
 
 ## Verification
 
@@ -181,9 +197,8 @@ Stop and request owner direction when:
 
 - a required visible state other than the approved `focus-visible` and
   `disabled` states is absent from Figma;
-- the Professional Figma connector tools are unavailable, it cannot be
-  verified with editor access, or a required variable/context/screenshot read
-  is blocked when exact values are required;
+- a required Figma variable/context/screenshot read is blocked when exact
+  values are required;
 - Case assets have unclear production rights or only temporary MCP URLs;
 - an implementation requires a new runtime dependency, public route, Figma
   write, backend behavior or product/widget scope;
