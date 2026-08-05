@@ -16,7 +16,7 @@ describe('CaseCard', () => {
     expect(link.attributes('href')).toBe('https://quantumready.info')
     expect(link.attributes('target')).toBe('_blank')
     expect(link.attributes('rel')).toBe('noopener noreferrer')
-    expect(wrapper.get('[data-testid="case-card-placeholder"]')).toBeDefined()
+    expect(wrapper.get('img[alt="Project preview"]')).toBeDefined()
   })
 
   it('keeps internal destinations in the current tab and renders a supplied image accessibly', async () => {
@@ -43,5 +43,6 @@ describe('CaseCard', () => {
     expect(wrapper.text()).toContain(longTitle)
     expect(caseCardFixtures).toHaveLength(6)
     expect(new Set(caseCardFixtures.map((caseCard) => caseCard.title)).size).toBe(6)
+    expect(caseCardFixtures.every((caseCard) => caseCard.image.src)).toBe(true)
   })
 })

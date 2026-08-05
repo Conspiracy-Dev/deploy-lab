@@ -1,6 +1,6 @@
 # Figma UI kit implementation plan
 
-Status: Epic 4 complete; Epic 5 not started
+Status: Epic 5 implementation and verification complete; owner review and explicit commit approval pending
 
 Last updated: 2026-08-05
 
@@ -53,7 +53,9 @@ Canonical design source:
   unavailable on the current Professional plan because Figma requires an
   Organization or Enterprise plan; it is not an Epic 0 dependency. Do not
   publish mappings or write to Figma.
-- Temporary Figma asset URLs are not production sources.
+- Temporary Figma asset URLs are not production sources. The six CaseCard
+  images are instead committed as local copies from the canonical Figma file;
+  the owner has confirmed their repository usage rights.
 
 ## Ownership seam
 
@@ -537,23 +539,143 @@ public product page in this epic.
 
 ### Epic 5 — hardening and handoff
 
-- [ ] Compare every implemented state against its exact Figma screenshot.
-- [ ] Verify desktop and mobile endpoints plus intermediate elastic widths.
-- [ ] Remove superseded or unconfirmed tokens and temporary fixture data.
-- [ ] Update this plan, the ADR and documentation index with final evidence.
-- [ ] Present the complete diff and verification report for owner review; do
-      not commit automatically.
+Goal: deliver a reviewable, evidence-backed UI-kit handoff without expanding
+product scope. The owner must review the complete diff before an explicit final
+commit; no next epic begins as part of this handoff.
+
+#### Execution plan
+
+1. [x] Resolve the production CaseCard asset gate.
+   - The owner authorised the six DeployLab Figma exports for repository use.
+     Local PNG files now replace decorative CSS placeholders; no short-lived
+     Figma URL or screenshot is a production source.
+   - The owner explicitly approved the shared placeholder alternative text
+     `Project preview`. It is intentionally recorded as an accessibility-content
+     follow-up: replace it with case-specific descriptions when supplied by the
+     content owner, without changing the component API.
+   - Per-case desktop crop metadata is taken from the master/instance image
+     layers. QuantumReady also has its Figma-provided mobile crop; the remaining
+     cards use their full local images in the mobile-flow composition because
+     Figma supplies no separate mobile instances for them.
+
+2. [x] Perform exact visual comparison for every implemented Figma state.
+   - Re-fetch high-resolution Figma screenshots/context for typography nodes
+     `143:158`/`143:159`, button states `143:105`/`144:1270`, input states
+     `144:1384`/`144:1427`/`144:1423`, checkbox `144:1450`, menu `144:1451`,
+     success `153:75`, CaseCard desktop `154:246` and mobile `144:955`.
+   - Compare the development fixture at 390 px, 768 px and 1440 px. Capture
+     Default/Hover/Focused/Filled/Checked/Closed/Open/Success states, record
+     measurable deviations and correct only values backed by Figma or the
+     existing approved accessibility contract.
+   - For CaseCard, compare complete card geometry and real-image crop only after
+     item 1. Until then, verify the placeholder boundary separately rather than
+     treating it as a Figma-equivalent image.
+
+3. [x] Complete accessibility and interaction hardening with the existing stack.
+   - Verify semantic heading hierarchy, labels, link names, decorative artwork,
+     one-tab-stop destination links, external-link safety, keyboard focus and
+     disabled behavior across the fixture at mobile and desktop endpoints.
+   - Keep invalid/error visuals, form submission, menu navigation and backend
+     work out of scope. No dependency is required for this audit; optionally
+     propose `@axe-core/playwright` only if the owner wants an automated scan
+     beyond existing Nuxt/Playwright/browser evidence.
+
+4. [x] Audit temporary development and product data deliberately.
+   - Keep `/__ui-kit` only while it remains the documented development-only
+     review surface and prove it stays absent from the production output.
+   - Retain the six case records in the feature-private config because they are
+     now the approved local asset and crop contract consumed by the component;
+     do not introduce a product collection/page merely to relocate them.
+   - Remove only tokens, CSS rules or assets that the build, tests and Figma
+     comparison prove superseded. Do not remove confirmed UI-kit tokens or the
+     exact Figma arrow asset as cosmetic cleanup.
+
+5. [x] Run final production, performance and security evidence.
+   - Run format, lint, Stylelint, typecheck, unit/runtime tests, dependency and
+     cycle checks, dead-code scan, full Playwright suite, `pnpm generate`,
+     `pnpm build`, `pnpm lighthouse`, secrets check, `git diff --check` and
+     `git status --short` under Node 24.
+   - Verify generated sitemap/robots behavior and the absence of `/__ui-kit`
+     from both production route output and discovery artifacts. Treat a flaky
+     check as a defect to reproduce or document; do not silently retry it away.
+
+6. [x] Finalise documentation and present the owner handoff.
+   - Update the roadmap, final Figma node evidence, asset source/rights table,
+     accessibility findings, browser screenshots, outstanding risks and ADR only
+     for new approved durable decisions. `docs/README.md` already links the
+     active plan; change it only if the documentation topology changes.
+   - Present the complete scoped diff and verification report for owner review.
+     Do not create a commit, push or start another epic unless separately
+     authorised after that review.
+
+#### Epic 5 implementation evidence
+
+- Asset provenance and rights: the owner approved repository use of the six
+  local images exported from the canonical DeployLab Figma file on 2026-08-05.
+  The source nodes are QuantumReady `154:246`, Modernistes `154:248`, QM Fund
+  `154:265`, John Lilic `154:282`, Cafe Cosmos Game `154:299` and
+  Potok.Digital `154:316`.
+
+| Local asset                                    | Case             | Figma crop evidence     |
+| ---------------------------------------------- | ---------------- | ----------------------- |
+| `app/assets/images/cases/quantumready.png`     | QuantumReady     | Desktop and mobile crop |
+| `app/assets/images/cases/modernistes.png`      | Modernistes      | Desktop crop            |
+| `app/assets/images/cases/qm-fund.png`          | QM Fund          | Desktop crop            |
+| `app/assets/images/cases/john-lilic.png`       | John Lilic       | Desktop crop            |
+| `app/assets/images/cases/cafe-cosmos-game.png` | Cafe Cosmos Game | Desktop crop            |
+| `app/assets/images/cases/potok-digital.png`    | Potok.Digital    | Desktop crop            |
+
+- Figma screenshots were re-read at high resolution for desktop/mobile
+  typography (`143:158`, `143:159`), button default/hover (`143:105`,
+  `144:1270`), input placeholder/filled/focused (`144:1384`, `144:1427`,
+  `144:1423`), checkbox (`144:1450`), menu (`144:1451`), success (`153:75`)
+  and Cases desktop/mobile (`154:246`, `144:955`). The Figma asset URLs are
+  inspection-only and are not stored in the repository.
+- Browser inspection of `/__ui-kit` confirms CaseCard at 390 px (335×524 card,
+  295 px visual image viewport) and 768 px (670×708 card) without horizontal
+  overflow. The existing desktop check confirms the 820×440 master geometry
+  and 482×360 image viewport at 1440 px. All six local images render with the
+  approved placeholder alternative text and remain outside the link tab stop.
+- Existing Nuxt and Playwright coverage now asserts that every fixture has a
+  local image source and that the development review fixture exposes six
+  `Project preview` images. The native semantic article, named destination,
+  external-link safety and single destination link per card remain covered.
+- No new package is needed for this audit. `@axe-core/playwright` remains an
+  optional future addition only if the owner requests an automated WCAG scan;
+  it is not required to validate this scoped UI-kit handoff.
+- Under Node 24.16.0, formatting, ESLint (seven pre-existing convention
+  warnings and no errors), Stylelint, typecheck, 24 Vitest assertions,
+  dependency-cruiser, Madge, Knip and all eight Playwright scenarios pass.
+  `pnpm generate` and `pnpm build` pass; generated `robots.txt` and
+  `sitemap.xml` contain no `/__ui-kit` route. `gitleaks` reports no secrets and
+  `git diff --check` passes.
+- Lighthouse is run against the static output immediately after `pnpm generate`:
+  performance 0.91, accessibility 1.00, best practices 1.00 and SEO 1.00.
+  An initial run after `pnpm build` correctly returned 404 because a node-server
+  build does not place a root document in `.output/public`; rerunning it after
+  the static generation is the configuration's intended, reproducible order.
+
+#### Epic 5 completion gate
+
+- Production CaseCard assets, owner-confirmed rights and crop metadata are
+  present. Placeholder alternative text is explicitly owner-approved but must
+  be upgraded when case-specific content is available.
+- Every listed Figma state has matching local screenshot evidence at both design
+  endpoints and the intermediate elastic width.
+- All final verification commands pass and documentation contains actual
+  evidence, not planned assertions.
+- Owner has reviewed the complete uncommitted diff before any final commit.
 
 ### Roadmap
 
-| Milestone | Deliverable                                       | Dependency                     | Status   |
-| --------- | ------------------------------------------------- | ------------------------------ | -------- |
-| R0        | Exact Figma inventory and approved scope          | Professional MCP editor access | Complete |
-| R1        | Tokens, fonts, elastic container and test surface | R0                             | Complete |
-| R2        | Typography and layout primitives                  | R1                             | Complete |
-| R3        | Native control primitives and success notice      | R2                             | Complete |
-| R4        | Responsive CaseCard                               | R3                             | Complete |
-| R5        | Visual, accessibility and reviewed handoff        | R4                             | Pending  |
+| Milestone | Deliverable                                       | Dependency                     | Status         |
+| --------- | ------------------------------------------------- | ------------------------------ | -------------- |
+| R0        | Exact Figma inventory and approved scope          | Professional MCP editor access | Complete       |
+| R1        | Tokens, fonts, elastic container and test surface | R0                             | Complete       |
+| R2        | Typography and layout primitives                  | R1                             | Complete       |
+| R3        | Native control primitives and success notice      | R2                             | Complete       |
+| R4        | Responsive CaseCard                               | R3                             | Complete       |
+| R5        | Visual, accessibility and reviewed handoff        | R4                             | Review pending |
 
 ## Verification
 

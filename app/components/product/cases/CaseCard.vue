@@ -29,13 +29,20 @@ defineProps<CaseCardData>()
       </a>
     </div>
 
-    <div class="case-card__image" :style="{ '--case-card-image-position': image.focalPosition }">
-      <img v-if="image.src" :alt="image.alt" :src="image.src" />
-      <div
-        v-else
-        class="case-card__placeholder"
-        aria-hidden="true"
-        data-testid="case-card-placeholder"
+    <div class="case-card__image">
+      <img
+        :alt="image.alt"
+        :src="image.src"
+        :style="{
+          '--case-card-desktop-image-height': image.desktopCrop?.height,
+          '--case-card-desktop-image-left': image.desktopCrop?.left,
+          '--case-card-desktop-image-top': image.desktopCrop?.top,
+          '--case-card-desktop-image-width': image.desktopCrop?.width,
+          '--case-card-mobile-image-height': image.mobileCrop?.height,
+          '--case-card-mobile-image-left': image.mobileCrop?.left,
+          '--case-card-mobile-image-top': image.mobileCrop?.top,
+          '--case-card-mobile-image-width': image.mobileCrop?.width,
+        }"
       />
     </div>
   </article>
@@ -110,21 +117,14 @@ defineProps<CaseCardData>()
   overflow: hidden;
 }
 
-.case-card__image > img,
-.case-card__placeholder {
+.case-card__image > img {
+  position: absolute;
+  inset-block-start: var(--case-card-mobile-image-top, 0);
+  inset-inline-start: var(--case-card-mobile-image-left, 0);
   display: block;
-  inline-size: 100%;
-  block-size: 100%;
-  object-fit: cover;
-  object-position: var(--case-card-image-position, center);
-}
-
-.case-card__placeholder {
-  background:
-    linear-gradient(135deg, transparent 48%, rgb(255 255 255 / 18%) 48% 52%, transparent 52%),
-    linear-gradient(45deg, transparent 48%, rgb(255 255 255 / 10%) 48% 52%, transparent 52%),
-    rgb(0 0 0 / 20%);
-  background-size: 2rem 2rem;
+  inline-size: var(--case-card-mobile-image-width, 100%);
+  block-size: var(--case-card-mobile-image-height, 100%);
+  max-inline-size: none;
 }
 
 @media (width < 64rem) {
@@ -169,6 +169,13 @@ defineProps<CaseCardData>()
     inline-size: 30.125rem;
     block-size: 22.5rem;
     aspect-ratio: auto;
+  }
+
+  .case-card__image > img {
+    inset-block-start: var(--case-card-desktop-image-top, 0);
+    inset-inline-start: var(--case-card-desktop-image-left, 0);
+    inline-size: var(--case-card-desktop-image-width, 100%);
+    block-size: var(--case-card-desktop-image-height, 100%);
   }
 }
 </style>

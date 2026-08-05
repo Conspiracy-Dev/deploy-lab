@@ -38,5 +38,5 @@ test('exposes UI-kit states only from the development fixture route', async ({ p
     'target',
     '_blank',
   )
-  await expect(page.getByTestId('case-card-placeholder')).toHaveCount(6)
+  await expect(page.getByAltText('Project preview')).toHaveCount(6)
 })

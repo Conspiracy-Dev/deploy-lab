@@ -1,3 +1,17 @@
+import cafeCosmosGameImage from '~/assets/images/cases/cafe-cosmos-game.png'
+import johnLilicImage from '~/assets/images/cases/john-lilic.png'
+import modernistesImage from '~/assets/images/cases/modernistes.png'
+import potokDigitalImage from '~/assets/images/cases/potok-digital.png'
+import qmFundImage from '~/assets/images/cases/qm-fund.png'
+import quantumReadyImage from '~/assets/images/cases/quantumready.png'
+
+type CaseCardImageCrop = {
+  height: string
+  left: string
+  top: string
+  width: string
+}
+
 export type CaseCardData = {
   description: string
   destination: {
@@ -7,8 +21,9 @@ export type CaseCardData = {
   }
   image: {
     alt: string
-    focalPosition?: string
-    src?: string
+    desktopCrop?: CaseCardImageCrop
+    mobileCrop?: CaseCardImageCrop
+    src: string
   }
   tags: string[]
   title: string
@@ -25,7 +40,12 @@ export const caseCardFixtures: CaseCardData[] = [
       href: 'https://quantumready.info',
       label: 'quantumready.info',
     },
-    image: { alt: '' },
+    image: {
+      alt: 'Project preview',
+      src: quantumReadyImage,
+      desktopCrop: { height: '108.09%', left: '-0.17%', top: '-8.09%', width: '100.2%' },
+      mobileCrop: { height: '108.75%', left: '-0.17%', top: '-8.42%', width: '100.82%' },
+    },
   },
   {
     title: 'Modernistes',
@@ -36,7 +56,11 @@ export const caseCardFixtures: CaseCardData[] = [
       href: 'https://modernistes.com',
       label: 'modernistes.com',
     },
-    image: { alt: '' },
+    image: {
+      alt: 'Project preview',
+      src: modernistesImage,
+      desktopCrop: { height: '100%', left: '-0.09%', top: '0', width: '161.06%' },
+    },
   },
   {
     title: 'QM Fund',
@@ -47,7 +71,11 @@ export const caseCardFixtures: CaseCardData[] = [
       href: 'https://qm.fund',
       label: 'qm.fund',
     },
-    image: { alt: '' },
+    image: {
+      alt: 'Project preview',
+      src: qmFundImage,
+      desktopCrop: { height: '100%', left: '0.08%', top: '0', width: '161.22%' },
+    },
   },
   {
     title: 'John Lilic — Personal Website',
@@ -58,7 +86,11 @@ export const caseCardFixtures: CaseCardData[] = [
       href: 'https://johnlilic.info',
       label: 'johnlilic.info',
     },
-    image: { alt: '' },
+    image: {
+      alt: 'Project preview',
+      src: johnLilicImage,
+      desktopCrop: { height: '100%', left: '-0.07%', top: '0', width: '162.37%' },
+    },
   },
   {
     title: 'Cafe Cosmos Game',
@@ -69,7 +101,11 @@ export const caseCardFixtures: CaseCardData[] = [
       href: 'https://game.cafecosmos.io',
       label: 'game.cafecosmos.io',
     },
-    image: { alt: '' },
+    image: {
+      alt: 'Project preview',
+      src: cafeCosmosGameImage,
+      desktopCrop: { height: '100%', left: '-17.05%', top: '0', width: '112.2%' },
+    },
   },
   {
     title: 'Potok.Digital',
@@ -80,6 +116,10 @@ export const caseCardFixtures: CaseCardData[] = [
       href: 'https://potok.digital',
       label: 'potok.digital',
     },
-    image: { alt: '' },
+    image: {
+      alt: 'Project preview',
+      src: potokDigitalImage,
+      desktopCrop: { height: '100%', left: '0.01%', top: '0', width: '132.55%' },
+    },
   },
 ]

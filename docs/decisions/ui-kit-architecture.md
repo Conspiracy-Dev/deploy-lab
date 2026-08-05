@@ -49,10 +49,12 @@ with elastic margins rather than a separate tablet design.
 10. The success notice adapts node `153:75`'s desktop composition to smaller
     widths by allowing its existing content block to shrink inside the shared
     elastic container. No separate mobile composition is inferred.
-11. Until approved production case assets and image descriptions arrive,
-    `CaseCard` renders a decorative CSS placeholder rather than a Figma export
-    or invented image. Its API already accepts a local image source, alternative
-    text and Figma-verified focal metadata for the future replacement.
+11. The owner approves repository use of the six local case images exported
+    from the canonical DeployLab Figma file. `CaseCard` renders those local
+    assets with Figma-verified per-case crop metadata, never a temporary Figma
+    URL or a screenshot. The owner also approves the temporary shared
+    alternative text `Project preview`; it must be replaced with case-specific
+    content descriptions when that content is supplied.
 12. Product data marks destinations as internal or external. Internal links
     stay in the current tab; external links use a new tab with
     `rel="noopener noreferrer"`. The six currently reviewed case destinations
@@ -75,8 +77,8 @@ with elastic margins rather than a separate tablet design.
   public product surface or SEO contract.
 - The desktop success layout remains visually consistent on mobile while
   avoiding an unsupported tablet or mobile variant API.
-- Temporary CaseCard previews preserve truthful accessibility and repository
-  asset rules, but visual parity for real project imagery remains a follow-up
-  when approved assets arrive.
+- Local CaseCard previews make real-image crop comparison possible now. The
+  remaining accessibility-content follow-up is to replace the approved
+  placeholder alternative text with case-specific descriptions.
 - Link safety is consistent without making the whole card a second competing
   interactive target.
