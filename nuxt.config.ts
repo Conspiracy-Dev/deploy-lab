@@ -36,15 +36,21 @@ export default defineNuxtConfig({
   fonts: {
     families: [
       {
-        name: 'Inter',
+        name: 'IBM Plex Sans',
         provider: 'google',
-        weights: [400, 500, 600, 700],
+        weights: [400],
         subsets: ['latin', 'cyrillic'],
       },
       {
         name: 'IBM Plex Mono',
         provider: 'google',
-        weights: [400, 500],
+        weights: [500, 700],
+        subsets: ['latin', 'cyrillic'],
+      },
+      {
+        name: 'Manrope',
+        provider: 'google',
+        weights: [600],
         subsets: ['latin', 'cyrillic'],
       },
     ],

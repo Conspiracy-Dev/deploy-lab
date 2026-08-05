@@ -23,7 +23,10 @@ with elastic margins rather than a separate tablet design.
 1. Product pages, widgets and full-screen compositions remain separate future
    tasks.
 2. Product-neutral primitives live under `app/components/ui/` and use the
-   repository's CSS tokens, scoped CSS and existing UnoCSS layout support.
+   repository's CSS tokens, scoped CSS and existing UnoCSS layout support. The
+   future `UiContainer` is the sole owner of reusable elastic gutters and the
+   content maximum; the page-local and Uno `page-shell` implementations are
+   transitional and are removed when that primitive is introduced.
 3. The Cases design is implemented once as a data-driven `CaseCard` under
    `app/components/product/cases/`. It is inside this task by owner-approved
    exception but is not classified as a UI primitive.
