@@ -1,0 +1,84 @@
+# ADR: UI kit scope and component ownership
+
+- **Status:** Accepted
+- **Date:** 2026-08-05
+- **Decision owner:** Igor Shavlovsky
+- **Design source:** [DeployLab — Copy / root node 0:1](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=0-1&p=f&m=dev)
+
+## Context
+
+The repository currently has tokens and a smoke-page scene but no reusable UI
+component layer. The canonical Figma copy contains a UI kit, full product screens and a
+separate Cases section. Implementing every screen in one task would mix
+product, widget and primitive responsibilities and make review unnecessarily
+large.
+
+The owner confirmed that this task implements only the UI kit. The Cases design
+is included as one explicit reusable product component. The project form is
+visual only, and responsive behavior is defined by desktop/mobile endpoints
+with elastic margins rather than a separate tablet design.
+
+## Decision
+
+1. Product pages, widgets and full-screen compositions remain separate future
+   tasks.
+2. Product-neutral primitives live under `app/components/ui/` and use the
+   repository's CSS tokens, scoped CSS and existing UnoCSS layout support. The
+   future `UiContainer` is the sole owner of reusable elastic gutters and the
+   content maximum; the page-local and Uno `page-shell` implementations are
+   transitional and are removed when that primitive is introduced.
+3. The Cases design is implemented once as a data-driven `CaseCard` under
+   `app/components/product/cases/`. It is inside this task by owner-approved
+   exception but is not classified as a UI primitive.
+4. Form-related components expose visual and accessible control states only.
+   Submission, business validation and backend delivery are out of scope.
+5. The owner approves `focus-visible` and `disabled` states for interactive
+   controls. They are derived from confirmed UI-kit tokens and tested even when
+   Figma does not draw them explicitly. Error/invalid visuals remain out of
+   scope until a separate design is supplied and approved.
+6. Responsive layout uses the 390 px mobile and 1440 px desktop Figma endpoints.
+   Outer gutters interpolate elastically between the Figma values instead of
+   introducing an invented tablet composition.
+7. Figma is read-only for this task. Code Connect, Figma mutations and asset
+   publishing require separate approval.
+8. No component-explorer, state-management or alternate CSS framework is added
+   unless implementation evidence establishes a need and the owner approves it.
+9. The visual UI-kit fixture is registered as `/__ui-kit` only while Nuxt runs
+   with `NODE_ENV=development`. It is not part of the production route output,
+   sitemap or prerender set; it exists solely for local component-state review.
+10. The success notice adapts node `153:75`'s desktop composition to smaller
+    widths by allowing its existing content block to shrink inside the shared
+    elastic container. No separate mobile composition is inferred.
+11. The owner approves repository use of the six local case images exported
+    from the canonical DeployLab Figma file. `CaseCard` renders those local
+    assets with Figma-verified per-case crop metadata, never a temporary Figma
+    URL or a screenshot. The owner also approves the temporary shared
+    alternative text `Project preview`; it must be replaced with case-specific
+    content descriptions when that content is supplied.
+12. Product data marks destinations as internal or external. Internal links
+    stay in the current tab; external links use a new tab with
+    `rel="noopener noreferrer"`. The six currently reviewed case destinations
+    are approved external HTTPS root URLs.
+
+## Consequences
+
+- UI primitives remain reusable without importing product content or page
+  composition.
+- Case presentation stays reusable and testable without weakening the meaning
+  of the UI-kit boundary.
+- Future page/widget tasks can compose these components without reopening this
+  scope decision.
+- Exact Figma values and assets must be obtained from the canonical copy before
+  implementing each affected component; visual gaps are not filled by guesswork.
+- `focus-visible` and `disabled` states are part of the accepted accessibility
+  contract; error/invalid styling is deliberately deferred rather than
+  invented.
+- The review fixture provides repeatable browser evidence without widening the
+  public product surface or SEO contract.
+- The desktop success layout remains visually consistent on mobile while
+  avoiding an unsupported tablet or mobile variant API.
+- Local CaseCard previews make real-image crop comparison possible now. The
+  remaining accessibility-content follow-up is to replace the approved
+  placeholder alternative text with case-specific descriptions.
+- Link safety is consistent without making the whole card a second competing
+  interactive target.

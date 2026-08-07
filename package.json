@@ -63,9 +63,11 @@
     "@lhci/cli": "^0.15.1",
     "@nuxt/eslint": "^1.16.0",
     "@nuxt/hints": "^1.1.4",
+    "@nuxt/test-utils": "^4.1.0",
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.1.2",
     "@types/three": "^0.185.3",
+    "@vue/test-utils": "^2.4.11",
     "dependency-cruiser": "^18.1.1",
     "eslint": "^10.8.0",
     "eslint-plugin-sonarjs": "^4.2.0",
@@ -83,6 +85,7 @@
     "typescript": "^5.9.3",
     "unocss": "66.7.5",
     "vitest": "^4.1.10",
+    "vitest-environment-nuxt": "^2.0.0",
     "vue-tsc": "^3.3.9"
   }
 }

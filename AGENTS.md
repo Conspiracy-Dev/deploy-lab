@@ -41,7 +41,7 @@ modify, delete, publish, or synchronise Figma content only after explicit
 approval for the exact target file and operation; never place Figma tokens,
 asset URLs, or design data in repository configuration.
 
-The canonical current design context is [DeployLab / node 144:1370](https://www.figma.com/design/5qHpOup4UcfQ39IeNs3GoM/DeployLab?node-id=144-1370&t=XMJSqptKe7uHjPsu-1).
+The canonical current design context is [DeployLab — Copy / root node 0:1](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=0-1&p=f&m=dev).
 Treat it as a read-only handoff target unless the user explicitly authorises a
 specific Figma mutation; implementation still follows the local contracts in
 this repository.

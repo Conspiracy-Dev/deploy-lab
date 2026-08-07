@@ -60,6 +60,6 @@ the router.
 
 ## Design source
 
-The current read-only handoff is [DeployLab / node 144:1370](https://www.figma.com/design/5qHpOup4UcfQ39IeNs3GoM/DeployLab?node-id=144-1370&t=XMJSqptKe7uHjPsu-1).
+The current read-only handoff is [DeployLab — Copy / root node 0:1](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=0-1&p=f&m=dev).
 Use it only with the Figma rule and an explicit implementation task; it does not
 grant approval to alter the Figma file or override local SEO/CWV contracts.
