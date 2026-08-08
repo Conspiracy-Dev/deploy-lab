@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('serves SEO discovery endpoints and security headers', async ({ page }) => {
+test('serves SEO discovery endpoints and security headers', async ({ page, request }) => {
   const homeResponse = await page.goto('/')
 
   expect(homeResponse).not.toBeNull()
@@ -23,11 +23,14 @@ test('serves SEO discovery endpoints and security headers', async ({ page }) => 
   expect(robotsResponse?.headers()['content-type']).toContain('text/plain')
   await expect(page.locator('body')).toContainText('User-agent')
 
-  const sitemapResponse = await page.goto('/sitemap.xml')
+  const sitemapResponse = await request.get('/sitemap.xml')
 
-  expect(sitemapResponse).not.toBeNull()
-  expect(sitemapResponse?.headers()['content-type']).toContain('xml')
+  expect(sitemapResponse.ok()).toBe(true)
+  expect(sitemapResponse.headers()['content-type']).toContain('xml')
   // The development server derives sitemap URLs from its local request origin.
   // The configured production fallback is asserted against the prerendered output.
-  expect(await sitemapResponse?.text()).toContain('<loc>http://127.0.0.1:3000/</loc>')
+  const sitemap = await sitemapResponse.text()
+
+  expect(sitemap).toContain('<loc>http://127.0.0.1:3000/</loc>')
+  expect(sitemap).toContain('<loc>http://127.0.0.1:3000/privacy-policy</loc>')
 })

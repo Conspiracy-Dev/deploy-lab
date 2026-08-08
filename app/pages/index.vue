@@ -50,7 +50,7 @@ useSchemaOrg([
       <HomeFeedback />
       <HomeContact />
     </main>
-    <HomeFooter />
+    <SiteFooter />
   </div>
 </template>
 

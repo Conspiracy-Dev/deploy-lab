@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
-import { homeAnchorIds, homeContent, type HomeNavigationItem } from './home.config'
+import { siteContent, type SiteNavigationItem } from './site.config'
 
-const props = defineProps<{
-  items: readonly HomeNavigationItem[]
-  modelValue: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    brandHref?: string
+    items: readonly SiteNavigationItem[]
+    modelValue: boolean
+  }>(),
+  {
+    brandHref: '/',
+  },
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
@@ -47,24 +53,24 @@ watch(
   <dialog
     ref="dialog"
     aria-label="Primary navigation"
-    class="home-mobile-navigation"
+    class="site-mobile-navigation"
     @close="restoreFocus"
     @cancel="closeMenu"
   >
-    <div class="home-mobile-navigation__header">
+    <div class="site-mobile-navigation__header">
       <a
-        class="home-mobile-navigation__brand"
-        :href="`#${homeAnchorIds.home}`"
+        class="site-mobile-navigation__brand"
+        :href="brandHref"
         aria-label="Deploy Lab home"
         @click="closeMenu"
       >
-        {{ homeContent.brand }}
+        {{ siteContent.brand }}
       </a>
       <UiMenuToggle :model-value="true" label="Close navigation" @update:model-value="closeMenu" />
     </div>
 
     <nav aria-label="Primary">
-      <ul class="home-mobile-navigation__list">
+      <ul class="site-mobile-navigation__list">
         <li v-for="item in items" :key="item.href">
           <a :href="item.href" @click="closeMenu">{{ item.label }}</a>
         </li>
@@ -74,7 +80,7 @@ watch(
 </template>
 
 <style scoped>
-.home-mobile-navigation {
+.site-mobile-navigation {
   position: fixed;
   inset: 0;
   inline-size: 100%;
@@ -87,21 +93,21 @@ watch(
   color: var(--color-text);
 }
 
-.home-mobile-navigation::backdrop {
+.site-mobile-navigation::backdrop {
   background: transparent;
 }
 
-.home-mobile-navigation__header {
+.site-mobile-navigation__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-block-size: var(--header-height);
+  min-block-size: var(--site-mobile-header-height, var(--header-height));
   padding-inline: var(--layout-gutter);
   background: var(--color-header-surface);
   backdrop-filter: blur(0.75rem);
 }
 
-.home-mobile-navigation__brand {
+.site-mobile-navigation__brand {
   color: var(--color-accent);
   font-family: var(--font-display);
   font-size: var(--font-size-uptitle);
@@ -110,7 +116,7 @@ watch(
   text-decoration: none;
 }
 
-.home-mobile-navigation__list {
+.site-mobile-navigation__list {
   display: grid;
   gap: var(--space-6);
   margin: var(--space-12) 0 0;
@@ -118,7 +124,7 @@ watch(
   list-style: none;
 }
 
-.home-mobile-navigation__list a {
+.site-mobile-navigation__list a {
   font-family: var(--font-display);
   font-size: var(--font-size-h3-mobile);
   font-weight: var(--font-weight-heading);
@@ -127,7 +133,7 @@ watch(
 }
 
 @media (width >= 64rem) {
-  .home-mobile-navigation {
+  .site-mobile-navigation {
     display: none;
   }
 }

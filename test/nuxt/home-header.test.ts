@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import HomeDesktopNavigation from '~/components/home/HomeDesktopNavigation.vue'
 import HomeHeader from '~/components/home/HomeHeader.vue'
-import HomeMobileNavigation from '~/components/home/HomeMobileNavigation.vue'
+import SiteMobileNavigation from '~/components/site/SiteMobileNavigation.vue'
 import { homeNavigationItems } from '~/components/home/home.config'
 
 describe('HomeHeader', () => {
@@ -13,7 +13,7 @@ describe('HomeHeader', () => {
 
     expect(wrapper.get('header').element.tagName).toBe('HEADER')
     expect(wrapper.findComponent(HomeDesktopNavigation).exists()).toBe(true)
-    expect(wrapper.findComponent(HomeMobileNavigation).exists()).toBe(true)
+    expect(wrapper.findComponent(SiteMobileNavigation).exists()).toBe(true)
     expect(wrapper.get('a[href="#projects"]').text()).toBe('Selected Projects')
     expect(wrapper.get('a[href="#contact"]').text()).toBe('Start a Project')
   })
@@ -22,7 +22,7 @@ describe('HomeHeader', () => {
     const desktop = await mountSuspended(HomeDesktopNavigation, {
       props: { items: homeNavigationItems },
     })
-    const mobile = await mountSuspended(HomeMobileNavigation, {
+    const mobile = await mountSuspended(SiteMobileNavigation, {
       props: { items: homeNavigationItems, modelValue: false },
     })
 
@@ -31,7 +31,7 @@ describe('HomeHeader', () => {
   })
 
   it('exposes an interactive close control inside the mobile dialog', async () => {
-    const mobile = await mountSuspended(HomeMobileNavigation, {
+    const mobile = await mountSuspended(SiteMobileNavigation, {
       props: { items: homeNavigationItems, modelValue: false },
     })
 

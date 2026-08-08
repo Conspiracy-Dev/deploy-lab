@@ -3,7 +3,7 @@ module.exports = {
     collect: {
       staticDistDir: '.output/public',
       numberOfRuns: 1,
-      url: ['http://localhost/'],
+      url: ['http://localhost/', 'http://localhost/privacy-policy'],
       settings: {
         // Lantern (simulated throttling, the default) mis-models this page's
         // LCP element and reports it 4-5x slower than reality — verified by

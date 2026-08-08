@@ -1,32 +1,33 @@
 <script setup lang="ts">
-import { homeContent } from './home.config'
+import { siteContent } from './site.config'
 </script>
 
 <template>
-  <footer class="home-footer">
-    <UiContainer class="home-footer__inner">
-      <p class="home-footer__brand">{{ homeContent.brand }}</p>
-      <div class="home-footer__meta">
-        <a :href="homeContent.privacyHref">Privacy Policy</a>
-        <p>{{ homeContent.footerYear }}</p>
+  <footer class="site-footer">
+    <UiContainer class="site-footer__inner">
+      <p class="site-footer__brand">{{ siteContent.brand }}</p>
+      <div class="site-footer__meta">
+        <a :href="siteContent.privacyHref">Privacy Policy</a>
+        <p>{{ siteContent.footerYear }}</p>
       </div>
     </UiContainer>
   </footer>
 </template>
 
 <style scoped>
-.home-footer {
+.site-footer {
   border-top: 1px solid var(--color-subtle-border);
   background: var(--color-footer-surface);
 }
 
-.home-footer__inner {
+.site-footer__inner {
   display: grid;
   gap: 0.625rem;
+  min-block-size: 8.25rem;
   padding-block: 2.5rem;
 }
 
-.home-footer__brand {
+.site-footer__brand {
   margin: 0;
   color: var(--color-accent);
   font-family: var(--font-display);
@@ -35,7 +36,7 @@ import { homeContent } from './home.config'
   line-height: var(--line-height-body);
 }
 
-.home-footer__meta {
+.site-footer__meta {
   display: flex;
   justify-content: space-between;
   color: var(--color-text-muted);
@@ -43,19 +44,19 @@ import { homeContent } from './home.config'
   line-height: var(--line-height-body);
 }
 
-.home-footer__meta p {
+.site-footer__meta p {
   margin: 0;
 }
 
 @media (width >= 64rem) {
-  .home-footer__inner {
+  .site-footer__inner {
     grid-template-columns: 1fr auto auto;
     align-items: center;
     min-block-size: 6.6875rem;
     padding-block: 0;
   }
 
-  .home-footer__meta {
+  .site-footer__meta {
     display: contents;
     font-size: var(--font-size-body-mobile);
   }
