@@ -14,6 +14,7 @@ export type CaseCardData = {
   }
   image: {
     alt: string
+    desktopDeliveryWidth?: number
     desktopCrop?: CaseCardImageCrop
     height: number
     mobileCrop?: CaseCardImageCrop
@@ -37,6 +38,7 @@ export const caseCardFixtures: CaseCardData[] = [
     },
     image: {
       alt: 'QuantumReady project preview',
+      desktopDeliveryWidth: 483,
       height: 828,
       src: '/images/cases/quantumready.png',
       width: 1028,
@@ -55,6 +57,7 @@ export const caseCardFixtures: CaseCardData[] = [
     },
     image: {
       alt: 'Modernistes project preview',
+      desktopDeliveryWidth: 777,
       height: 882,
       src: '/images/cases/modernistes.png',
       width: 1902,
@@ -72,6 +75,7 @@ export const caseCardFixtures: CaseCardData[] = [
     },
     image: {
       alt: 'QM Fund project preview',
+      desktopDeliveryWidth: 778,
       height: 877,
       src: '/images/cases/qm-fund.png',
       width: 1893,
@@ -89,6 +93,7 @@ export const caseCardFixtures: CaseCardData[] = [
     },
     image: {
       alt: 'John Lilic personal website project preview',
+      desktopDeliveryWidth: 783,
       height: 874,
       src: '/images/cases/john-lilic.png',
       width: 1900,
@@ -106,6 +111,7 @@ export const caseCardFixtures: CaseCardData[] = [
     },
     image: {
       alt: 'Cafe Cosmos game project preview',
+      desktopDeliveryWidth: 542,
       height: 876,
       src: '/images/cases/cafe-cosmos-game.png',
       width: 1316,
@@ -123,6 +129,7 @@ export const caseCardFixtures: CaseCardData[] = [
     },
     image: {
       alt: 'Potok.Digital platform project preview',
+      desktopDeliveryWidth: 640,
       height: 870,
       src: '/images/cases/potok-digital.png',
       width: 1544,

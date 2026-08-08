@@ -30,6 +30,25 @@ test('renders the implemented Philosophy and Services landmarks with local Figma
   await expect(services.locator('img[alt=""]')).toHaveCount(7)
   await expect(page.locator('a[href="#philosophy"]').first()).toHaveText('Philosophy')
   await expect(page.locator('a[href="#services"]').first()).toHaveText('Services')
+
+  await services.scrollIntoViewIfNeeded()
+  await expect
+    .poll(() =>
+      services.evaluate((section) => {
+        const [eyebrow, title, description] =
+          section.querySelector('.home-services__intro')!.children
+        const eyebrowBox = eyebrow!.getBoundingClientRect()
+        const titleBox = title!.getBoundingClientRect()
+        const descriptionBox = description!.getBoundingClientRect()
+        const expectedGap = window.innerWidth >= 1024 ? 20 : 10
+
+        return (
+          Math.round(titleBox.top - eyebrowBox.bottom) === expectedGap &&
+          Math.round(descriptionBox.top - titleBox.bottom) === expectedGap
+        )
+      }),
+    )
+    .toBe(true)
 })
 
 test('keeps the static local visual for reduced motion', async ({ page }) => {
@@ -49,6 +68,7 @@ test('renders Projects and Process landmarks with manual project collection sema
   const process = page.locator('#process')
 
   await expect(projects.getByRole('heading', { level: 2 })).toContainText('Selected Projects')
+  await expect(projects.getByText('[Portfolio]')).toBeVisible()
   await expect(projects.locator('.home-projects__list > li')).toHaveCount(6)
   await expect(projects.locator('.home-projects__list')).toHaveAttribute('tabindex', '0')
   await expect(projects.locator('a[href="https://quantumready.info"]')).toHaveAttribute(
@@ -59,6 +79,24 @@ test('renders Projects and Process landmarks with manual project collection sema
   await expect(process.locator('ol > li')).toHaveCount(7)
   await expect(page.locator('a[href="#projects"]').first()).toHaveText('Selected Projects')
   await expect(page.locator('a[href="#process"]').first()).toHaveText('Process')
+
+  await projects.scrollIntoViewIfNeeded()
+  await expect
+    .poll(() =>
+      projects
+        .locator('.case-card__image img')
+        .first()
+        .evaluate((image) => {
+          const box = image.getBoundingClientRect()
+          const sourceWidth = Number(image.currentSrc.match(/s_(\d+)x/)?.[1])
+
+          return (
+            image.currentSrc.includes('q_80') &&
+            sourceWidth >= Math.ceil(box.width * window.devicePixelRatio)
+          )
+        }),
+    )
+    .toBe(true)
 })
 
 test('renders Feedback and a visual-only Contact boundary', async ({ page }) => {
@@ -70,6 +108,7 @@ test('renders Feedback and a visual-only Contact boundary', async ({ page }) => 
   await expect(feedback.getByRole('heading', { level: 2 })).toContainText('Client')
   await expect(feedback.locator('.home-feedback__list > li')).toHaveCount(3)
   await expect(feedback.locator('.home-feedback__list')).toHaveAttribute('tabindex', '0')
+  await expect(feedback).toHaveCSS('overflow', 'hidden')
   await expect(page.locator('a[href="#feedback"]').first()).toHaveText('Feedback')
 
   await expect(contact.getByRole('heading', { level: 2 })).toHaveText('Start a Project')

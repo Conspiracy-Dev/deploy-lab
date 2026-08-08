@@ -20,6 +20,9 @@ describe('CaseCard', () => {
     expect(wrapper.get('img[alt="QuantumReady project preview"]').attributes('loading')).toBe(
       'lazy',
     )
+    expect(wrapper.get('img[alt="QuantumReady project preview"]').attributes('srcset')).toContain(
+      'q_80',
+    )
   })
 
   it('keeps internal destinations in the current tab and renders a supplied image accessibly', async () => {
@@ -52,5 +55,6 @@ describe('CaseCard', () => {
     expect(caseCardFixtures).toHaveLength(6)
     expect(new Set(caseCardFixtures.map((caseCard) => caseCard.title)).size).toBe(6)
     expect(caseCardFixtures.every((caseCard) => caseCard.image.src)).toBe(true)
+    expect(caseCardFixtures.every((caseCard) => caseCard.image.desktopDeliveryWidth)).toBe(true)
   })
 })

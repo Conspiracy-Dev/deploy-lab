@@ -147,3 +147,16 @@ accessibility 0.96, best practices 1.00 and SEO 1.00 (LCP 3596 ms, CLS 0,
 921 kB transfer); the owner-accepted consent contrast debt remains unchanged.
 No smoke/3D cleanup remained. `deploylab.example` is still the intentional
 temporary URL until `NUXT_PUBLIC_SITE_URL` is supplied; no domain was inferred.
+
+The approved technical-debt follow-up completed on 2026-08-08. Header remains
+the home-local semantic shell and mobile-menu state owner, while desktop links
+are now isolated in `HomeDesktopNavigation`; `HomeMobileNavigation` remains the
+separate mobile composition and both consume the same typed navigation data.
+This records a homepage-local boundary, not a promotion to a global layout or
+UI Kit. Services uses Figma-measured desktop content spacing, and the Projects
+eyebrow is `[Portfolio]`. CaseCard keeps its approved crops and lazy loading,
+but now emits valid responsive Nuxt Image sizes with q80 and x1/x2 delivery;
+the old 310 px fallback had been stretched by the desktop crop. The Feedback
+investigation found that its exact Figma SVG contains an off-canvas grey design
+board; section clipping already prevents it from rendering, so no visual mask
+or asset change was warranted.

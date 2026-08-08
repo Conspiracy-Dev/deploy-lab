@@ -12,13 +12,7 @@ const isMenuOpen = ref(false)
         {{ homeContent.brand }}
       </a>
 
-      <nav class="home-header__desktop-nav" aria-label="Primary">
-        <ul>
-          <li v-for="item in homeNavigationItems" :key="item.href">
-            <a :href="item.href">{{ item.label }}</a>
-          </li>
-        </ul>
-      </nav>
+      <HomeDesktopNavigation :items="homeNavigationItems" />
 
       <a class="home-header__action" :href="`#${homeAnchorIds.contact}`">
         {{ homeContent.hero.actionLabel }}
@@ -60,7 +54,6 @@ const isMenuOpen = ref(false)
   text-decoration: none;
 }
 
-.home-header__desktop-nav,
 .home-header__action {
   display: none;
 }
@@ -73,25 +66,6 @@ const isMenuOpen = ref(false)
   .home-header__inner {
     grid-template-columns: auto 1fr auto;
     min-block-size: 5rem;
-  }
-
-  .home-header__desktop-nav {
-    display: block;
-    justify-self: center;
-  }
-
-  .home-header__desktop-nav ul {
-    display: flex;
-    gap: 2.5rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .home-header__desktop-nav a {
-    font-size: 0.875rem;
-    line-height: var(--line-height-body);
-    text-decoration: none;
   }
 
   .home-header__action {

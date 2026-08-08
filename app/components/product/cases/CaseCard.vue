@@ -33,12 +33,12 @@ defineProps<CaseCardData>()
       <NuxtImg
         :alt="image.alt"
         decoding="async"
-        densities="1"
+        densities="x1 x2"
         format="webp"
         :height="image.height"
         loading="lazy"
-        quality="70"
-        sizes="(min-width: 1024px) 482px, 310px"
+        quality="80"
+        :sizes="`310px lg:${image.desktopDeliveryWidth ?? 482}px`"
         :src="image.src"
         :style="{
           '--case-card-desktop-image-height': image.desktopCrop?.height,

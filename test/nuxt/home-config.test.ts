@@ -31,6 +31,7 @@ describe('home config contract', () => {
   it('keeps immutable Epic 2 content counts and approved section copy', () => {
     expect(homeContent.philosophy.title).toBe('We deliver complete products')
     expect(homeContent.services.title).toBe('What We Do')
+    expect(homeContent.projects.eyebrow).toBe('[Portfolio]')
     expect(homePhilosophyItems).toHaveLength(3)
     expect(homeServiceItems).toHaveLength(6)
     expect(Object.isFrozen(homePhilosophyItems)).toBe(true)

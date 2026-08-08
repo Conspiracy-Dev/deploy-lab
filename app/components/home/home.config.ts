@@ -61,7 +61,7 @@ export const homeContent = Object.freeze({
   projects: {
     description:
       'We build digital products with a focus on fintech and web3. Our team delivers the full development cycle from design and architecture to production release and ongoing support.',
-    eyebrow: '[Manifesto, Philosophy]',
+    eyebrow: '[Portfolio]',
     title: 'Selected Projects',
   },
   mobileMenuLabel: 'Open navigation',

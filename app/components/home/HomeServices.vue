@@ -72,6 +72,7 @@ import { homeAnchorIds, homeContent, homeServiceItems } from './home.config'
 
 .home-services__intro {
   display: grid;
+  align-content: start;
   gap: 0.625rem;
   max-inline-size: 25rem;
 }

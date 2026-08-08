@@ -1,8 +1,140 @@
 # Figma homepage implementation plan
 
-Status: Epic 5 complete; locally committed, awaiting owner direction (no push)
+Status: Technical-debt follow-up complete; local commit created, awaiting owner direction (no push)
 
 Last updated: 2026-08-08
+
+## Recorded technical debt
+
+These items were recorded after Epic 5 and completed in the explicitly
+approved technical-debt follow-up on 2026-08-08.
+
+- [x] Extract navigation into a distinct navbar boundary with separate desktop
+      and mobile component versions.
+- [x] Align desktop Services heading-to-body spacing with the exact Figma
+      layout.
+- [x] Rename the Selected Projects card tag from `[Manifesto, Philosophy]` to
+      `[Portfolio]`.
+- [x] Replace/upscale Selected Projects card image delivery so the browser does
+      not show visibly low-quality or pixelated imagery; preserve approved crops.
+- [x] Investigate the grey-spacing artifact in Client Feedback: the exact
+      decorative Figma export has an off-canvas grey board, but it is clipped
+      by the section and was not observable in the rendered route; no
+      visual-divergent workaround was added.
+
+### Technical-debt follow-up plan
+
+Execution status: complete on 2026-08-08. This follow-up used the existing
+Nuxt/Vue, native CSS, Nuxt Image, UI Kit, Vitest and Playwright stack; no
+dependency was added.
+
+#### TD.1 — establish the exact baseline and causes — complete
+
+1. Re-read the canonical Figma desktop/mobile homepage and the focused nodes:
+   desktop header `144:1272`, Services `31:6064`, Projects `32:6287`, the
+   existing Cases component `154:246`, and the Feedback section/artwork. Take
+   fresh Figma and local screenshots at 1440 and 390 px; use 768 px only for
+   fluid-layout proof.
+2. Record measurable deltas before editing: desktop Services intro and every
+   service card's heading/body positions; Projects eyebrow copy; header DOM and
+   responsive ownership; Feedback artifact location/colour/stacking context.
+   Do not classify a Figma decoration, intended clipped overflow or browser
+   screenshot scaling as a defect without this comparison.
+3. Diagnose project-image degradation from the real rendered `srcset`, selected
+   IPX derivative dimensions/format/quality, CSS crop scale, device pixel ratio
+   and the source PNG dimensions. Compare them with the approved Figma source
+   images. If the source itself lacks enough pixels for the required crop, stop
+   for an owner-approved higher-resolution source instead of algorithmically
+   upscaling or inventing imagery.
+
+#### TD.2 — split navigation ownership without changing its contract — complete
+
+1. Keep `HomeHeader.vue` as the semantic shell and menu state owner, but move
+   desktop navigation into a dedicated `HomeDesktopNavigation.vue` and retain
+   the mobile version as a dedicated `HomeMobileNavigation.vue`. Both receive
+   the same typed immutable navigation items; neither creates a second source
+   of links or changes IDs/URLs.
+2. Preserve desktop `<nav aria-label="Primary">`, the mobile native-dialog
+   lifecycle, Escape/selected-link close, focus restoration, scroll lock and
+   server-rendered links. Do not promote this homepage-specific composition to
+   the global UI Kit without a second route use case.
+3. Add focused component coverage for both versions and rerun the existing
+   desktop/mobile keyboard flow. Acceptance: exactly one visible primary nav at
+   each breakpoint and no navigation/anchor regression.
+
+#### TD.3 — restore measured visual fidelity and content — complete
+
+1. Change only `homeContent.projects.eyebrow` from
+   `[Manifesto, Philosophy]` to `[Portfolio]`; update the config-contract and
+   relevant E2E expectations. Philosophy retains its own original eyebrow.
+2. Adjust desktop-only Services spacing only from TD.1 measurements, targeting
+   Figma node `31:6069` for the intro and `32:6144` / `31:6114` for a service
+   card: preserve mobile layout, typography tokens, list semantics and the
+   decorative visual's accessibility isolation.
+3. Apply the image fix supported by TD.1: first correct responsive `sizes`,
+   delivery dimensions/quality and crop-container behaviour; replace local
+   assets only when the approved Figma original demonstrably supplies a better
+   source. Keep below-fold loading lazy, explicit intrinsic dimensions, local
+   assets, case-specific alt text and the existing desktop/mobile crop contract.
+   Do not make all six images eager or add an image-processing package.
+4. Remove the Feedback grey artifact based on the proven source (for example
+   background, negative stacking layer, overflow or spacing), while retaining
+   the approved wireframe art, scroll-snap interaction, card dimensions and
+   decorative accessibility semantics. Avoid a masking overlay or arbitrary
+   negative margin that merely hides an unexplained defect.
+
+#### TD.4 — regression gate, documentation and handoff — complete
+
+1. Extend tests for `[Portfolio]`, both navigation variants, exact Services
+   desktop structure, case-image delivery attributes and Feedback's verified
+   visual/stacking contract. Run Playwright at 390, 768 and 1440 px; inspect
+   network requests to prove that selected case image derivatives are not being
+   displayed below their rendered pixel requirement.
+2. Complete the Node 24 gate: `format:check`, typecheck, lint/stylelint,
+   unit tests, full desktop/mobile E2E, dependency/cycle/dead-code/secrets
+   checks, build, generate/link inspection, Lighthouse and `git diff --check`.
+   Compare local screenshots with the Figma nodes from TD.1 and verify keyboard
+   navigation plus no horizontal overflow.
+3. Update this debt list with completion evidence and amend the homepage ADR
+   only if the investigation produces a durable architectural decision. Do not
+   commit, push or begin another scope without a separate owner instruction.
+
+Completion criteria: desktop and mobile nav boundaries are distinct without
+behavioural regression; Services desktop spacing is measured against Figma;
+Projects displays `[Portfolio]`; case imagery is sharp at its rendered size
+without harming lazy/CWV behaviour; Feedback has no observed grey artifact; the
+full regression gate is green.
+
+#### TD delivery evidence
+
+- Figma was re-read at desktop header `144:1272`, Services `31:6064` (intro
+  `31:6069`, first-card title/body `32:6144` / `31:6114`), Projects `32:6287`
+  and CaseCard `154:246`, Feedback `46:174` and its decorative artwork
+  `46:563`. Local Chrome captures at 1440 and 390 px were inspected.
+- `HomeHeader` remains the semantic and state-owning shell; its desktop links
+  now live in `HomeDesktopNavigation`, while `HomeMobileNavigation` remains
+  the separate dialog composition. Both consume the same typed immutable
+  navigation data and retain the anchor/keyboard contract.
+- The Services intro no longer lets the desktop grid stretch its rows: it uses
+  `align-content: start`, giving the Figma-measured 20 px desktop gaps between
+  eyebrow, title and body; mobile keeps its 10 px composition.
+- The Projects eyebrow is `[Portfolio]`. Case delivery now uses valid Nuxt
+  Image responsive sizes, `q=80` and `x1 x2` densities. The previous
+  browser-style `sizes` query fell back to a 310 px derivative while CSS could
+  render it at 483–776 px. Per-card desktop delivery widths now preserve the
+  approved crop and have an x2 source within each original local PNG's native
+  dimensions; loading remains lazy with intrinsic dimensions.
+- The Feedback SVG source exactly matches Figma and includes a grey design
+  board outside the visual artwork. The section's existing `overflow: hidden`
+  clips it; fresh desktop/mobile route screenshots showed no grey spacing
+  artifact. The translucent testimonial card surface is intentional Figma
+  styling, so no arbitrary mask, negative margin or asset alteration was made.
+- Node 24 verification passed: static quality (11 Vitest files, 37 tests),
+  dependency/cycle/dead-code/secrets checks, full Playwright (17 passed,
+  1 intentionally skipped), build, generate, link inspection, diff check and
+  Lighthouse. Lighthouse remained performance `0.90`, accessibility `0.96`
+  (owner-accepted), best practices `1.00`, SEO `1.00`; LCP 3597 ms, CLS `0`,
+  transfer 922 kB.
 
 ## Goal
 
@@ -769,15 +901,16 @@ remains truthful rather than concealing accepted debt or claiming `1.00`.
 
 ### Roadmap
 
-| Milestone | Deliverable                                         | Dependency                 | Status   |
-| --------- | --------------------------------------------------- | -------------------------- | -------- |
-| R0        | Exact Figma/code/UI Kit inventory and baseline      | Figma read access, Node 24 | Complete |
-| R1        | Approved contract and homepage ADR                  | Owner answers              | Complete |
-| R2        | Local assets, tokens, semantic shell and navigation | R1, approved Epic 1 plan   | Complete |
-| R3        | Hero, philosophy and services                       | R2                         | Complete |
-| R4        | Selected projects and process                       | R3                         | Complete |
-| R5        | Feedback and contact boundary                       | R4                         | Complete |
-| R6        | Full fidelity, SEO/CWV and reviewed handoff         | R5                         | Complete |
+| Milestone | Deliverable                                         | Dependency                  | Status   |
+| --------- | --------------------------------------------------- | --------------------------- | -------- |
+| R0        | Exact Figma/code/UI Kit inventory and baseline      | Figma read access, Node 24  | Complete |
+| R1        | Approved contract and homepage ADR                  | Owner answers               | Complete |
+| R2        | Local assets, tokens, semantic shell and navigation | R1, approved Epic 1 plan    | Complete |
+| R3        | Hero, philosophy and services                       | R2                          | Complete |
+| R4        | Selected projects and process                       | R3                          | Complete |
+| R5        | Feedback and contact boundary                       | R4                          | Complete |
+| R6        | Full fidelity, SEO/CWV and reviewed handoff         | R5                          | Complete |
+| R7        | Approved homepage technical-debt follow-up          | R6, owner start instruction | Complete |
 
 ## Verification
 
@@ -817,8 +950,9 @@ package не нужен. Golden screenshots должны создаваться 
 - возникает необходимость изменить Figma, public route contract или второй
   page/layout ownership без отдельного подтверждения.
 
-Task complete после Epic 5, полного evidence и local commit, explicitly
-authorised by the owner. Push/PR остаются отдельным действием после approval.
+Task complete после Epic 5 и approved technical-debt follow-up, полного
+evidence и local commits, explicitly authorised by the owner. Push/PR остаются
+отдельным действием после approval.
 
 ### Approved decisions
 
