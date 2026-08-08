@@ -16,7 +16,10 @@ describe('CaseCard', () => {
     expect(link.attributes('href')).toBe('https://quantumready.info')
     expect(link.attributes('target')).toBe('_blank')
     expect(link.attributes('rel')).toBe('noopener noreferrer')
-    expect(wrapper.get('img[alt="Project preview"]')).toBeDefined()
+    expect(wrapper.get('img[alt="QuantumReady project preview"]')).toBeDefined()
+    expect(wrapper.get('img[alt="QuantumReady project preview"]').attributes('loading')).toBe(
+      'lazy',
+    )
   })
 
   it('keeps internal destinations in the current tab and renders a supplied image accessibly', async () => {
@@ -24,7 +27,12 @@ describe('CaseCard', () => {
       props: {
         ...quantumReady,
         destination: { href: '/cases/quantumready', label: 'Read case' },
-        image: { alt: 'QuantumReady dashboard preview', src: '/preview.png' },
+        image: {
+          alt: 'QuantumReady dashboard preview',
+          height: 100,
+          src: '/preview.png',
+          width: 100,
+        },
       },
     })
 

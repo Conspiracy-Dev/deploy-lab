@@ -40,6 +40,27 @@ test('keeps the static local visual for reduced motion', async ({ page }) => {
   await expect(page.locator('canvas')).toHaveCount(0)
 })
 
+test('renders Projects and Process landmarks with manual project collection semantics', async ({
+  page,
+}) => {
+  await page.goto('/')
+
+  const projects = page.locator('#projects')
+  const process = page.locator('#process')
+
+  await expect(projects.getByRole('heading', { level: 2 })).toContainText('Selected Projects')
+  await expect(projects.locator('.home-projects__list > li')).toHaveCount(6)
+  await expect(projects.locator('.home-projects__list')).toHaveAttribute('tabindex', '0')
+  await expect(projects.locator('a[href="https://quantumready.info"]')).toHaveAttribute(
+    'target',
+    '_blank',
+  )
+  await expect(process.getByRole('heading', { level: 2 })).toContainText('How We Work')
+  await expect(process.locator('ol > li')).toHaveCount(7)
+  await expect(page.locator('a[href="#projects"]').first()).toHaveText('Selected Projects')
+  await expect(page.locator('a[href="#process"]').first()).toHaveText('Process')
+})
+
 test('opens and closes mobile navigation with keyboard-safe native dialog behaviour', async ({
   page,
 }) => {

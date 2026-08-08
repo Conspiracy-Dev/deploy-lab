@@ -102,3 +102,11 @@ runtime dependency or generic card abstraction was introduced. The hero retains
 its exact local source while Nuxt Image emits a preloaded single-density AVIF
 derivative for the static visual; lazy below-fold derivatives keep the approved
 Lighthouse assertions passing. Epic 3 has not started.
+
+Epic 3 completed on 2026-08-08. Projects is a home-local semantic collection
+of the existing CaseCard fixtures with native manual scroll snap; no carousel
+dependency, autoplay or speculative controls were introduced. Case imagery now
+uses the approved placeholder alt text plus intrinsic dimensions and lazy
+delivery while retaining its existing Figma crop contract. Process is an
+ordered seven-stage sequence with exact local desktop/mobile Figma SVG art kept
+decorative. Epic 4 has not started.

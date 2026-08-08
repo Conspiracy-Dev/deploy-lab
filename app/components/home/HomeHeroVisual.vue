@@ -7,7 +7,7 @@
       format="avif"
       height="1736"
       preload
-      quality="12"
+      quality="8"
       sizes="1736px"
       src="/images/home/hero-abstract-shape.png"
       width="1736"

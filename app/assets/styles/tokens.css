@@ -27,6 +27,11 @@
     --color-service-divider: #0231ea;
     --color-service-surface: rgb(255 255 255 / 5%);
 
+    /* Homepage process, Figma nodes 46:53 and 144:455. */
+    --color-process-start: #00001f;
+    --color-process-middle: #120d5b;
+    --color-process-end: #2422ba;
+
     --color-wireframe: #1a20ff;
     --color-border: var(--color-control-border);
 

@@ -45,6 +45,8 @@ useSchemaOrg([
       </section>
       <HomePhilosophy />
       <HomeServices />
+      <HomeProjects />
+      <HomeProcess />
     </main>
     <HomeFooter />
   </div>

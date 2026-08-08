@@ -37,6 +37,18 @@ export const homeContent = Object.freeze({
     eyebrow: '[Manifesto, Philosophy]',
     title: 'We deliver complete products',
   },
+  process: {
+    description:
+      'We build digital products with a focus on fintech and web3. Our team delivers the full development cycle from design and architecture to production release and ongoing support.',
+    eyebrow: '[Process]',
+    title: 'How We Work',
+  },
+  projects: {
+    description:
+      'We build digital products with a focus on fintech and web3. Our team delivers the full development cycle from design and architecture to production release and ongoing support.',
+    eyebrow: '[Manifesto, Philosophy]',
+    title: 'Selected Projects',
+  },
   mobileMenuLabel: 'Open navigation',
   privacyHref: '/privacy-policy',
   services: {
@@ -98,6 +110,16 @@ export const homeServiceItems = Object.freeze([
     icon: '/icons/home/service-support.svg',
     title: 'Technical Support',
   },
+] as const)
+
+export const homeProcessItems = Object.freeze([
+  { tone: 'start', title: 'Product Discovery' },
+  { tone: 'start', title: 'Requirements Collection' },
+  { tone: 'middle', title: 'Timeline Planning' },
+  { tone: 'middle', title: 'Infrastructure Setup' },
+  { tone: 'middle', title: 'Sprint Development with Regular Demos' },
+  { tone: 'end', title: 'Production Deployment' },
+  { tone: 'end', title: 'Post-production Support' },
 ] as const)
 
 export const casePlaceholderAltTexts = Object.freeze([

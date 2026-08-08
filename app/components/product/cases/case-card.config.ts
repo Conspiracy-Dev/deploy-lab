@@ -1,10 +1,3 @@
-import cafeCosmosGameImage from '~/assets/images/cases/cafe-cosmos-game.png'
-import johnLilicImage from '~/assets/images/cases/john-lilic.png'
-import modernistesImage from '~/assets/images/cases/modernistes.png'
-import potokDigitalImage from '~/assets/images/cases/potok-digital.png'
-import qmFundImage from '~/assets/images/cases/qm-fund.png'
-import quantumReadyImage from '~/assets/images/cases/quantumready.png'
-
 type CaseCardImageCrop = {
   height: string
   left: string
@@ -22,8 +15,10 @@ export type CaseCardData = {
   image: {
     alt: string
     desktopCrop?: CaseCardImageCrop
+    height: number
     mobileCrop?: CaseCardImageCrop
     src: string
+    width: number
   }
   tags: string[]
   title: string
@@ -41,8 +36,10 @@ export const caseCardFixtures: CaseCardData[] = [
       label: 'quantumready.info',
     },
     image: {
-      alt: 'Project preview',
-      src: quantumReadyImage,
+      alt: 'QuantumReady project preview',
+      height: 828,
+      src: '/images/cases/quantumready.png',
+      width: 1028,
       desktopCrop: { height: '108.09%', left: '-0.17%', top: '-8.09%', width: '100.2%' },
       mobileCrop: { height: '108.75%', left: '-0.17%', top: '-8.42%', width: '100.82%' },
     },
@@ -57,8 +54,10 @@ export const caseCardFixtures: CaseCardData[] = [
       label: 'modernistes.com',
     },
     image: {
-      alt: 'Project preview',
-      src: modernistesImage,
+      alt: 'Modernistes project preview',
+      height: 882,
+      src: '/images/cases/modernistes.png',
+      width: 1902,
       desktopCrop: { height: '100%', left: '-0.09%', top: '0', width: '161.06%' },
     },
   },
@@ -72,8 +71,10 @@ export const caseCardFixtures: CaseCardData[] = [
       label: 'qm.fund',
     },
     image: {
-      alt: 'Project preview',
-      src: qmFundImage,
+      alt: 'QM Fund project preview',
+      height: 877,
+      src: '/images/cases/qm-fund.png',
+      width: 1893,
       desktopCrop: { height: '100%', left: '0.08%', top: '0', width: '161.22%' },
     },
   },
@@ -87,8 +88,10 @@ export const caseCardFixtures: CaseCardData[] = [
       label: 'johnlilic.info',
     },
     image: {
-      alt: 'Project preview',
-      src: johnLilicImage,
+      alt: 'John Lilic personal website project preview',
+      height: 874,
+      src: '/images/cases/john-lilic.png',
+      width: 1900,
       desktopCrop: { height: '100%', left: '-0.07%', top: '0', width: '162.37%' },
     },
   },
@@ -102,8 +105,10 @@ export const caseCardFixtures: CaseCardData[] = [
       label: 'game.cafecosmos.io',
     },
     image: {
-      alt: 'Project preview',
-      src: cafeCosmosGameImage,
+      alt: 'Cafe Cosmos game project preview',
+      height: 876,
+      src: '/images/cases/cafe-cosmos-game.png',
+      width: 1316,
       desktopCrop: { height: '100%', left: '-17.05%', top: '0', width: '112.2%' },
     },
   },
@@ -117,8 +122,10 @@ export const caseCardFixtures: CaseCardData[] = [
       label: 'potok.digital',
     },
     image: {
-      alt: 'Project preview',
-      src: potokDigitalImage,
+      alt: 'Potok.Digital platform project preview',
+      height: 870,
+      src: '/images/cases/potok-digital.png',
+      width: 1544,
       desktopCrop: { height: '100%', left: '0.01%', top: '0', width: '132.55%' },
     },
   },

@@ -1,6 +1,6 @@
 # Figma homepage implementation plan
 
-Status: Epic 2 complete; Epic 3 has not started
+Status: Epic 3 complete; Epic 4 has not started
 
 Last updated: 2026-08-08
 
@@ -372,7 +372,7 @@ cover the scope.
   `--color-service-surface`, document Figma node `31:6064`; no generic card or
   runtime package was added.
 - The hero keeps its exact local source and Figma geometry. Nuxt Image delivers
-  a preloaded, one-density AVIF derivative at quality 12 for the decorative
+  a preloaded, one-density AVIF derivative at quality 8 for the decorative
   first paint; below-fold artwork remains lazy. This preserves the existing
   Lighthouse gate without introducing a new optimizer.
 - Focused component coverage adds philosophy/services semantic-list assertions;
@@ -387,20 +387,120 @@ cover the scope.
 Goal: встроить существующий CaseCard и реализовать process без дублирования UI
 Kit.
 
-- [ ] Selected Projects desktop `32:6287` / mobile `144:816`: использовать
+- [x] Selected Projects desktop `32:6287` / mobile `144:816`: использовать
       `CaseCard` и существующий typed dataset.
-- [ ] Перевести case previews на `NuxtImg`/`NuxtPicture` только если crop
+- [x] Перевести case previews на Nuxt Image с intrinsic dimensions, responsive
+      sizes и lazy loading; существующий crop contract не менялся.
       contract сохраняется; задать intrinsic dimensions, responsive sizes и lazy
       loading для below-fold images.
-- [ ] Реализовать утверждённое collection behaviour (native scroll-snap либо
+- [x] Реализовать утверждённое collection behaviour (native scroll-snap либо
       другой согласованный control), без autoplay по умолчанию.
-- [ ] Process desktop `46:53` / mobile `144:455`: semantic ordered list из семи
+- [x] Process desktop `46:53` / mobile `144:455`: semantic ordered list из семи
       этапов, responsive decorative line/art и читаемый DOM order.
-- [ ] Применить шесть generated placeholder alt texts из homepage ADR и
+- [x] Применить шесть generated placeholder alt texts из homepage ADR и
       проверить external case links и touch/keyboard operation.
 
 Completion gate: full epic verification, image/network budget comparison,
 keyboard/touch proof и visual comparison всех visible project/process states.
+
+#### Epic 3 execution plan
+
+Execution status: complete on 2026-08-08. Новые runtime packages не требуются: существующие `CaseCard`, Nuxt
+Image, native CSS scroll snap, `UiContainer`, `UiTypography`, Vitest и
+Playwright покрывают scope.
+
+##### E3.1 — Figma reconfirmation, content and asset contract — complete
+
+1. Перед изменением каждого участка повторно получать context и screenshot для
+   desktop `32:6287`/`46:53` и mobile `144:816`/`144:455`. Зафиксировать
+   измеримые размеры карточек, gaps, видимый pagination state и оба варианта
+   Process art; не строить interaction на основании одного статичного кадра.
+2. Использовать `caseCardFixtures` как единственный источник case copy, URLs,
+   image crops и внешней-link policy. Заменить шесть generic `Project preview`
+   на уже approved placeholder alts в data-layer карточек, а не дублировать
+   записи на homepage.
+3. Загрузить только необходимые exact Figma Process exports локально. В plan
+   записать node IDs, source path, роль и empty `alt`; временные Figma URLs и
+   hand-drawn substitute не допускаются. Существующие шесть case PNG повторно
+   не экспортировать.
+
+##### E3.2 — CaseCard image-delivery proof and Projects collection — complete
+
+1. Провести small visual spike на первой и второй карточках: добавить exact
+   intrinsic dimensions, responsive `sizes` и `loading="lazy"` below fold,
+   сохранив desktop/mobile crop variables pixel-for-pixel. Перейти на
+   `NuxtImg`/`NuxtPicture` только если compare screenshot докажет отсутствие
+   crop regression; иначе оставить native image с explicit dimensions и lazy
+   loading. Не изменять CaseCard public API ради одной homepage-композиции.
+2. Создать home-local `HomeProjects.vue` с `section#projects`, H2 intro и
+   semantic `ul > li > CaseCard` в исходном порядке всех шести fixtures.
+   Переиспользовать `UiContainer` и `UiTypography`; не создавать второй card
+   component или переносить case copy в `home.config.ts`.
+3. Реализовать Figma desktop 820×440 cards и mobile 350 px cards через native
+   horizontal scroll container. Применить CSS `scroll-snap-type`,
+   `scroll-snap-align`, visible focus и маркировку scroll region для
+   keyboard/touch operation. Pagination dots оставить декоративным visual
+   state, пока Figma не покажет настоящие controls; не добавлять autoplay,
+   carousel library или invented navigation buttons.
+
+##### E3.3 — Process composition and responsive art — complete
+
+1. Создать home-local `HomeProcess.vue` с `section#process`, intro и readable
+   `ol` из семи final Figma stages. Section heading остаётся H2, labels stages
+   получают H3/semantic equivalent; декоративная линия и grid остаются вне
+   accessibility tree.
+2. На desktop воспроизвести диагональную композицию labels над exact local art,
+   а на mobile — вертикальную sequence с measured 16 px gaps и wrap пятого
+   шага. DOM order всегда остаётся 1→7, независимо от visual positioning.
+3. Добавить только значения, действительно отсутствующие в tokens, с Figma
+   node ID рядом с token; не превращать palette Process в глобальную тему без
+   второго consumer.
+
+##### E3.4 — route integration and focused evidence — complete
+
+1. Вставить Projects и Process после Services в `app/pages/index.vue`, не
+   менять header/footer, routes, SEO contract или future Feedback/Contact
+   placeholders. Проверить, что прежние nav anchors теперь ведут к реальным
+   landmarks.
+2. Добавить component tests: шесть cards, approved alts, external
+   `target`/`rel`, lazy/intrinsic image contract, process `ol` с семью items и
+   decorative images. Добавить Playwright: anchors, visible desktop/mobile
+   cards, keyboard focus/scroll, touch/manual scroll state, external-link
+   attributes и отсутствие horizontal document overflow.
+3. Сравнить 390 и 1440 screenshots с Figma, затем browser proof на 768 и
+   320 px. Проверить reduced motion, focus visibility, console/network, lazy
+   image requests и сохранение card crop. Не принимать visual snapshot как
+   единственное доказательство interaction.
+
+##### E3.5 — Epic gate and handoff — complete
+
+1. Выполнить полный Node 24 gate: static quality, full desktop/mobile E2E,
+   dependency/cycle/dead-code checks, build, generate/link inspection,
+   Lighthouse, secrets и `git diff --check`.
+2. Сравнить initial transfer/LCP с Epic 2: case PNG не должны стать eager,
+   local Process art не должен блокировать first paint. Исправлять только
+   регрессию в Epic 3 scope.
+3. После успешного gate обновить Epic 3 checklist, roadmap, Figma asset
+   manifest и ADR implementation record. Остановиться перед Epic 4; commit
+   делать только после отдельного явного owner instruction.
+
+#### Epic 3 delivery evidence
+
+- `HomeProjects.vue` renders `section#projects` with an SSR semantic list of
+  all six existing `CaseCard` fixtures. The native, focusable horizontal
+  scroll container uses manual CSS scroll snap and decorative Figma pagination
+  dots; it has no autoplay, carousel package or invented controls.
+- The six fixture records now carry their approved placeholder alts and
+  intrinsic dimensions. Nuxt Image delivers responsive WebP derivatives with
+  lazy loading; existing desktop/mobile crop values remain unchanged, so the
+  Figma card composition is preserved.
+- `HomeProcess.vue` renders `section#process` with an ordered 1→7 DOM sequence.
+  The exact Figma SVG exports are local: `46:346` / `46:352` for desktop and
+  `144:485` / `144:531` for mobile; both grid and line are decorative with an
+  empty `alt`.
+- New focused component and E2E coverage proves project/process landmarks,
+  item counts, case alt/link contracts and the focusable collection. Full
+  Epic 3 verification is recorded after the final Node 24 gate below.
 
 ### Epic 4 — feedback, contact and submission boundary
 
@@ -448,7 +548,7 @@ Completion gate: весь scope имеет browser/automated evidence, доку�
 | R1        | Approved contract and homepage ADR                  | Owner answers              | Complete |
 | R2        | Local assets, tokens, semantic shell and navigation | R1, approved Epic 1 plan   | Complete |
 | R3        | Hero, philosophy and services                       | R2                         | Complete |
-| R4        | Selected projects and process                       | R3                         | Pending  |
+| R4        | Selected projects and process                       | R3                         | Complete |
 | R5        | Feedback and contact boundary                       | R4                         | Pending  |
 | R6        | Full fidelity, SEO/CWV and reviewed handoff         | R5                         | Pending  |
 
