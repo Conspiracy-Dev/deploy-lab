@@ -30,8 +30,15 @@ defineProps<CaseCardData>()
     </div>
 
     <div class="case-card__image">
-      <img
+      <NuxtImg
         :alt="image.alt"
+        decoding="async"
+        densities="x1 x2"
+        format="webp"
+        :height="image.height"
+        loading="lazy"
+        quality="80"
+        :sizes="`310px lg:${image.desktopDeliveryWidth ?? 482}px`"
         :src="image.src"
         :style="{
           '--case-card-desktop-image-height': image.desktopCrop?.height,
@@ -43,6 +50,7 @@ defineProps<CaseCardData>()
           '--case-card-mobile-image-top': image.mobileCrop?.top,
           '--case-card-mobile-image-width': image.mobileCrop?.width,
         }"
+        :width="image.width"
       />
     </div>
   </article>

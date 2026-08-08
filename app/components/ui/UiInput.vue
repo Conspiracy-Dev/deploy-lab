@@ -34,8 +34,7 @@ function updateValue(event: Event) {
     :rows="rows"
     :value="modelValue"
     @input="updateValue"
-  >
-  </textarea>
+  />
   <input
     v-else
     v-bind="$attrs"

@@ -1,8 +1,8 @@
 # Figma UI kit implementation plan
 
-Status: Epic 5 implementation and verification complete; owner review and explicit commit approval pending
+Status: Complete and merged through PR #1
 
-Last updated: 2026-08-05
+Last updated: 2026-08-08
 
 ## Goal
 
@@ -668,14 +668,14 @@ commit; no next epic begins as part of this handoff.
 
 ### Roadmap
 
-| Milestone | Deliverable                                       | Dependency                     | Status         |
-| --------- | ------------------------------------------------- | ------------------------------ | -------------- |
-| R0        | Exact Figma inventory and approved scope          | Professional MCP editor access | Complete       |
-| R1        | Tokens, fonts, elastic container and test surface | R0                             | Complete       |
-| R2        | Typography and layout primitives                  | R1                             | Complete       |
-| R3        | Native control primitives and success notice      | R2                             | Complete       |
-| R4        | Responsive CaseCard                               | R3                             | Complete       |
-| R5        | Visual, accessibility and reviewed handoff        | R4                             | Review pending |
+| Milestone | Deliverable                                       | Dependency                     | Status   |
+| --------- | ------------------------------------------------- | ------------------------------ | -------- |
+| R0        | Exact Figma inventory and approved scope          | Professional MCP editor access | Complete |
+| R1        | Tokens, fonts, elastic container and test surface | R0                             | Complete |
+| R2        | Typography and layout primitives                  | R1                             | Complete |
+| R3        | Native control primitives and success notice      | R2                             | Complete |
+| R4        | Responsive CaseCard                               | R3                             | Complete |
+| R5        | Visual, accessibility and reviewed handoff        | R4                             | Complete |
 
 ## Verification
 

@@ -17,6 +17,21 @@
     --color-control-border: var(--color-white);
     --color-focus: var(--color-green-500);
 
+    /* Homepage shell, Figma nodes 31:6021 and 46:1308. */
+    --color-header-surface: rgb(255 255 255 / 5%);
+    --color-footer-surface: #01004d;
+    --color-subtle-border: rgb(255 255 255 / 20%);
+    --color-overlay-backdrop: rgb(1 0 129 / 96%);
+
+    /* Homepage services, Figma node 31:6064. */
+    --color-service-divider: #0231ea;
+    --color-service-surface: rgb(255 255 255 / 5%);
+
+    /* Homepage process, Figma nodes 46:53 and 144:455. */
+    --color-process-start: #00001f;
+    --color-process-middle: #120d5b;
+    --color-process-end: #2422ba;
+
     --color-wireframe: #1a20ff;
     --color-border: var(--color-control-border);
 
@@ -57,6 +72,10 @@
     --layout-gutter: clamp(1.25rem, calc(5.714vw - 0.143rem), 5rem);
     --content-width: 80rem;
     --header-height: 4.5rem;
+
+    /* Homepage shell, Figma node 31:6021. */
+    --space-shell-desktop: 5rem;
+    --space-shell-mobile: 1.25rem;
     --motion-fast: 140ms;
     --motion-standard: 260ms;
   }

@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue'
 import { normalizeSiteUrl } from '#shared/utils/site-url'
-
-const HeroWireframe = defineAsyncComponent(() => import('~/components/scenes/HeroWireframe.vue'))
+import { homeAnchorIds, homeContent } from '~/components/home/home.config'
 
 const runtimeConfig = useRuntimeConfig()
 const siteUrl = normalizeSiteUrl(runtimeConfig.public.siteUrl)
@@ -26,90 +24,106 @@ useSchemaOrg([
 </script>
 
 <template>
-  <UiContainer as="main">
-    <section class="hero">
-      <div class="hero__copy">
-        <UiTypography variant="uptitle" class="hero__brand">DeployLab</UiTypography>
-        <UiTypography variant="h1" class="hero__title">
-          Full-cycle web and mobile development.
-        </UiTypography>
-        <UiTypography variant="body" muted class="hero__description">
-          The technical foundation is ready for a distinctive, accessible, and fast product site.
-        </UiTypography>
-      </div>
-      <div class="hero__scene" data-testid="hero-scene">
-        <svg class="hero__fallback" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
-          <path d="M34 220C84 28 276 60 342 155S287 374 135 339 10 278 34 220Z" />
-          <path d="M58 224C103 64 260 80 317 163S267 344 141 316 36 276 58 224Z" />
-          <path d="M83 226C122 95 243 104 294 170S250 315 145 291 64 274 83 226Z" />
-          <path d="M109 228C143 125 226 129 271 177S233 286 149 267 92 271 109 228Z" />
-        </svg>
-        <ClientOnly>
-          <HeroWireframe />
-        </ClientOnly>
-      </div>
-    </section>
-  </UiContainer>
+  <div class="home-page">
+    <HomeHeader />
+    <main>
+      <section :id="homeAnchorIds.home" class="home-hero" aria-labelledby="home-title">
+        <HomeHeroVisual />
+        <UiContainer class="home-hero__content">
+          <div class="home-hero__copy">
+            <UiTypography id="home-title" variant="h1">
+              {{ homeContent.hero.title }}
+            </UiTypography>
+            <UiTypography muted variant="body" class="home-hero__description">
+              {{ homeContent.hero.description }}
+            </UiTypography>
+            <a class="home-hero__action" :href="`#${homeAnchorIds.contact}`">
+              {{ homeContent.hero.actionLabel }}
+            </a>
+          </div>
+        </UiContainer>
+      </section>
+      <HomePhilosophy />
+      <HomeServices />
+      <HomeProjects />
+      <HomeProcess />
+      <HomeFeedback />
+      <HomeContact />
+    </main>
+    <HomeFooter />
+  </div>
 </template>
 
 <style scoped>
-.hero {
-  display: grid;
-  align-items: center;
-  min-height: 100dvh;
-  gap: var(--space-8);
-  padding-block: var(--space-16);
+.home-page {
+  min-block-size: 100dvh;
+  background: var(--color-canvas);
 }
 
-.hero__copy {
-  position: relative;
-  z-index: 1;
-  max-width: 42rem;
-}
-
-.hero__brand {
-  margin: 0 0 var(--space-8);
-}
-
-.hero__title {
-  margin: 0;
-  text-wrap: balance;
-}
-
-.hero__description {
-  max-width: 36rem;
-  margin: var(--space-8) 0 0;
-}
-
-.hero__scene {
+.home-hero {
   position: relative;
   isolation: isolate;
-  min-height: min(52vw, 36rem);
+  display: grid;
+  min-block-size: 52.75rem;
+  overflow: hidden;
 }
 
-.hero__fallback {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: var(--color-wireframe);
-  stroke-width: 1.35;
+.home-hero__content {
+  position: relative;
+  z-index: 1;
+  align-self: stretch;
+  display: grid;
+  align-items: start;
+  padding-top: 28.8125rem;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hero__fallback {
-    opacity: 0.75;
-  }
+.home-hero__copy {
+  display: grid;
+  max-inline-size: 46.375rem;
+}
+
+.home-hero__description {
+  max-inline-size: 30rem;
+  margin-top: 0.625rem;
+}
+
+.home-hero__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  justify-self: start;
+  margin-top: 2.5rem;
+  padding: 0.75rem 2rem;
+  border: 1px solid var(--color-control-border);
+  background: var(--color-control-surface);
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--font-size-body-mobile);
+  font-weight: var(--font-weight-heading);
+  line-height: var(--line-height-body);
+  text-decoration: none;
 }
 
 @media (width >= 64rem) {
-  .hero {
-    grid-template-columns: minmax(0, 0.9fr) minmax(28rem, 1.1fr);
+  .home-hero {
+    min-block-size: 50rem;
+    align-items: center;
   }
 
-  .hero__scene {
-    min-height: min(54vw, 42rem);
+  .home-hero__content {
+    align-self: center;
+    display: block;
+    padding-top: 0;
+  }
+
+  .home-hero__action {
+    inline-size: auto;
+    margin-top: 3.75rem;
+  }
+
+  .home-hero__description {
+    margin-top: 1.25rem;
   }
 }
 </style>

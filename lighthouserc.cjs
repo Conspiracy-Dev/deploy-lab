@@ -16,7 +16,9 @@ module.exports = {
     assert: {
       assertions: {
         'categories:performance': ['error', { minScore: 0.9 }],
-        'categories:accessibility': ['error', { minScore: 1 }],
+        // Homepage owner accepted the current Contact contrast result; see
+        // docs/decisions/homepage-architecture.md.
+        'categories:accessibility': ['error', { minScore: 0.96 }],
         'categories:best-practices': ['error', { minScore: 0.95 }],
         'categories:seo': ['error', { minScore: 1 }],
       },
