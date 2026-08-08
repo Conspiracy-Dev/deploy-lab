@@ -2,13 +2,15 @@
   <div class="home-hero-visual" aria-hidden="true">
     <NuxtImg
       alt=""
+      densities="1"
       fetchpriority="high"
-      format="webp"
-      height="2800"
+      format="avif"
+      height="1736"
       preload
-      quality="80"
+      quality="12"
+      sizes="1736px"
       src="/images/home/hero-abstract-shape.png"
-      width="2800"
+      width="1736"
     />
   </div>
 </template>
@@ -34,8 +36,9 @@
 
 @media (width < 64rem) {
   .home-hero-visual img {
-    inline-size: 115rem;
-    inset: 3rem auto auto -42rem;
+    inline-size: 56.25rem;
+    inset: -12.5625rem auto auto 0;
+    transform: rotate(90deg);
   }
 }
 </style>

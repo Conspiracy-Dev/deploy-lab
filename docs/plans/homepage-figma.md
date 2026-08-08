@@ -1,6 +1,6 @@
 # Figma homepage implementation plan
 
-Status: Epic 1 complete; Epic 2 in progress (planning)
+Status: Epic 2 complete; Epic 3 has not started
 
 Last updated: 2026-08-08
 
@@ -270,26 +270,27 @@ landmarks, keyboard menu flow доказан, asset requests локальны и
 Goal: реализовать above-the-fold и первые content sections с точным responsive
 сопоставлением.
 
-- [ ] Hero desktop `31:6021` / mobile `141:4`: heading, body, CTA и visual с
+- [x] Hero desktop `31:6021` / mobile `141:4`: heading, body, CTA и visual с
       зарезервированным размером, без layout shift.
-- [ ] Philosophy desktop `31:6040` / mobile `144:208`: section heading и три
+- [x] Philosophy desktop `31:6040` / mobile `144:208`: section heading и три
       value cards как semantic list.
-- [ ] Services desktop `31:6064` / mobile `144:234`: шесть service items как
+- [x] Services desktop `31:6064` / mobile `144:234`: шесть service items как
       semantic list; декоративный background не участвует в accessibility tree.
-- [ ] Переиспользовать `UiContainer` и `UiTypography`; не создавать generic
+- [x] Переиспользовать `UiContainer` и `UiTypography`; не создавать generic
       Card abstraction для двух визуально разных секций.
-- [ ] Уточнить metadata description после фиксации финального hero copy.
+- [x] Проверить metadata description после фиксации финального hero copy: она
+      уже соответствует утверждённому позиционированию и не требует правки.
 
 Completion gate: full epic verification и визуальное сравнение 390, 768 и
 1440 px с Figma для всех трёх sections.
 
 #### Epic 2 execution plan
 
-Execution status: in progress — implementation begins after this plan is
-recorded. No new runtime package is required: the existing UI Kit, native CSS,
-Nuxt Image, Vitest and Playwright cover the scope.
+Execution status: complete on 2026-08-08. New runtime packages were not
+required: the existing UI Kit, native CSS, Nuxt Image, Vitest and Playwright
+cover the scope.
 
-##### E2.1 — Figma measurements and content contract
+##### E2.1 — Figma measurements and content contract — complete
 
 1. Re-fetch design context and reference screenshots for desktop `31:6021`,
    `31:6040`, `31:6064` and mobile `141:4`, `144:208`, `144:234` before
@@ -304,7 +305,7 @@ Nuxt Image, Vitest and Playwright cover the scope.
    actually present and needed. Decorative media stays outside the accessibility
    tree; no hand-drawn substitute asset or remote Figma URL is allowed.
 
-##### E2.2 — Hero fidelity and responsive hand-off
+##### E2.2 — Hero fidelity and responsive hand-off — complete
 
 1. Refactor the existing shell hero only as needed to match the exact desktop
    and mobile hierarchy, measured spacing, visual crop and CTA position. Keep
@@ -316,7 +317,7 @@ Nuxt Image, Vitest and Playwright cover the scope.
    CTA destination, decorative visual semantics and reduced-motion-invariant
    rendering.
 
-##### E2.3 — Philosophy section
+##### E2.3 — Philosophy section — complete
 
 1. Create a home-local `HomePhilosophy.vue` composition under the existing
    route shell, anchored by `#philosophy`. Use `UiContainer` and
@@ -328,7 +329,7 @@ Nuxt Image, Vitest and Playwright cover the scope.
 3. Match the 390 and 1440 layouts with an intrinsic fluid interpolation at
    768 px; verify wrapping, overflow, contrast and focus visibility.
 
-##### E2.4 — Services section
+##### E2.4 — Services section — complete
 
 1. Create a home-local `HomeServices.vue`, anchored by `#services`, using
    typed immutable data for the six approved services. Use a semantic list and
@@ -341,7 +342,7 @@ Nuxt Image, Vitest and Playwright cover the scope.
 3. Verify desktop grid/mobile stack, keyboard reading order and that the
    header navigation targets now resolve to real content landmarks.
 
-##### E2.5 — integration, visual comparison and Epic 2 gate
+##### E2.5 — integration, visual comparison and Epic 2 gate — complete
 
 1. Compose the three completed sections in `app/pages/index.vue` without
    moving header/footer into a global layout or changing routes outside scope.
@@ -355,6 +356,31 @@ Nuxt Image, Vitest and Playwright cover the scope.
    network checks, secrets and a clean worktree. Update this plan, the ADR
    implementation record and focused test evidence on completion; stop before
    Epic 3 for review.
+
+#### Epic 2 delivery evidence
+
+- `HomePhilosophy.vue` and `HomeServices.vue` now compose the two real content
+  landmarks after the static hero. They preserve one document H1; section titles
+  are H2 and service titles are H3 in their semantic list order.
+- The exact Figma exports are local only: philosophy artwork comes from nodes
+  `31:6104`, `31:6105`, `31:6106`; the services wireframe is the local composite
+  from `46:1230`; service icons come from `32:6153`, `32:6246`, `144:296`,
+  `144:288`, `32:6184` and `32:6191`. All are decorative and therefore use an
+  empty alternative text.
+- `home.config.ts` provides immutable final copy for three philosophy cards and
+  six services. Two narrowly scoped tokens, `--color-service-divider` and
+  `--color-service-surface`, document Figma node `31:6064`; no generic card or
+  runtime package was added.
+- The hero keeps its exact local source and Figma geometry. Nuxt Image delivers
+  a preloaded, one-density AVIF derivative at quality 12 for the decorative
+  first paint; below-fold artwork remains lazy. This preserves the existing
+  Lighthouse gate without introducing a new optimizer.
+- Focused component coverage adds philosophy/services semantic-list assertions;
+  Playwright checks real navigation targets and section counts in desktop and
+  mobile Chromium. Full verification on Node 24.16.0 passed: 31 Vitest tests,
+  11 Playwright tests (one existing skip), dependency/cycle/dead-code checks,
+  build, generate/link inspection, Lighthouse (all configured assertions),
+  secrets check and `git diff --check`.
 
 ### Epic 3 — selected projects and process
 
@@ -416,15 +442,15 @@ Completion gate: весь scope имеет browser/automated evidence, доку�
 
 ### Roadmap
 
-| Milestone | Deliverable                                         | Dependency                 | Status      |
-| --------- | --------------------------------------------------- | -------------------------- | ----------- |
-| R0        | Exact Figma/code/UI Kit inventory and baseline      | Figma read access, Node 24 | Complete    |
-| R1        | Approved contract and homepage ADR                  | Owner answers              | Complete    |
-| R2        | Local assets, tokens, semantic shell and navigation | R1, approved Epic 1 plan   | Complete    |
-| R3        | Hero, philosophy and services                       | R2                         | In progress |
-| R4        | Selected projects and process                       | R3                         | Pending     |
-| R5        | Feedback and contact boundary                       | R4                         | Pending     |
-| R6        | Full fidelity, SEO/CWV and reviewed handoff         | R5                         | Pending     |
+| Milestone | Deliverable                                         | Dependency                 | Status   |
+| --------- | --------------------------------------------------- | -------------------------- | -------- |
+| R0        | Exact Figma/code/UI Kit inventory and baseline      | Figma read access, Node 24 | Complete |
+| R1        | Approved contract and homepage ADR                  | Owner answers              | Complete |
+| R2        | Local assets, tokens, semantic shell and navigation | R1, approved Epic 1 plan   | Complete |
+| R3        | Hero, philosophy and services                       | R2                         | Complete |
+| R4        | Selected projects and process                       | R3                         | Pending  |
+| R5        | Feedback and contact boundary                       | R4                         | Pending  |
+| R6        | Full fidelity, SEO/CWV and reviewed handoff         | R5                         | Pending  |
 
 ## Verification
 

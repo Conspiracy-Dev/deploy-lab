@@ -43,6 +43,8 @@ useSchemaOrg([
           </div>
         </UiContainer>
       </section>
+      <HomePhilosophy />
+      <HomeServices />
     </main>
     <HomeFooter />
   </div>
@@ -58,7 +60,6 @@ useSchemaOrg([
   position: relative;
   isolation: isolate;
   display: grid;
-  align-items: center;
   min-block-size: 52.75rem;
   overflow: hidden;
 }
@@ -66,19 +67,27 @@ useSchemaOrg([
 .home-hero__content {
   position: relative;
   z-index: 1;
+  align-self: stretch;
+  display: grid;
+  align-items: start;
+  padding-top: 28.8125rem;
 }
 
 .home-hero__copy {
   display: grid;
-  gap: 1.25rem;
   max-inline-size: 46.375rem;
 }
 
 .home-hero__description {
   max-inline-size: 30rem;
+  margin-top: 0.625rem;
 }
 
 .home-hero__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
   justify-self: start;
   margin-top: 2.5rem;
   padding: 0.75rem 2rem;
@@ -95,13 +104,20 @@ useSchemaOrg([
 @media (width >= 64rem) {
   .home-hero {
     min-block-size: 50rem;
+    align-items: center;
   }
 
-  .home-hero__copy {
-    gap: 1.25rem;
+  .home-hero__content {
+    display: block;
+    padding-top: 0;
   }
 
   .home-hero__action {
+    inline-size: auto;
+    margin-top: 3.75rem;
+  }
+
+  .home-hero__description {
     margin-top: 1.25rem;
   }
 }

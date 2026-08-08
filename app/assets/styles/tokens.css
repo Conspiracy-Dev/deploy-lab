@@ -23,6 +23,10 @@
     --color-subtle-border: rgb(255 255 255 / 20%);
     --color-overlay-backdrop: rgb(1 0 129 / 96%);
 
+    /* Homepage services, Figma node 31:6064. */
+    --color-service-divider: #0231ea;
+    --color-service-surface: rgb(255 255 255 / 5%);
+
     --color-wireframe: #1a20ff;
     --color-border: var(--color-control-border);
 

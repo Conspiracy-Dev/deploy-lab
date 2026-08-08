@@ -11,6 +11,27 @@ test('renders the semantic home shell and its local hero visual', async ({ page 
   await expect(page.locator('canvas')).toHaveCount(0)
 })
 
+test('renders the implemented Philosophy and Services landmarks with local Figma visuals', async ({
+  page,
+}) => {
+  await page.goto('/')
+
+  const philosophy = page.locator('#philosophy')
+  const services = page.locator('#services')
+
+  await expect(philosophy.getByRole('heading', { level: 2 })).toContainText(
+    'We deliver complete products',
+  )
+  await expect(philosophy.locator('li')).toHaveCount(3)
+  await expect(philosophy.locator('img[alt=""]')).toHaveCount(3)
+
+  await expect(services.getByRole('heading', { level: 2 })).toContainText('What We Do')
+  await expect(services.locator('li')).toHaveCount(6)
+  await expect(services.locator('img[alt=""]')).toHaveCount(7)
+  await expect(page.locator('a[href="#philosophy"]').first()).toHaveText('Philosophy')
+  await expect(page.locator('a[href="#services"]').first()).toHaveText('Services')
+})
+
 test('keeps the static local visual for reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')

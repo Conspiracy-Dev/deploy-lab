@@ -92,4 +92,13 @@ from Figma node `31:6073` locally, and removed the unused 3D smoke scene plus
 its direct dependencies after consumer evidence. Privacy Policy remains out of
 scope, so Link Checker excludes precisely `/privacy-policy` during build until
 its separate implementation task exists. The local 4096×4096 source remains
-canonical; existing Nuxt Image produces the preloaded WebP delivery derivative.
+canonical; existing Nuxt Image produces the preloaded delivery derivative.
+
+Epic 2 completed on 2026-08-08. The route now composes Figma-matched hero,
+Philosophy and Services sections through home-local components, typed immutable
+copy and semantic lists. Exact decorative exports from Figma are stored locally;
+the service background and icons stay outside the accessibility tree. No new
+runtime dependency or generic card abstraction was introduced. The hero retains
+its exact local source while Nuxt Image emits a preloaded single-density AVIF
+derivative for the static visual; lazy below-fold derivatives keep the approved
+Lighthouse assertions passing. Epic 3 has not started.
