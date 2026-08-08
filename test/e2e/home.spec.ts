@@ -72,7 +72,7 @@ test('renders Feedback and a visual-only Contact boundary', async ({ page }) => 
   await expect(feedback.locator('.home-feedback__list')).toHaveAttribute('tabindex', '0')
   await expect(page.locator('a[href="#feedback"]').first()).toHaveText('Feedback')
 
-  await expect(contact.getByRole('heading', { level: 3 })).toHaveText('Start a Project')
+  await expect(contact.getByRole('heading', { level: 2 })).toHaveText('Start a Project')
   await contact.getByLabel('Name').fill('Ada Lovelace')
   await contact.getByLabel('Email').fill('ada@example.com')
   await contact.getByLabel('Message').fill('A visual-only request.')
@@ -89,6 +89,23 @@ test('renders Feedback and a visual-only Contact boundary', async ({ page }) => 
   )
   await expect(contact.locator('[role="status"]')).toHaveCount(0)
   await expect(page).toHaveURL(/\/$/)
+})
+
+test('keeps a semantic section heading sequence and avoids narrow-document overflow', async ({
+  page,
+}) => {
+  for (const width of [320, 768]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/')
+
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
+    await expect(
+      page.locator('main > section').last().getByRole('heading', { level: 2 }),
+    ).toHaveText('Start a Project')
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    )
+  }
 })
 
 test('opens and closes mobile navigation with keyboard-safe native dialog behaviour', async ({

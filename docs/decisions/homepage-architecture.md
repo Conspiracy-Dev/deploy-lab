@@ -63,6 +63,15 @@ implementation.
 9. No new runtime dependency is approved for the homepage baseline. Existing
    Vue/Nuxt, native CSS, UI kit, Nuxt Image, VueUse, Vitest and Playwright
    capabilities are used first.
+10. The owner accepts the current homepage Lighthouse accessibility result of
+    `0.96` as-is. The Contact consent/Privacy contrast finding (4.37:1) is
+    documented accepted debt for this delivery and must not trigger visual
+    changes or package work in Epic 5. Lighthouse CI records the same
+    owner-approved minimum (`0.96`) so the published quality gate remains
+    truthful rather than silently failing on accepted debt.
+11. No canonical production origin is available yet. `NUXT_PUBLIC_SITE_URL`
+    remains unset and the local/CI fallback `https://deploylab.example` is
+    intentional until the owner provides the purchased domain in a later stage.
 
 ## Consequences
 
@@ -83,6 +92,11 @@ implementation.
 - The generated case alt text is usable for implementation but intentionally
   documented as placeholder content rather than a final description of each
   screenshot.
+- Epic 5 records and configures the owner-accepted Lighthouse accessibility
+  result (`0.96`) rather than treating the Contact contrast finding as an
+  implementation blocker.
+- Production canonical, robots, sitemap and schema URL evidence is deferred
+  until the owner supplies `NUXT_PUBLIC_SITE_URL`; no domain is inferred.
 
 ## Implementation record
 
@@ -122,3 +136,14 @@ loading/error/success state or `UiSuccessNotice`. `UiInput` was minimally
 corrected to avoid whitespace content in SSR textarea output, and the common
 `sr-only` utility supplies labels without changing the Figma field appearance.
 No runtime package or Privacy Policy route was added.
+
+Epic 5 completed on 2026-08-08. Final Figma comparison covered the canonical
+1440/390 endpoints plus 320/768 overflow proof. Contact now has a semantic H2
+section title without changing its approved H3 visual treatment, and its
+composite consent label has an explicit accessible name. Production build,
+static generate/link inspection, SSR SEO/discovery output and full desktop/
+mobile Playwright verification passed. Lighthouse recorded performance 0.90,
+accessibility 0.96, best practices 1.00 and SEO 1.00 (LCP 3596 ms, CLS 0,
+921 kB transfer); the owner-accepted consent contrast debt remains unchanged.
+No smoke/3D cleanup remained. `deploylab.example` is still the intentional
+temporary URL until `NUXT_PUBLIC_SITE_URL` is supplied; no domain was inferred.

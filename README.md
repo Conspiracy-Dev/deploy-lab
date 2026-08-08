@@ -8,8 +8,9 @@
 
 DeployLab is the frontend foundation for a public company site. It favours
 server-rendered or prerendered content, explicit architecture boundaries, and
-small browser-only enhancements. The current route is a technical smoke
-surface, not the final Figma implementation.
+small browser-only enhancements. The current route is the implemented Figma
+homepage; its contact form is deliberately visual-only until a separate delivery
+task is approved.
 
 | ✦ Product constraint | How the project responds                                                                     |
 | -------------------- | -------------------------------------------------------------------------------------------- |
@@ -24,7 +25,6 @@ surface, not the final Figma implementation.
 - Nuxt Image, Fonts, SEO and Security for media, discovery and headers
 - Nuxt Content with typed frontmatter
 - UnoCSS plus native CSS design tokens; Reka UI primitives; VueUse composables
-- TresJS and Three.js for isolated, progressively enhanced 3D scenes
 - Playwright, Vitest, ESLint, Stylelint, Prettier and architecture checks
 
 ## Start locally
@@ -67,8 +67,8 @@ browser evidence; static checks alone do not prove visual behaviour. See
 ## Architecture at a glance
 
 - `app/` owns routes, UI composition, browser lifecycle, and page styling.
-- `app/components/scenes/` owns optional 3D only; essential text and controls
-  always have a semantic non-canvas path.
+- `app/components/home/` owns the Figma homepage compositions; essential text
+  and controls remain semantic and SSR/prerendered.
 - `shared/` contains pure reusable contracts and transformations.
 - `server/` owns Nitro boundaries and integrations; it never imports from
   `app/`.

@@ -12,7 +12,9 @@ const consent = ref(false)
   <section :id="homeAnchorIds.contact" class="home-contact" aria-labelledby="contact-title">
     <UiContainer class="home-contact__container">
       <div class="home-contact__intro">
-        <UiTypography id="contact-title" variant="h3">{{ homeContent.contact.title }}</UiTypography>
+        <UiTypography id="contact-title" as="h2" variant="h3">
+          {{ homeContent.contact.title }}
+        </UiTypography>
         <UiTypography variant="body">{{ homeContent.contact.description }}</UiTypography>
       </div>
 
@@ -57,7 +59,7 @@ const consent = ref(false)
             <UiCheckbox
               id="contact-consent"
               v-model="consent"
-              aria-labelledby="contact-consent-label"
+              aria-label="I agree to the Privacy Policy."
               name="consent"
             />
             <span id="contact-consent-label">

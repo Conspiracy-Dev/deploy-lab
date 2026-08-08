@@ -19,6 +19,7 @@ describe('Epic 4 home sections', () => {
     const wrapper = await mountSuspended(HomeContact)
 
     expect(wrapper.get('section').attributes('id')).toBe('contact')
+    expect(wrapper.get('#contact-title').element.tagName).toBe('H2')
     expect(wrapper.get('input[name="name"]').attributes('placeholder')).toBe('Name')
     expect(wrapper.get('input[name="email"]').attributes('type')).toBe('email')
     expect(wrapper.get('textarea[name="message"]')).toBeDefined()
