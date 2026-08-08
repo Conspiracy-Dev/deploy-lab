@@ -16,7 +16,6 @@ export default defineNuxtConfig({
     'nuxt-security',
     '@nuxt/hints',
     '@nuxt/content',
-    '@tresjs/nuxt',
     '@unocss/nuxt',
     '@vueuse/nuxt',
     '@nuxt/eslint',
@@ -34,6 +33,10 @@ export default defineNuxtConfig({
   image: {
     format: ['avif', 'webp'],
     quality: 80,
+  },
+  linkChecker: {
+    // The approved destination is implemented in a separate, out-of-scope task.
+    excludeLinks: ['/privacy-policy'],
   },
   fonts: {
     families: [
@@ -80,6 +83,8 @@ export default defineNuxtConfig({
   },
   nitro: {
     prerender: {
+      // Owned by a separate legal-content task; do not crawl a non-existent route.
+      ignore: ['/privacy-policy'],
       routes: ['/robots.txt', '/sitemap.xml'],
     },
   },
