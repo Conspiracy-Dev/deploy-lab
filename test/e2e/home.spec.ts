@@ -8,7 +8,32 @@ test('renders the semantic home shell and its local hero visual', async ({ page 
   await expect(page.getByRole('banner')).toBeVisible()
   await expect(page.getByRole('contentinfo')).toBeVisible()
   await expect(page.locator('.home-hero-visual img')).toBeVisible()
+  await expect(page.locator('.home-hero-visual img')).toHaveAttribute('loading', 'eager')
   await expect(page.locator('canvas')).toHaveCount(0)
+})
+
+test('keeps the desktop header as a distinct Figma-height band before Hero', async ({ page }) => {
+  test.skip(
+    test.info().project.name !== 'chromium',
+    'The measured desktop header/Hero relationship belongs to the desktop endpoint.',
+  )
+
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/')
+
+  expect(
+    await page.evaluate(() => {
+      const header = document.querySelector('.home-header')!.getBoundingClientRect()
+      const hero = document.querySelector('.home-hero')!.getBoundingClientRect()
+      const copy = document.querySelector('.home-hero__copy')!.getBoundingClientRect()
+
+      return (
+        header.height === 80 &&
+        hero.top === header.bottom &&
+        Math.abs(copy.top - (hero.top + (hero.height - copy.height) / 2)) <= 1
+      )
+    }),
+  ).toBe(true)
 })
 
 test('renders the implemented Philosophy and Services landmarks with local Figma visuals', async ({
@@ -130,6 +155,26 @@ test('renders Feedback and a visual-only Contact boundary', async ({ page }) => 
   await expect(page).toHaveURL(/\/$/)
 })
 
+test('keeps Feedback free of a widescreen canvas artifact', async ({ page }) => {
+  test.skip(
+    test.info().project.name !== 'chromium',
+    'The reported canvas artifact is specific to the widescreen desktop viewport.',
+  )
+
+  await page.setViewportSize({ width: 1920, height: 1080 })
+  await page.goto('/')
+
+  const feedback = page.locator('#feedback')
+  await feedback.scrollIntoViewIfNeeded()
+
+  await expect(feedback).toHaveCSS('overflow', 'hidden')
+  await expect(page.locator('.home-feedback__wireframe')).toHaveCSS(
+    'background-color',
+    'rgba(0, 0, 0, 0)',
+  )
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1920)
+})
+
 test('keeps a semantic section heading sequence and avoids narrow-document overflow', async ({
   page,
 }) => {
@@ -163,6 +208,30 @@ test('opens and closes mobile navigation with keyboard-safe native dialog behavi
   await expect(dialog).toBeVisible()
   await expect(dialog.getByRole('link', { name: 'Philosophy' })).toBeVisible()
 
+  const close = dialog.getByRole('button', { name: 'Close navigation' })
+  await expect(close).toBeVisible()
+  await close.click()
+  await expect(dialog).not.toBeVisible()
+  await expect(toggle).toBeFocused()
+
+  await toggle.press('Enter')
+  await expect(dialog).toBeVisible()
+  await close.press('Space')
+  await expect(dialog).not.toBeVisible()
+  await expect(toggle).toBeFocused()
+
+  await toggle.click()
+  const closeBox = await close.boundingBox()
+  await page.touchscreen.tap(closeBox!.x + closeBox!.width / 2, closeBox!.y + closeBox!.height / 2)
+  await expect(dialog).not.toBeVisible()
+  await expect(toggle).toBeFocused()
+
+  await toggle.click()
+  await dialog.getByRole('link', { name: 'Feedback' }).click()
+  await expect(dialog).not.toBeVisible()
+  await expect(page).toHaveURL(/#feedback$/)
+
+  await toggle.click()
   await page.keyboard.press('Escape')
   await expect(dialog).not.toBeVisible()
   await expect(toggle).toBeFocused()

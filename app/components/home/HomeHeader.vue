@@ -30,9 +30,8 @@ const isMenuOpen = ref(false)
 
 <style scoped>
 .home-header {
-  position: absolute;
-  z-index: 2;
-  inset: 0 0 auto;
+  position: relative;
+  z-index: 1;
   min-block-size: var(--header-height);
   background: var(--color-header-surface);
   backdrop-filter: blur(0.75rem);

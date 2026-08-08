@@ -1,6 +1,6 @@
 # Figma homepage implementation plan
 
-Status: Technical-debt follow-up complete; local commit created, awaiting owner direction (no push)
+Status: Additional technical-debt follow-up complete; local commit created, awaiting owner direction (no push)
 
 Last updated: 2026-08-08
 
@@ -21,6 +21,149 @@ approved technical-debt follow-up on 2026-08-08.
       decorative Figma export has an off-canvas grey board, but it is clipped
       by the section and was not observable in the rendered route; no
       visual-divergent workaround was added.
+
+### Additional recorded technical debt — 2026-08-08
+
+The following observations were supplied after the completed follow-up and
+resolved in the explicitly approved additional technical-debt implementation.
+
+- [x] Restore the intended gap between the desktop navbar and the first Hero
+      screen. Evidence: owner screenshot at the wide desktop viewport shows
+      Hero content touching the navbar (`Screen Shot 2026-08-08 at 16.17.29
+PM.png`).
+- [x] Investigate and remove the Client Feedback visual artifact at
+      1920×1080. Evidence: owner screenshot shows a grey vertical area at the
+      right edge of the Reviews section (`Screenshot 2026-08-08 at 16.18.40.png`).
+      This is a new, resolution-specific report and must not be closed by the
+      earlier 1440/390 clipping evidence.
+- [x] Fix the mobile menu close control. Evidence: owner screenshot shows the
+      opened menu with the close icon at 390 px (`Screenshot 2026-08-08 at
+16.19.39.png`); the owner reports that activating it does not close the
+      menu. Reproduce pointer, keyboard and touch behaviour before changing the
+      dialog lifecycle.
+
+### Additional technical-debt execution plan
+
+Execution status: complete on 2026-08-08. The existing Nuxt/Vue, native dialog,
+CSS, UI Kit, Vitest and Playwright stack was sufficient; no package was added.
+
+#### ATD.1 — deterministic reproduction and Figma acceptance measurements — complete
+
+1. Re-read Figma desktop header `144:1272` (1440×80), desktop Hero `31:6021`
+   (1440×800), Feedback `46:174` and the mobile endpoint `144:233`. Capture
+   the exact approved header/Hero relationship and the intended mobile overlay
+   header/close-control placement; do not infer a new visual gap from a single
+   browser capture.
+2. With a clean local Chrome session, capture the route at 1440×900 and
+   1920×1080, then record header/Hero bounding boxes, computed positioning,
+   background layers, document/client widths, SVG bounds and horizontal
+   overflow. At 390 px, reproduce close by pointer, keyboard activation and
+   touch emulation, plus Escape and a selected navigation link.
+3. Preserve the supplied screenshots as issue evidence only. Determine whether
+   the Feedback strip is the exported SVG's off-canvas board, a viewport/body
+   scrollbar/gutter, a scroll-snap overflow surface or a browser-specific
+   rendering layer before changing CSS. The prior 1440/390 result does not
+   settle the new 1920×1080 report.
+
+#### ATD.2 — header/Hero composition correction — complete
+
+1. Compare the observed geometry with the Figma measurements from ATD.1. If
+   the current absolutely positioned header incorrectly overlays the first
+   screen, make the smallest home-local layout change so the header and Hero
+   occupy the approved vertical relationship at desktop while preserving the
+   mobile composition, one H1, anchor destinations and Hero artwork crop.
+2. Keep `HomeHeader` as the semantic header and retain the already separated
+   `HomeDesktopNavigation` / `HomeMobileNavigation` boundaries. Do not add a
+   global layout, new spacing token or duplicated header solely for this route.
+3. Add a focused visual/geometry assertion for the measured desktop header and
+   Hero boundary at 1440 and prove the fluid result at 1920 without inventing a
+   separate tablet design.
+
+#### ATD.3 — Feedback 1920×1080 artifact correction — complete
+
+1. Based only on the reproduced source, adjust the Feedback clipping,
+   wireframe positioning/sizing, collection overflow or document background as
+   needed to remove the visible right-edge grey strip at 1920×1080. Preserve
+   the exact local Figma wireframe, decorative accessibility isolation, card
+   geometry, manual scroll-snap and pagination semantics.
+2. Do not crop or replace the SVG, add a masking overlay or hide scrollbars
+   globally unless the recorded source proves it necessary. Check 1440×900,
+   1920×1080 and 390 px so a widescreen correction does not revive the earlier
+   off-canvas-board concern at another width.
+3. Add deterministic browser coverage that samples the Feedback section's
+   right edge and asserts no horizontal document overflow; retain a screenshot
+   for owner review rather than committing a visual-regression golden without
+   review.
+
+#### ATD.4 — mobile menu close interaction correction — complete
+
+1. Use ATD.1 interaction evidence to fix the native dialog top-layer ownership:
+   the visible close control must live in, or otherwise be genuinely interactive
+   above, the modal layer. Reuse `UiMenuToggle` where its contract fits; keep a
+   single `isMenuOpen` state source and avoid duplicate navigation data.
+2. Preserve the approved overlay visual, native dialog semantics, scroll lock,
+   Escape and selected-link close, focus restoration to the original trigger,
+   SSR links and the desktop navigation contract. Give the close control an
+   accessible `Close navigation` name and visible keyboard focus.
+3. Add unit coverage for opening/closing state and browser E2E coverage for
+   pointer click, Enter/Space, touch emulation, Escape, link close and focus
+   restoration on the 390 px profile.
+
+#### ATD.5 — completion gate, documentation and handoff — complete
+
+1. Run Node 24 `format:check`, typecheck, lint/stylelint, slop scan, focused
+   component tests, full Vitest, desktop/mobile Playwright, dependency/cycle/
+   dead-code/secrets checks, build, generate/link inspection, Lighthouse and
+   `git diff --check`.
+2. Review deterministic local screenshots against the Figma nodes at 1440,
+   1920 and 390 px, including keyboard navigation, reduced motion and document
+   overflow. Treat the owner-accepted Contact contrast Lighthouse score of
+   `0.96` as unchanged debt unless this work demonstrably affects it.
+3. Mark these three checklist items complete with reproduction/correction
+   evidence, update the homepage ADR only for a durable ownership decision, and
+   create a local commit only after the owner explicitly requests execution and
+   a commit. Do not push or begin another scope.
+
+Completion criteria: header/Hero vertical composition matches the measured
+Figma relationship; no Feedback grey artifact or horizontal overflow is visible
+at 1920×1080; mobile menu closes by pointer, keyboard, touch, Escape and a
+selected link while restoring focus; no navigation, SSR, accessibility or
+responsive regression is introduced.
+
+#### ATD delivery evidence
+
+- Figma desktop header `144:1272` measures 1440×80 and Hero `31:6021` measures
+  1440×800 with vertically centred content; Feedback `46:174` and the mobile
+  endpoint `144:233` were used for the visual comparison. Local Chrome was
+  checked at 1440×900, 1920×1080 and Pixel 5 (390 px).
+- The reported header issue was reproducible: `HomeHeader` was `position:
+absolute`, so it and Hero began at the same vertical coordinate. It is now a
+  relative, z-indexed 80 px band in normal document flow, and desktop Hero
+  content explicitly self-aligns to the centre of its own 800 px frame.
+- The 1920 artifact was reproducible without document horizontal overflow. The
+  locally saved SVG export contained Figma design-canvas fills (`#555555` and
+  its enclosing `#444444` canvas paths) outside the actual `Frame 45` artwork;
+  they only became visible when the decorative image no longer extended past the
+  viewport. The export now makes those two canvas paths transparent while
+  retaining the exact local wireframe paths and section clipping. 1440, 1920
+  and mobile screenshots have no grey strip.
+- The mobile close issue was reproducible: after `showModal()`, the native
+  dialog top layer covered the header's externally rendered toggle, so it
+  remained visible through the transparent backdrop but could not receive a
+  click. `HomeMobileNavigation` now renders its own brand and `UiMenuToggle`
+  inside the dialog top layer; both variants still consume the same navigation
+  data and one `isMenuOpen` source. The visible button is labelled `Close
+navigation`, has a `:focus-visible` indicator and restores focus to the
+  original opener after close.
+- Focused component tests, mobile click/Enter/Space/touch/Escape/selected-link
+  E2E, desktop geometry and 1920 Feedback E2E passed before the full Node 24
+  gate. The Hero visual is explicitly eager so the preloaded LCP image is not
+  assessed as lazy. Final Node 24 verification passed: 39 Vitest tests, full
+  Playwright (19 passed, 3 intentional breakpoint skips), static quality,
+  dependency/cycle/dead-code/secrets checks, build, generate/link inspection,
+  diff check and Lighthouse. Lighthouse recorded performance `0.90`,
+  accessibility `0.96` (owner-accepted), best practices `1.00`, SEO `1.00`;
+  LCP 3637 ms, CLS `0`, transfer 922 kB.
 
 ### Technical-debt follow-up plan
 
@@ -901,16 +1044,17 @@ remains truthful rather than concealing accepted debt or claiming `1.00`.
 
 ### Roadmap
 
-| Milestone | Deliverable                                         | Dependency                  | Status   |
-| --------- | --------------------------------------------------- | --------------------------- | -------- |
-| R0        | Exact Figma/code/UI Kit inventory and baseline      | Figma read access, Node 24  | Complete |
-| R1        | Approved contract and homepage ADR                  | Owner answers               | Complete |
-| R2        | Local assets, tokens, semantic shell and navigation | R1, approved Epic 1 plan    | Complete |
-| R3        | Hero, philosophy and services                       | R2                          | Complete |
-| R4        | Selected projects and process                       | R3                          | Complete |
-| R5        | Feedback and contact boundary                       | R4                          | Complete |
-| R6        | Full fidelity, SEO/CWV and reviewed handoff         | R5                          | Complete |
-| R7        | Approved homepage technical-debt follow-up          | R6, owner start instruction | Complete |
+| Milestone | Deliverable                                         | Dependency                           | Status   |
+| --------- | --------------------------------------------------- | ------------------------------------ | -------- |
+| R0        | Exact Figma/code/UI Kit inventory and baseline      | Figma read access, Node 24           | Complete |
+| R1        | Approved contract and homepage ADR                  | Owner answers                        | Complete |
+| R2        | Local assets, tokens, semantic shell and navigation | R1, approved Epic 1 plan             | Complete |
+| R3        | Hero, philosophy and services                       | R2                                   | Complete |
+| R4        | Selected projects and process                       | R3                                   | Complete |
+| R5        | Feedback and contact boundary                       | R4                                   | Complete |
+| R6        | Full fidelity, SEO/CWV and reviewed handoff         | R5                                   | Complete |
+| R7        | Approved homepage technical-debt follow-up          | R6, owner start instruction          | Complete |
+| R8        | Additional homepage technical-debt corrections      | R7, owner implementation instruction | Complete |
 
 ## Verification
 

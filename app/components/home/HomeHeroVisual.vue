@@ -6,6 +6,7 @@
       fetchpriority="high"
       format="avif"
       height="1736"
+      loading="eager"
       preload
       quality="8"
       sizes="1736px"

@@ -1,4 +1,6 @@
 import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import HomeDesktopNavigation from '~/components/home/HomeDesktopNavigation.vue'
 import HomeHeader from '~/components/home/HomeHeader.vue'
@@ -26,5 +28,25 @@ describe('HomeHeader', () => {
 
     expect(desktop.get('nav[aria-label="Primary"]').findAll('a')).toHaveLength(6)
     expect(mobile.get('nav[aria-label="Primary"]').findAll('a')).toHaveLength(6)
+  })
+
+  it('exposes an interactive close control inside the mobile dialog', async () => {
+    const mobile = await mountSuspended(HomeMobileNavigation, {
+      props: { items: homeNavigationItems, modelValue: false },
+    })
+
+    await mobile.get('button[aria-label="Close navigation"]').trigger('click')
+
+    expect(mobile.emitted('update:modelValue')).toEqual([[false]])
+  })
+
+  it('keeps the Feedback export transparent outside its Figma artwork', () => {
+    const feedbackWireframe = readFileSync(
+      resolve(process.cwd(), 'public/images/home/feedback-wireframe.svg'),
+      'utf8',
+    )
+
+    expect(feedbackWireframe).not.toContain('<rect width="956" height="799" fill="#555555"/>')
+    expect(feedbackWireframe).toContain('#Design &gt; path:nth-of-type(-n + 2)')
   })
 })

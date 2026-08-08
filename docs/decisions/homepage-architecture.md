@@ -160,3 +160,17 @@ the old 310 px fallback had been stretched by the desktop crop. The Feedback
 investigation found that its exact Figma SVG contains an off-canvas grey design
 board; section clipping already prevents it from rendering, so no visual mask
 or asset change was warranted.
+
+The additional technical-debt follow-up completed on 2026-08-08. Header is a
+normal-flow, z-indexed home-local band rather than an absolute Hero overlay;
+desktop Hero retains its distinct 800 px Figma frame and vertically centred
+copy. The Feedback export had included Figma editor canvas fills outside its
+actual `Frame 45` wireframe, which became visible only at widescreen widths;
+those non-artwork canvas paths are now transparent while the decorative
+wireframe and clipping contract remain intact. Native dialog top-layer rules
+mean a header toggle visible beneath a transparent backdrop is not interactive,
+so the mobile dialog owns its visible brand and close `UiMenuToggle`. It emits
+to the existing single menu state and preserves Escape, selected-link close and
+focus restoration; the existing toggle also now provides a visible keyboard
+focus outline. This remains a home-local mobile navigation composition, not a
+global layout or UI Kit API change.

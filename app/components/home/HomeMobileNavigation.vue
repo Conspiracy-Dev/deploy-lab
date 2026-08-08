@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
-import type { HomeNavigationItem } from './home.config'
+import { homeAnchorIds, homeContent, type HomeNavigationItem } from './home.config'
 
 const props = defineProps<{
   items: readonly HomeNavigationItem[]
@@ -51,6 +51,18 @@ watch(
     @close="restoreFocus"
     @cancel="closeMenu"
   >
+    <div class="home-mobile-navigation__header">
+      <a
+        class="home-mobile-navigation__brand"
+        :href="`#${homeAnchorIds.home}`"
+        aria-label="Deploy Lab home"
+        @click="closeMenu"
+      >
+        {{ homeContent.brand }}
+      </a>
+      <UiMenuToggle :model-value="true" label="Close navigation" @update:model-value="closeMenu" />
+    </div>
+
     <nav aria-label="Primary">
       <ul class="home-mobile-navigation__list">
         <li v-for="item in items" :key="item.href">
@@ -64,12 +76,12 @@ watch(
 <style scoped>
 .home-mobile-navigation {
   position: fixed;
-  inset: var(--header-height) 0 0;
+  inset: 0;
   inline-size: 100%;
   max-inline-size: none;
-  block-size: calc(100dvh - var(--header-height));
+  block-size: 100dvh;
   margin: 0;
-  padding: var(--space-12) var(--layout-gutter);
+  padding: 0;
   border: 0;
   background: var(--color-overlay-backdrop);
   color: var(--color-text);
@@ -79,11 +91,30 @@ watch(
   background: transparent;
 }
 
+.home-mobile-navigation__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-block-size: var(--header-height);
+  padding-inline: var(--layout-gutter);
+  background: var(--color-header-surface);
+  backdrop-filter: blur(0.75rem);
+}
+
+.home-mobile-navigation__brand {
+  color: var(--color-accent);
+  font-family: var(--font-display);
+  font-size: var(--font-size-uptitle);
+  font-weight: var(--font-weight-heading);
+  line-height: var(--line-height-body);
+  text-decoration: none;
+}
+
 .home-mobile-navigation__list {
   display: grid;
   gap: var(--space-6);
-  margin: 0;
-  padding: 0;
+  margin: var(--space-12) 0 0;
+  padding: 0 var(--layout-gutter);
   list-style: none;
 }
 

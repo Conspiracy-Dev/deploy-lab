@@ -112,6 +112,7 @@ useSchemaOrg([
   }
 
   .home-hero__content {
+    align-self: center;
     display: block;
     padding-top: 0;
   }
