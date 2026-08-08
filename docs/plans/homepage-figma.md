@@ -1,6 +1,6 @@
 # Figma homepage implementation plan
 
-Status: Epic 3 complete; Epic 4 has not started
+Status: Epic 4 complete; Epic 5 has not started
 
 Last updated: 2026-08-08
 
@@ -506,19 +506,127 @@ Playwright покрывают scope.
 
 Goal: завершить interaction-heavy часть страницы без фиктивного backend.
 
-- [ ] Feedback desktop `46:174` / mobile `144:535`: semantic testimonials и
+- [x] Feedback desktop `46:174` / mobile `144:535`: semantic testimonials и
       утверждённое navigation behaviour; no autoplay unless explicitly required.
-- [ ] Contact desktop `48:1595` / mobile `144:1236`: собрать поля из `UiInput`,
+- [x] Contact desktop `48:1595` / mobile `144:1236`: собрать поля из `UiInput`,
       consent из `UiCheckbox`, visual submit control из `UiButton`; label и
       Privacy link остаются видимыми и keyboard-safe.
-- [ ] Не делать submit action и не показывать fake success: форма visual-only.
+- [x] Не делать submit action и не показывать fake success: форма visual-only.
       Functional submission, validation, anti-abuse и delivery adapter остаются
       отдельной будущей задачей.
-- [ ] Проверить mobile menu, forms и horizontal collections совместно на
+- [x] Проверить mobile menu, forms и horizontal collections совместно на
       focus order, Escape/back behaviour и scroll ownership.
 
 Completion gate: full epic verification; visual controls не отправляют данные
 и не показывают недостоверный success state.
+
+#### Epic 4 execution plan
+
+Execution status: complete on 2026-08-08. Новые пакеты не потребовались: UI
+Kit, Vue/Nuxt, native CSS scroll snap, Vitest и Playwright покрыли утверждённый
+scope.
+
+##### E4.1 — lock Figma data and local-art boundary
+
+1. Перед кодированием ещё раз сравнить screenshot/context Feedback
+   desktop `46:174` / mobile `144:535` и Contact desktop `48:1595` / mobile
+   `144:1236`. Зафиксировать в typed `home.config.ts` три точных testimonial
+   records: цитату John Lilic, `Testimonial #1` и `Testimonial #2`; не
+   дописывать copy или авторов.
+2. Через Figma metadata сузить decorative subtree Feedback и экспортировать
+   только утверждённый локальный artwork/indicator. Не переносить сотни vector
+   layers вручную, не использовать временный Figma URL и оставить decoration
+   вне accessibility tree (`alt=""`, `aria-hidden`).
+3. Добавить в home-local config Contact copy и labels: `Start a Project`,
+   approved description, `Name`, `Email`, `Message`, consent и `Send request`.
+   Desktop Figma-плейсхолдер textarea `Name` не переопределяет принятое
+   решение: semantic и visible textarea label остаётся `Message`.
+4. `/privacy-policy` остаётся только существующим ссылочным контрактом и
+   исключением link checker. Сам route не реализовывать в Epic 4.
+
+##### E4.2 — Feedback section and manual collection
+
+1. Создать `HomeFeedback.vue`: `section#feedback` с `aria-labelledby`,
+   `UiContainer`/`UiTypography`, semantic `ul > li > article` и
+   `blockquote`/author для каждого testimonial. Сохранить точную desktop
+   композицию с тремя cards и mobile 350 px visible card.
+2. Сделать collection нативно focusable (`tabindex="0"`), touch/keyboard
+   доступной и прокручиваемой вручную через CSS scroll snap. Не добавлять
+   autoplay, carousel package, таймер или поведение pagination, которого нет в
+   Figma; dots остаются декоративными, пока Figma не покажет controls.
+3. Расположить локальный Figma-artwork под cards, с responsive crop по точным
+   endpoints. Ввести homepage CSS values только при отсутствующем token и с
+   Figma node ID в комментарии; не расширять общий UI Kit ради одной секции.
+
+##### E4.3 — Contact visual-only boundary
+
+1. Создать `HomeContact.vue`: `section#contact` с labelled form. На desktop
+   расположить Name/Email в ряд, затем Message; на mobile собрать поля в один
+   столбец. Использовать `UiInput` (textarea с Figma-height), `UiCheckbox` и
+   `UiButton` без изменения их public API.
+2. Связать каждый control с видимым native `label`, передать корректные
+   `id`, `name`, `type` и `autocomplete`; consent label должен содержать
+   keyboard-safe link `/privacy-policy`. Обеспечить заметный локальный
+   `:focus-visible`, включая checkbox с `appearance: none`.
+3. Форма может отражать введённые локально значения, но не имеет `action`,
+   submit handler, API call, business validation, disabled/loading/error state
+   или `UiSuccessNotice`. CTA имеет явный `type="button"`: клик не отправляет
+   данные и не создаёт фиктивный success.
+
+##### E4.4 — route integration and focused evidence
+
+1. Вставить Feedback и Contact после Process в `app/pages/index.vue`, не
+   менять header/footer, navigation contract, SEO/route ownership или
+   будущую Privacy Policy page. Убедиться, что `#feedback`, `#contact` и Hero
+   CTA ведут к реальным landmarks в SSR HTML.
+2. Добавить focused component/config tests: число и точный текст testimonials,
+   quote/author semantics, focusable manual collection, Contact labels, три
+   fields, consent/policy link, `button[type="button"]` и отсутствие
+   `role="status"`.
+3. Добавить Playwright proof на desktop/mobile: anchors, manual feedback
+   scroll/focus/touch ownership, visual field entry + consent, CTA без
+   navigation/success, visible focus, no document overflow. Сверить
+   deterministic screenshots 390 и 1440 с четырьмя Figma endpoints; 768 и
+   320 проверить в browser как fluid/overflow proof.
+
+##### E4.5 — Epic gate, documentation and stop
+
+1. Выполнить полный Node 24 gate из раздела Verification, включая static
+   quality, desktop/mobile E2E, build/generate/link inspection, Lighthouse,
+   dependency/dead-code/secrets checks и `git diff --check`. Проверить form,
+   mobile menu и обе horizontal collections совместно: focus order,
+   Escape/back behaviour и scroll ownership.
+2. После успешного gate обновить Epic 4 checklist, R5 status, Figma asset
+   manifest и ADR implementation record с фактами реализации и остаточным
+   visual-only boundary. Не менять ADR-решения без нового owner direction.
+3. Остановиться до Epic 5. Commit, staging и push делать только по отдельной
+   явной инструкции владельца после review.
+
+#### Epic 4 delivery evidence
+
+| Figma node | Local asset                                 | Role                                           | Alt policy                 |
+| ---------- | ------------------------------------------- | ---------------------------------------------- | -------------------------- |
+| `46:563`   | `public/images/home/feedback-wireframe.svg` | Decorative Feedback wireframe, responsive crop | Empty `alt`; `aria-hidden` |
+
+- `HomeFeedback.vue` renders `section#feedback` with three Figma-approved
+  testimonial records as semantic `ul > li > article > blockquote`, a local
+  decorative export from Figma node `46:563`, and the existing manual,
+  focusable CSS scroll-snap contract. Pagination dots are intentionally
+  decorative; no autoplay, timer, carousel package or invented control exists.
+- `HomeContact.vue` renders `section#contact` after Process. It reuses
+  `UiInput`, `UiCheckbox` and `UiButton`, has labelled Name, Email and Message
+  fields, a keyboard-safe `/privacy-policy` link and a visible consent control.
+  The CTA is explicitly `type="button"`: there is no action, submit handler,
+  API delivery, validation, loading/error state or `UiSuccessNotice`.
+- `UiInput` now emits an empty SSR textarea without whitespace children. The
+  minimal `sr-only` utility provides accessible labels without changing the
+  approved placeholder visual.
+- Focused config/component coverage and desktop/mobile Playwright coverage
+  verify both new landmarks, testimonial semantics, manual collection focus,
+  local field entry/consent, policy href, non-submitting CTA and absence of a
+  success region. Node 24 full tests, static quality, dependency/cycle/dead-code,
+  secrets, build, generate and `git diff --check` pass with existing upstream
+  Nuxt warnings only.
 
 ### Epic 5 — final fidelity, SEO/CWV and reviewed handoff
 
@@ -549,7 +657,7 @@ Completion gate: весь scope имеет browser/automated evidence, доку�
 | R2        | Local assets, tokens, semantic shell and navigation | R1, approved Epic 1 plan   | Complete |
 | R3        | Hero, philosophy and services                       | R2                         | Complete |
 | R4        | Selected projects and process                       | R3                         | Complete |
-| R5        | Feedback and contact boundary                       | R4                         | Pending  |
+| R5        | Feedback and contact boundary                       | R4                         | Complete |
 | R6        | Full fidelity, SEO/CWV and reviewed handoff         | R5                         | Pending  |
 
 ## Verification
@@ -580,7 +688,8 @@ package не нужен. Golden screenshots должны создаваться 
 
 - реализация требует copy, URL, interaction или form behaviour за пределами
   принятого homepage ADR;
-- `/privacy-policy` отсутствует перед final production handoff;
+- owner просит включить не реализованную `/privacy-policy` page в текущий
+  scope; до такого решения ссылка остаётся принятым out-of-scope contract;
 - asset usage rights не подтверждены либо доступен только временный Figma URL;
 - exact Figma visual требует сохранить/расширить 3D, external script,
   `ClientOnly`, новую runtime dependency или иной rendering profile;

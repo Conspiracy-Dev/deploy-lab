@@ -24,6 +24,21 @@ export const homeAnchorIds = Object.freeze({
 
 export const homeContent = Object.freeze({
   brand: '[Deploy Lab]',
+  contact: {
+    actionLabel: 'Send request',
+    consentPrefix: 'I agree to the ',
+    consentSuffix: '',
+    description: 'We build digital products with a focus on fintech and web3.',
+    emailLabel: 'Email',
+    messageLabel: 'Message',
+    nameLabel: 'Name',
+    privacyLabel: 'Privacy Policy',
+    title: 'Start a Project',
+  },
+  feedback: {
+    eyebrow: '[Reviews]',
+    title: 'Client Feedback',
+  },
   footerYear: '2025',
   hero: {
     actionLabel: 'Start a Project',
@@ -58,6 +73,24 @@ export const homeContent = Object.freeze({
     title: 'What We Do',
   },
 } as const)
+
+export const homeFeedbackItems = Object.freeze([
+  {
+    author: 'John Lilic',
+    quote:
+      '“Over the years, the team has consistently delivered high-quality work with precise execution and strong technical understanding. They handle complex tasks confidently and always bring projects to completion.”',
+  },
+  {
+    author: 'Testimonial #1',
+    quote:
+      '“The collaboration was transparent and predictable. The team quickly grasped the product and maintained development speed without sacrificing quality.”',
+  },
+  {
+    author: 'Testimonial #2',
+    quote:
+      '“From start to release, the process was structured and well managed. The team demonstrated technical confidence and a mature approach that many contractors lack.”',
+  },
+] as const)
 
 export const homePhilosophyItems = Object.freeze([
   {

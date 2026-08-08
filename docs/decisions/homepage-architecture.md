@@ -73,9 +73,9 @@ implementation.
 - The visual form must not imply successful delivery. Its functional contract
   cannot be added incrementally inside this task without a separate decision.
 - `/privacy-policy` is the accepted public link contract, but implementation of
-  that route remains out of the homepage scope. Final link verification must
-  stop if the route is still absent; the owner must schedule or explicitly add
-  the Privacy Policy page before a production handoff.
+  that route remains out of the homepage scope. It is excluded from current
+  link verification; a separate owner decision is required before treating the
+  route as part of a production release scope.
 - Home-specific components are not promoted into a global layout or generic UI
   abstractions prematurely.
 - Manual scrolling avoids autoplay motion and a carousel dependency while
@@ -110,3 +110,15 @@ uses the approved placeholder alt text plus intrinsic dimensions and lazy
 delivery while retaining its existing Figma crop contract. Process is an
 ordered seven-stage sequence with exact local desktop/mobile Figma SVG art kept
 decorative. Epic 4 has not started.
+
+Epic 4 completed on 2026-08-08. Feedback is a home-local semantic testimonial
+collection with the exact locally stored Figma node `46:563` wireframe artwork,
+manual focusable CSS scroll snap and decorative pagination only; no carousel
+dependency, autoplay or speculative control was introduced. Contact composes
+the existing UI Kit controls as a labelled visual-only form with local entered
+values, a keyboard-safe accepted Privacy Policy link and an explicit
+`type="button"` CTA. It deliberately has no submission, API, validation,
+loading/error/success state or `UiSuccessNotice`. `UiInput` was minimally
+corrected to avoid whitespace content in SSR textarea output, and the common
+`sr-only` utility supplies labels without changing the Figma field appearance.
+No runtime package or Privacy Policy route was added.

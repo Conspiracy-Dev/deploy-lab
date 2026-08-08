@@ -47,6 +47,8 @@ useSchemaOrg([
       <HomeServices />
       <HomeProjects />
       <HomeProcess />
+      <HomeFeedback />
+      <HomeContact />
     </main>
     <HomeFooter />
   </div>

@@ -3,6 +3,7 @@ import {
   casePlaceholderAltTexts,
   homeAnchorIds,
   homeContent,
+  homeFeedbackItems,
   homeNavigationItems,
   homePhilosophyItems,
   homeServiceItems,
@@ -34,5 +35,13 @@ describe('home config contract', () => {
     expect(homeServiceItems).toHaveLength(6)
     expect(Object.isFrozen(homePhilosophyItems)).toBe(true)
     expect(Object.isFrozen(homeServiceItems)).toBe(true)
+  })
+
+  it('keeps the approved Epic 4 testimonials and visual-only contact copy', () => {
+    expect(homeContent.feedback.title).toBe('Client Feedback')
+    expect(homeContent.contact.messageLabel).toBe('Message')
+    expect(homeFeedbackItems).toHaveLength(3)
+    expect(homeFeedbackItems[1]?.author).toBe('Testimonial #1')
+    expect(Object.isFrozen(homeFeedbackItems)).toBe(true)
   })
 })

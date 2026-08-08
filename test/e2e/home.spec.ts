@@ -61,6 +61,36 @@ test('renders Projects and Process landmarks with manual project collection sema
   await expect(page.locator('a[href="#process"]').first()).toHaveText('Process')
 })
 
+test('renders Feedback and a visual-only Contact boundary', async ({ page }) => {
+  await page.goto('/')
+
+  const feedback = page.locator('#feedback')
+  const contact = page.locator('#contact')
+
+  await expect(feedback.getByRole('heading', { level: 2 })).toContainText('Client')
+  await expect(feedback.locator('.home-feedback__list > li')).toHaveCount(3)
+  await expect(feedback.locator('.home-feedback__list')).toHaveAttribute('tabindex', '0')
+  await expect(page.locator('a[href="#feedback"]').first()).toHaveText('Feedback')
+
+  await expect(contact.getByRole('heading', { level: 3 })).toHaveText('Start a Project')
+  await contact.getByLabel('Name').fill('Ada Lovelace')
+  await contact.getByLabel('Email').fill('ada@example.com')
+  await contact.getByLabel('Message').fill('A visual-only request.')
+  await contact.getByLabel(/I agree to the Privacy Policy/).check()
+  await expect(contact.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute(
+    'href',
+    '/privacy-policy',
+  )
+
+  await contact.getByRole('button', { name: 'Send request' }).click()
+  await expect(contact.getByRole('button', { name: 'Send request' })).toHaveAttribute(
+    'type',
+    'button',
+  )
+  await expect(contact.locator('[role="status"]')).toHaveCount(0)
+  await expect(page).toHaveURL(/\/$/)
+})
+
 test('opens and closes mobile navigation with keyboard-safe native dialog behaviour', async ({
   page,
 }) => {
