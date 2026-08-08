@@ -1,6 +1,6 @@
 # Figma homepage implementation plan
 
-Status: Epic 1 complete; Epic 2 has not started
+Status: Epic 1 complete; Epic 2 in progress (planning)
 
 Last updated: 2026-08-08
 
@@ -283,6 +283,79 @@ Goal: реализовать above-the-fold и первые content sections с 
 Completion gate: full epic verification и визуальное сравнение 390, 768 и
 1440 px с Figma для всех трёх sections.
 
+#### Epic 2 execution plan
+
+Execution status: in progress — implementation begins after this plan is
+recorded. No new runtime package is required: the existing UI Kit, native CSS,
+Nuxt Image, Vitest and Playwright cover the scope.
+
+##### E2.1 — Figma measurements and content contract
+
+1. Re-fetch design context and reference screenshots for desktop `31:6021`,
+   `31:6040`, `31:6064` and mobile `141:4`, `144:208`, `144:234` before
+   writing each corresponding section. Record only the values missing from
+   existing tokens, with source node IDs.
+2. Verify all copy, card count and visual roles against the canonical nodes.
+   Keep the approved hero copy in `home.config.ts`; add philosophy and services
+   data there as typed immutable page-local content rather than introducing a
+   CMS layer.
+3. Audit every visual in these nodes. Reuse the local hero export from Epic 1;
+   download an exact local Figma export only when a separate source asset is
+   actually present and needed. Decorative media stays outside the accessibility
+   tree; no hand-drawn substitute asset or remote Figma URL is allowed.
+
+##### E2.2 — Hero fidelity and responsive hand-off
+
+1. Refactor the existing shell hero only as needed to match the exact desktop
+   and mobile hierarchy, measured spacing, visual crop and CTA position. Keep
+   exactly one document H1 and the CTA as a same-page `#contact` anchor.
+2. Preserve intrinsic image dimensions, responsive `sizes` and static first
+   paint. Verify no layout shift, canvas/WebGL reintroduction or duplicate
+   hero copy is introduced.
+3. Add focused component/E2E assertions for the hero heading, description,
+   CTA destination, decorative visual semantics and reduced-motion-invariant
+   rendering.
+
+##### E2.3 — Philosophy section
+
+1. Create a home-local `HomePhilosophy.vue` composition under the existing
+   route shell, anchored by `#philosophy`. Use `UiContainer` and
+   `UiTypography`; express the three values as a semantic list with section
+   heading/description and readable DOM order.
+2. Implement the distinct card treatment locally from the Figma measurements.
+   Do not create or expand a generic Card API: philosophy and services have no
+   confirmed shared visual contract.
+3. Match the 390 and 1440 layouts with an intrinsic fluid interpolation at
+   768 px; verify wrapping, overflow, contrast and focus visibility.
+
+##### E2.4 — Services section
+
+1. Create a home-local `HomeServices.vue`, anchored by `#services`, using
+   typed immutable data for the six approved services. Use a semantic list and
+   correct heading hierarchy, keeping decorative background content out of the
+   accessibility tree.
+2. Reuse `UiContainer` and `UiTypography`; retain services-specific visual
+   treatment locally instead of abstracting it prematurely. Add narrowly scoped
+   tokens only if the inspected Figma nodes prove an existing semantic token
+   cannot represent the value.
+3. Verify desktop grid/mobile stack, keyboard reading order and that the
+   header navigation targets now resolve to real content landmarks.
+
+##### E2.5 — integration, visual comparison and Epic 2 gate
+
+1. Compose the three completed sections in `app/pages/index.vue` without
+   moving header/footer into a global layout or changing routes outside scope.
+   Reconcile title/description metadata with the approved hero copy only if a
+   concrete mismatch remains.
+2. Capture deterministic section screenshots at 390 and 1440 px and browser
+   proof at 768 px; compare against the exact Figma references and fix only
+   measured deviations.
+3. Run the full Node 24 gate in `Verification`, including focused and full
+   E2E, dependencies/dead code, build/generate/Lighthouse, keyboard/console/
+   network checks, secrets and a clean worktree. Update this plan, the ADR
+   implementation record and focused test evidence on completion; stop before
+   Epic 3 for review.
+
 ### Epic 3 — selected projects and process
 
 Goal: встроить существующий CaseCard и реализовать process без дублирования UI
@@ -343,15 +416,15 @@ Completion gate: весь scope имеет browser/automated evidence, доку�
 
 ### Roadmap
 
-| Milestone | Deliverable                                         | Dependency                 | Status   |
-| --------- | --------------------------------------------------- | -------------------------- | -------- |
-| R0        | Exact Figma/code/UI Kit inventory and baseline      | Figma read access, Node 24 | Complete |
-| R1        | Approved contract and homepage ADR                  | Owner answers              | Complete |
-| R2        | Local assets, tokens, semantic shell and navigation | R1, approved Epic 1 plan   | Complete |
-| R3        | Hero, philosophy and services                       | R2                         | Pending  |
-| R4        | Selected projects and process                       | R3                         | Pending  |
-| R5        | Feedback and contact boundary                       | R4                         | Pending  |
-| R6        | Full fidelity, SEO/CWV and reviewed handoff         | R5                         | Pending  |
+| Milestone | Deliverable                                         | Dependency                 | Status      |
+| --------- | --------------------------------------------------- | -------------------------- | ----------- |
+| R0        | Exact Figma/code/UI Kit inventory and baseline      | Figma read access, Node 24 | Complete    |
+| R1        | Approved contract and homepage ADR                  | Owner answers              | Complete    |
+| R2        | Local assets, tokens, semantic shell and navigation | R1, approved Epic 1 plan   | Complete    |
+| R3        | Hero, philosophy and services                       | R2                         | In progress |
+| R4        | Selected projects and process                       | R3                         | Pending     |
+| R5        | Feedback and contact boundary                       | R4                         | Pending     |
+| R6        | Full fidelity, SEO/CWV and reviewed handoff         | R5                         | Pending     |
 
 ## Verification
 
