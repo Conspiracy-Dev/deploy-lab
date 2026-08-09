@@ -1,3 +1,5 @@
+import { siteContent } from '~/components/site/site.config'
+
 export type HomeNavigationItem = {
   href: `#${string}`
   label: string
@@ -23,7 +25,7 @@ export const homeAnchorIds = Object.freeze({
 } as const)
 
 export const homeContent = Object.freeze({
-  brand: '[Deploy Lab]',
+  brand: siteContent.brand,
   contact: {
     actionLabel: 'Send request',
     consentPrefix: 'I agree to the ',
@@ -39,7 +41,7 @@ export const homeContent = Object.freeze({
     eyebrow: '[Reviews]',
     title: 'Client Feedback',
   },
-  footerYear: '2025',
+  footerYear: siteContent.footerYear,
   hero: {
     actionLabel: 'Start a Project',
     description:
@@ -64,8 +66,8 @@ export const homeContent = Object.freeze({
     eyebrow: '[Portfolio]',
     title: 'Selected Projects',
   },
-  mobileMenuLabel: 'Open navigation',
-  privacyHref: '/privacy-policy',
+  mobileMenuLabel: siteContent.mobileMenuLabel,
+  privacyHref: siteContent.privacyHref,
   services: {
     description:
       'We build digital products with a focus on fintech and web3. Our team delivers the full development cycle from design and architecture to production release and ongoing support.',

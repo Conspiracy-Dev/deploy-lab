@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { homeAnchorIds, homeContent, homeNavigationItems } from './home.config'
+import { siteContent } from '~/components/site/site.config'
 
 const isMenuOpen = ref(false)
 </script>
@@ -9,7 +10,7 @@ const isMenuOpen = ref(false)
   <header class="home-header">
     <UiContainer class="home-header__inner">
       <a class="home-header__brand" href="#home" aria-label="Deploy Lab home">
-        {{ homeContent.brand }}
+        {{ siteContent.brand }}
       </a>
 
       <HomeDesktopNavigation :items="homeNavigationItems" />
@@ -21,10 +22,14 @@ const isMenuOpen = ref(false)
       <UiMenuToggle
         v-model="isMenuOpen"
         class="home-header__menu-toggle"
-        :label="isMenuOpen ? 'Close navigation' : homeContent.mobileMenuLabel"
+        :label="isMenuOpen ? 'Close navigation' : siteContent.mobileMenuLabel"
       />
     </UiContainer>
-    <HomeMobileNavigation v-model="isMenuOpen" :items="homeNavigationItems" />
+    <SiteMobileNavigation
+      v-model="isMenuOpen"
+      :brand-href="`#${homeAnchorIds.home}`"
+      :items="homeNavigationItems"
+    />
   </header>
 </template>
 

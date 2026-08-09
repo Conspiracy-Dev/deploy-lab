@@ -7,7 +7,7 @@
       format="avif"
       height="1736"
       loading="eager"
-      preload
+      :preload="{ fetchPriority: 'high' }"
       quality="8"
       sizes="1736px"
       src="/images/home/hero-abstract-shape.png"
