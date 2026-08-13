@@ -1,6 +1,6 @@
 # ADR: Contact-form delivery to Notion
 
-- **Status:** Accepted — Epics 0–2 implemented
+- **Status:** Accepted — Epics 0–3 implemented
 - **Date:** 2026-08-13
 - **Decision owner:** Nikita Zinevich
 - **Design source:** [Contact desktop / 48:1595](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=48-1595&p=f&m=dev), [Contact mobile / 144:1236](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=144-1236&p=f&m=dev), [success / 153:75](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=153-75&p=f&m=dev)
@@ -52,10 +52,13 @@ Nginx/Caddy reverse proxy.
    bounded retry respecting `Retry-After`; timeouts and 5xx responses are not
    retried to avoid duplicate applications.
 8. The form uses native submit semantics, disables inputs while submitting,
-   preserves entered values on error and replaces itself with the existing
-   Figma-derived `UiSuccessNotice` after success. The approved new copy is
-   `Sending…`, field-level prompts, and “We couldn’t send your request. Please
-   try again.”
+   preserves entered values on error and shows text prompts beneath invalid
+   fields with semantic associations. It announces delivery failure in a
+   form-level `role="alert"`. After success it replaces itself with the existing
+   Figma-derived `UiSuccessNotice`, plus the existing UI-kit button “Start a new
+   request”; that button restores the form and is full-width at the 390 px
+   endpoint. The approved new copy is `Sending…`, field-level prompts and “We
+   couldn’t send your request. Please try again.”
 9. This decision supersedes the homepage ADR's visual-only form direction only
    when the implementation and tests described in the contact-form plan ship.
    Until then the existing visual-only UI remains the factual runtime behaviour.

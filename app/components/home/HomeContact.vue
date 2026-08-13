@@ -1,11 +1,141 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { nextTick, reactive, ref } from 'vue'
+import {
+  contactAcceptedResponseSchema,
+  contactInvalidRequestResponseSchema,
+  contactRequestSchema,
+  getInvalidContactFields,
+  type ContactField,
+} from '#shared/contracts/contact-request'
 import { homeAnchorIds, homeContent } from './home.config'
 
-const name = ref('')
-const email = ref('')
-const message = ref('')
-const consent = ref(false)
+type ContactFormField = Exclude<ContactField, 'website'>
+type ContactFormState = 'idle' | 'submitting' | 'success' | 'error'
+
+interface ContactFormValues {
+  consent: boolean
+  email: string
+  message: string
+  name: string
+  website: string
+}
+
+const FIELD_VALIDATION_MESSAGES: Record<ContactFormField, string> = {
+  consent: homeContent.contact.consentValidationMessage,
+  email: homeContent.contact.emailValidationMessage,
+  message: homeContent.contact.messageValidationMessage,
+  name: homeContent.contact.nameValidationMessage,
+}
+const FORM_FIELD_ORDER: readonly ContactFormField[] = ['name', 'email', 'message', 'consent']
+
+const formValues = reactive<ContactFormValues>({
+  consent: false,
+  email: '',
+  message: '',
+  name: '',
+  website: '',
+})
+const formState = ref<ContactFormState>('idle')
+const fieldErrors = ref<Partial<Record<ContactFormField, string>>>({})
+
+function getFieldErrorId(field: ContactFormField): string | undefined {
+  return fieldErrors.value[field] ? `contact-${field}-error` : undefined
+}
+
+function getResponseData(error: unknown): unknown {
+  if (typeof error !== 'object' || error === null || !('data' in error)) {
+    return undefined
+  }
+
+  return error.data
+}
+
+function resetForm() {
+  formValues.consent = false
+  formValues.email = ''
+  formValues.message = ''
+  formValues.name = ''
+  formValues.website = ''
+  fieldErrors.value = {}
+}
+
+function resetForNewRequest() {
+  formState.value = 'idle'
+  scheduleFocus('name')
+}
+
+function setInvalidFields(fields: readonly ContactField[]) {
+  fieldErrors.value = Object.fromEntries(
+    fields
+      .filter((field): field is ContactFormField => field !== 'website')
+      .map((field) => [field, FIELD_VALIDATION_MESSAGES[field]]),
+  )
+
+  const firstInvalidField = FORM_FIELD_ORDER.find((field) => fields.includes(field))
+
+  if (firstInvalidField) {
+    scheduleFocus(firstInvalidField)
+  }
+}
+
+function scheduleFocus(field: ContactFormField) {
+  void nextTick(() => setTimeout(() => focusField(field)))
+}
+
+function focusField(field: ContactFormField) {
+  document.getElementById(`contact-${field}`)?.focus()
+}
+
+function validateForm(): boolean {
+  const result = contactRequestSchema.safeParse(formValues)
+
+  if (result.success) {
+    return true
+  }
+
+  setInvalidFields(getInvalidContactFields(result.error))
+  return false
+}
+
+async function submitForm() {
+  if (formState.value === 'submitting') {
+    return
+  }
+
+  fieldErrors.value = {}
+
+  if (!validateForm()) {
+    return
+  }
+
+  formState.value = 'submitting'
+
+  try {
+    const response = await $fetch('/api/contact', {
+      body: { ...formValues },
+      method: 'POST',
+    })
+
+    if (contactAcceptedResponseSchema.safeParse(response).success) {
+      resetForm()
+      formState.value = 'success'
+      return
+    }
+
+    formState.value = 'error'
+  } catch (error: unknown) {
+    const responseData = getResponseData(error)
+    const invalidResponse = contactInvalidRequestResponseSchema.safeParse(responseData)
+
+    if (invalidResponse.success) {
+      setInvalidFields(invalidResponse.data.fields)
+      formState.value = 'idle'
+      return
+    }
+
+    formState.value = 'error'
+  }
+}
 </script>
 
 <template>
@@ -18,58 +148,140 @@ const consent = ref(false)
         <UiTypography variant="body">{{ homeContent.contact.description }}</UiTypography>
       </div>
 
-      <form class="home-contact__form" novalidate>
+      <div v-if="formState === 'success'" class="home-contact__success">
+        <UiSuccessNotice
+          :description="homeContent.contact.successDescription"
+          :title="homeContent.contact.successTitle"
+        />
+        <UiButton type="button" @click="resetForNewRequest">
+          {{ homeContent.contact.startNewRequestLabel }}
+        </UiButton>
+      </div>
+
+      <form class="home-contact__form" novalidate @submit.prevent="submitForm">
         <div class="home-contact__fields">
-          <label class="home-contact__field" for="contact-name">
-            <span class="sr-only">{{ homeContent.contact.nameLabel }}</span>
+          <div class="home-contact__field">
+            <label class="sr-only" for="contact-name">{{ homeContent.contact.nameLabel }}</label>
             <UiInput
               id="contact-name"
-              v-model="name"
+              v-model="formValues.name"
+              :aria-describedby="getFieldErrorId('name')"
+              :aria-invalid="Boolean(fieldErrors.name)"
+              :disabled="formState === 'submitting'"
               autocomplete="name"
               name="name"
               :placeholder="homeContent.contact.nameLabel"
+              required
             />
-          </label>
-          <label class="home-contact__field" for="contact-email">
-            <span class="sr-only">{{ homeContent.contact.emailLabel }}</span>
+            <p
+              v-if="fieldErrors.name"
+              :id="getFieldErrorId('name')"
+              class="home-contact__field-error"
+            >
+              {{ fieldErrors.name }}
+            </p>
+          </div>
+          <div class="home-contact__field">
+            <label class="sr-only" for="contact-email">{{ homeContent.contact.emailLabel }}</label>
             <UiInput
               id="contact-email"
-              v-model="email"
+              v-model="formValues.email"
+              :aria-describedby="getFieldErrorId('email')"
+              :aria-invalid="Boolean(fieldErrors.email)"
+              :disabled="formState === 'submitting'"
               autocomplete="email"
               name="email"
               :placeholder="homeContent.contact.emailLabel"
+              required
               type="email"
             />
-          </label>
-          <label class="home-contact__field home-contact__field--message" for="contact-message">
-            <span class="sr-only">{{ homeContent.contact.messageLabel }}</span>
+            <p
+              v-if="fieldErrors.email"
+              :id="getFieldErrorId('email')"
+              class="home-contact__field-error"
+            >
+              {{ fieldErrors.email }}
+            </p>
+          </div>
+          <div class="home-contact__field home-contact__field--message">
+            <label class="sr-only" for="contact-message">{{
+              homeContent.contact.messageLabel
+            }}</label>
             <UiInput
               id="contact-message"
-              v-model="message"
+              v-model="formValues.message"
+              :aria-describedby="getFieldErrorId('message')"
+              :aria-invalid="Boolean(fieldErrors.message)"
+              :disabled="formState === 'submitting'"
               multiline
               name="message"
               :placeholder="homeContent.contact.messageLabel"
+              required
               :rows="4"
             />
-          </label>
+            <p
+              v-if="fieldErrors.message"
+              :id="getFieldErrorId('message')"
+              class="home-contact__field-error"
+            >
+              {{ fieldErrors.message }}
+            </p>
+          </div>
         </div>
 
         <div class="home-contact__actions">
-          <label class="home-contact__consent" for="contact-consent">
+          <div class="home-contact__consent">
             <UiCheckbox
               id="contact-consent"
-              v-model="consent"
-              aria-label="I agree to the Privacy Policy."
+              v-model="formValues.consent"
+              :aria-describedby="getFieldErrorId('consent')"
+              :aria-invalid="Boolean(fieldErrors.consent)"
+              :disabled="formState === 'submitting'"
               name="consent"
+              required
             />
             <span id="contact-consent-label">
-              {{ homeContent.contact.consentPrefix }}
-              <a :href="homeContent.privacyHref">{{ homeContent.contact.privacyLabel }}</a
-              >{{ homeContent.contact.consentSuffix }}
+              <label class="sr-only" for="contact-consent">
+                {{ homeContent.contact.consentPrefix }}{{ homeContent.contact.privacyLabel }}
+              </label>
+              <span aria-hidden="true">{{ homeContent.contact.consentPrefix }}</span>
+              <a :href="homeContent.privacyHref">{{ homeContent.contact.privacyLabel }}</a>
+              <span aria-hidden="true">{{ homeContent.contact.consentSuffix }}</span>
             </span>
-          </label>
-          <UiButton type="button">{{ homeContent.contact.actionLabel }}</UiButton>
+            <p
+              v-if="fieldErrors.consent"
+              :id="getFieldErrorId('consent')"
+              class="home-contact__field-error"
+            >
+              {{ fieldErrors.consent }}
+            </p>
+          </div>
+          <UiButton
+            :aria-busy="formState === 'submitting'"
+            :disabled="formState === 'submitting'"
+            type="submit"
+          >
+            {{
+              formState === 'submitting'
+                ? homeContent.contact.sendingLabel
+                : homeContent.contact.actionLabel
+            }}
+          </UiButton>
         </div>
+
+        <p v-if="formState === 'error'" class="home-contact__form-error" role="alert">
+          {{ homeContent.contact.errorMessage }}
+        </p>
+
+        <UiInput
+          v-model="formValues.website"
+          aria-hidden="true"
+          autocomplete="off"
+          class="home-contact__honeypot"
+          :disabled="formState === 'submitting'"
+          name="website"
+          tabindex="-1"
+        />
       </form>
     </UiContainer>
   </section>
@@ -98,7 +310,15 @@ const consent = ref(false)
 }
 
 .home-contact__field {
-  display: block;
+  min-width: 0;
+}
+
+.home-contact__field-error,
+.home-contact__form-error {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text);
+  font-size: var(--font-size-body-mobile);
+  line-height: var(--line-height-body);
 }
 
 .home-contact :deep(textarea.ui-input) {
@@ -122,13 +342,19 @@ const consent = ref(false)
 }
 
 .home-contact__consent {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 0.5rem;
+  column-gap: var(--space-2);
   color: rgb(255 255 255 / 50%);
   font-family: var(--font-body);
   font-size: var(--font-size-body-mobile);
   line-height: var(--line-height-body);
+}
+
+.home-contact__consent .home-contact__field-error {
+  grid-column: 1 / -1;
+  color: var(--color-text);
 }
 
 .home-contact__consent a {
@@ -138,6 +364,25 @@ const consent = ref(false)
 .home-contact__consent a:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+.home-contact__success {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-6);
+}
+
+.home-contact__success :deep(.ui-button) {
+  inline-size: 100%;
+}
+
+.home-contact__honeypot {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 @media (width >= 64rem) {
@@ -169,6 +414,10 @@ const consent = ref(false)
     grid-template-columns: 1fr auto;
     align-items: center;
     gap: 1.25rem;
+  }
+
+  .home-contact__success :deep(.ui-button) {
+    inline-size: auto;
   }
 }
 </style>

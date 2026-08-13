@@ -1,6 +1,6 @@
 # Contact form → Notion implementation plan
 
-Status: Epics 0–2 complete; Epics 3–4 pending
+Status: Epics 0–3 complete; Epic 4 pending
 
 Last updated: 2026-08-13
 
@@ -194,19 +194,117 @@ a live Notion request or exposed secret.
 
 ### Epic 3 — Contact UI and accessibility
 
-Status: Pending
+Status: Complete
 
-1. Replace visual-only button behaviour with a native form submit path.
-2. Add `idle`, `submitting`, `success` and `error` states using existing UI
-   primitives and Figma success composition.
-3. Add inline field errors, accessible error associations, first-invalid focus,
-   disabled controls while sending and retry without losing entered values.
-4. Correct the consent/link markup without changing the approved visual layout.
-5. Replace visual-only form tests with component and Playwright user-path tests
-   using a mocked `/api/contact` boundary.
+#### Design evidence and decision required
+
+- The approved resting form is Contact desktop `48:1595` and mobile
+  `144:1236`. It has no error or loading variant.
+- The approved success composition is desktop node `153:75`, already rendered
+  by `UiSuccessNotice`; no separate mobile success node exists.
+- Therefore implementation must not silently invent a red invalid state,
+  spinner, reset CTA or a new shared form component.
+
+Before code, the owner must approve this minimal treatment for the states
+absent from Figma:
+
+1. Show a short text prompt beneath each invalid field and set
+   `aria-invalid`/`aria-describedby`; do not rely on colour alone. Proposed
+   prompts are: “Enter your name using 2–100 characters.”, “Enter a valid email
+   address.”, “Enter a message using 10–2,000 characters.” and “Accept the
+   Privacy Policy to continue.”
+2. Show the ADR-approved generic request failure copy in a form-level
+   `role="alert"`, retaining every entered value and offering the existing
+   `Send request` button again.
+3. Replace the form with the existing `UiSuccessNotice` after `201 accepted`,
+   using the exact Figma success copy and its existing responsive, column
+   layout at 390 px as well as 1440 px. Add the existing UI-kit button “Start a
+   new request”; it restores the cleared form and is full-width at 390 px.
+
+#### Execution plan
+
+1. **E3.1 — Preserve the contract at the UI boundary**
+   - Keep state local to `HomeContact.vue`; a composable, store and new package
+     have no second consumer and are out of scope.
+   - Reuse `contactRequestSchema` and the shared response schemas from
+     `shared/contracts/contact-request.ts` so browser feedback uses the same
+     trim, length and consent rules as `/api/contact`.
+   - Add a typed local state machine: `idle`, `submitting`, `success` and
+     `error`. It makes the submit handler single-flight and prevents a second
+     request while the first is pending.
+
+2. **E3.2 — Implement native, accessible submission**
+   - Change the CTA to `type="submit"` and bind `@submit.prevent` to the
+     `<form>` so click and Enter use the same path; retain `novalidate` because
+     the shared contract supplies consistent custom feedback.
+   - Submit the exact approved JSON shape — including an accessibility-hidden,
+     keyboard-inaccessible `website` honeypot — with same-origin `$fetch` to
+     `/api/contact`. Do not call Notion from the browser or add client-only
+     rendering.
+   - Validate locally before I/O. Map a `400 invalid_request` response by field
+     name; map every other approved non-success response and network failure to
+     the generic failure notice, without rendering vendor or transport detail.
+   - During `submitting`, disable all fields, consent and submit button, expose
+     `aria-busy`, and replace the button label with the ADR-approved
+     “Sending…”. On failure restore interactivity and preserve values; on
+     success clear local values, show `UiSuccessNotice` and offer the approved
+     existing-UI-kit “Start a new request” button.
+
+3. **E3.3 — Repair semantic relationships without changing resting layout**
+   - Associate each existing visually hidden label, input and inline error by
+     stable IDs. Put focus on the first invalid control after a failed submit;
+     announce generic delivery failure with `role="alert"` and retain
+     `UiSuccessNotice`’s `role="status"`.
+   - Split the consent text, checkbox label and Privacy Policy link so the
+     anchor is no longer nested inside `<label>`. Keep one named native checkbox
+     and its current focus treatment.
+   - Add only token-based, mobile-first error spacing and text styling after
+     the owner decision; do not alter the owner-accepted resting consent/link
+     contrast debt or introduce animation.
+
+4. **E3.4 — Replace obsolete visual-only proof**
+   - Update the Nuxt component test in `test/nuxt/home-epic-four.test.ts` from
+     the obsolete `button[type="button"]` contract to observable form
+     semantics, field associations, loading disablement, invalid focus,
+     success status and retry/value retention. Mock only the `$fetch` boundary.
+   - Replace the visual-only Contact Playwright scenario in
+     `test/e2e/home.spec.ts` with route-intercepted `/api/contact` user paths:
+     keyboard Enter success, client validation with no request, one in-flight
+     request despite repeated submit, server failure and retry, and success
+     status. No test contacts Notion.
+   - Run the Contact paths at 390 px and 1440 px; retain the existing 320/768
+     document-overflow proof and add no snapshot baseline unless a deterministic
+     visual mismatch needs review.
+
+5. **E3.5 — Epic gate and documentation state**
+   - First run focused Nuxt and Playwright tests, then typecheck, lint,
+     Stylelint, static quality, build, generate/link inspection, secrets and
+     diff checks on Node 24/pnpm 11.
+   - Inspect the real browser at 390 px and 1440 px in resting, invalid,
+     submitting, failure and success states; record the result in this roadmap.
+   - Update the ADR and this plan only with delivered behaviour and test
+     evidence. Do not stage, commit, push or begin Epic 4 without a separate
+     owner instruction.
 
 Acceptance: keyboard submit, validation, loading, duplicate-submit protection,
-success and retry work at 1440 px and 390 px without overflow.
+success and retry work at 1440 px and 390 px without overflow. The browser
+submits no secret and the test suite performs no live Notion write.
+
+Delivery evidence — 2026-08-13: `HomeContact` now uses native form submit
+semantics and the shared contact contract for client validation. Inline prompts
+are associated with invalid fields and focus follows the visual field order;
+delivery failures keep values and announce a generic retryable error. The form
+disables during one pending request, then shows the existing `UiSuccessNotice`.
+The approved existing UI-kit “Start a new request” button restores the cleared
+form and takes the full available width at the 390 px endpoint. Contact Nuxt
+tests mock only `$fetch`; Playwright intercepts `/api/contact`, so verification
+does not write to Notion. Node 24.19.0/pnpm 11.19.0 checks passed: formatting,
+typecheck, ESLint (15 pre-existing warnings; no errors), Stylelint, Slop Scan,
+64 Vitest tests, dependency/cycle checks, 34 desktop/mobile Playwright tests
+with the existing intentional skips, production build, static generation/link
+inspection, secret scan and diff check. Browser proof covered normal, invalid,
+pending, failure, retry and success states; the existing Nuxt hydration/LCP
+hints remain unrelated baseline diagnostics.
 
 ### Epic 4 — deployment readiness and owner review
 
