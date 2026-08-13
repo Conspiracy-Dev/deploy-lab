@@ -1,6 +1,6 @@
 # VPS deployment plan and roadmap
 
-Status: Epic 0 and Epic 1 complete; Epic 2 implementation prepared, external validation blocked
+Status: Epic 0 and Epic 1 complete; Epic 2 protected delivery boundary ready, publication validation blocked
 
 Last updated: 2026-08-13
 
@@ -41,10 +41,11 @@ HTTPS after its DNS record is ready.
 - VPS discovery confirmed Ubuntu 24.04 amd64, one vCPU, 961 MiB RAM, 6.7 GiB
   free disk, free TCP 80/443, outbound HTTPS, no Docker, inactive firewall,
   and SSH currently allowing root and password login.
-- The source repository is public (`iShavlovsky/deploy-lab`); the selected
+- The source repository is public (`Conspiracy-Dev/deploy-lab`); the selected
   delivery model is GitHub Actions, public GHCR image, direct DNS A record, one
   Caddy runtime container, and a manually approved production workflow.
-- `iShavlovsky` is the selected GitHub Environment production reviewer. A
+- `f7one` and `iShavlovsky` have repository `admin` access. `iShavlovsky` is
+  the selected GitHub Environment production reviewer. A
   provider rescue console is available for the SSH-hardening step.
 - Secrets and private keys belong only in GitHub Environment secrets or the
   local SSH agent. They must never enter this repository, images, command logs,
@@ -125,7 +126,7 @@ local HTTP; no image contains `.env`, source checkout, Node runtime, or secrets.
 
 ### Epic 2 — CI, registry, and approved delivery
 
-Status: Implementation prepared; external GitHub validation blocked
+Status: Protected delivery boundary ready; GHCR publication validation blocked
 
 Goal: publish a reproducible `linux/amd64` static image for every approved
 `main` commit, without automatically touching the VPS. Prepare the protected
@@ -140,10 +141,9 @@ Constraints and planning findings:
 
 - The repository is public and its default branch is `main`. No GHCR package
   named `deploy-lab` exists yet.
-- The current account `f7one` has repository role `write`, not administrative
-  access. The GitHub Actions policy endpoints return HTTP 403. Repository owner
-  `iShavlovsky` must apply the required GitHub settings or explicitly grant the
-  required administrative access.
+- The repository was transferred to `Conspiracy-Dev`. Both `f7one` and
+  `iShavlovsky` have repository `admin` access; `f7one` can apply GitHub
+  settings while `iShavlovsky` remains the independent production reviewer.
 - Existing `.github/workflows/ci.yml` references moving action tags. Epic 2
   must replace every action reference in the existing and new workflows with a
   verified full commit SHA from its official upstream repository.
@@ -156,12 +156,11 @@ Constraints and planning findings:
 
 Execution order for the remaining work:
 
-1. **Partial — confirm GitHub ownership path and verification tool.**
-   `actionlint` 1.7.12 is installed through Homebrew. The current account
-   remains `write`-only; obtain owner `iShavlovsky`'s confirmation for Actions
-   policy and Environment settings. Record the actual configuration and tool
-   version as evidence; do not store tokens, private keys, or `known_hosts`
-   values in the repository.
+1. **Complete — confirm GitHub ownership path and verification tool.**
+   `actionlint` 1.7.12 is installed through Homebrew. The current account has
+   repository `admin` access; Actions are enabled with a read-only default
+   token and mandatory full-SHA action pinning. Do not store tokens, private
+   keys, or `known_hosts` values in the repository.
 2. **Complete — harden the workflow supply chain.** Resolve each required action
    from its official repository and pin it by full commit SHA, including the
    existing quality workflow. Set workflow/job permissions explicitly to the
@@ -171,18 +170,19 @@ Execution order for the remaining work:
 3. **Implemented; awaiting `main` and final domain — add container CI and immutable GHCR publication.** Add a Docker
    verification job for pull requests using the existing static-container smoke
    test, with a non-production build URL. On a successful `main` run, build and
-   publish only `linux/amd64` to `ghcr.io/ishavlovsky/deploy-lab`, tagging it
+   publish only `linux/amd64` to `ghcr.io/conspiracy-dev/deploy-lab`, tagging it
    with the full source SHA and recording OCI source/revision metadata. Resolve
    and report the resulting registry digest; never publish `latest`.
 4. **Blocked — create and verify the package boundary.** After the first
    reviewed successful publication, confirm that the package is linked to this
-   repository through OCI source metadata. Repository owner `iShavlovsky` must
+   repository through OCI source metadata. Repository owner `f7one` must
    explicitly change it to public, acknowledging that GitHub does not permit reverting a
    public container package to private. Prove an anonymous pull of the exact
    digest before relying on it from the VPS.
-5. **Implemented; external configuration blocked — create the protected manual-release boundary.** Repository owner
-   `iShavlovsky` creates GitHub Environment `production`, restricts it to
-   `main`, and assigns themselves as required reviewer. Add a concurrency-protected
+5. **Complete — create the protected manual-release boundary.** Repository
+   owner `f7one` created GitHub Environment `production`, restricted it to
+   `main`, and assigned `iShavlovsky` as required reviewer with self-review
+   disabled. Add a concurrency-protected
    `workflow_dispatch` workflow accepting exactly one full 40-character commit
    SHA. It verifies that the SHA is reachable from `main`, resolves the matching
    immutable GHCR digest, and exposes the selected release in the protected
@@ -211,9 +211,12 @@ the `main`-only publication job. `release.yml` accepts one lowercase
 digest, serializes releases with `production-release`, and performs no SSH
 operation or use of deployment secrets. Publication is deliberately skipped
 until repository variable `PRODUCTION_SITE_URL` is set to the real canonical
-origin. The remaining proof requires a reviewed push to `main`, owner-created
-Environment `production`, explicit package public visibility, and the final
-domain; none were changed in this epic.
+origin. The `production` Environment is now configured exactly as specified:
+only branch `main`, `iShavlovsky` as required reviewer, and self-review
+disabled. Repository policy now requires full-SHA action pinning while keeping
+the default workflow token read-only. The remaining proof requires a reviewed
+push to `main`, explicit package public visibility, and the final domain; none
+were changed in this epic.
 
 The full local closing gate also passed: the Docker smoke test and Compose
 configuration validation, static quality checks (42 unit tests), dependency

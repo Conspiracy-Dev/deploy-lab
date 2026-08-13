@@ -31,7 +31,7 @@ production image cannot be accepted before it is rebuilt with the final
    `sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d`.
 3. GitHub Actions verifies the static container on pull requests and publishes
    an immutable `linux/amd64` image for each full `main` commit SHA to the
-   public GitHub Container Registry package `ghcr.io/ishavlovsky/deploy-lab`
+   public GitHub Container Registry package `ghcr.io/conspiracy-dev/deploy-lab`
    only after the owner supplies `PRODUCTION_SITE_URL`. The package is linked to
    this repository through OCI source metadata. The server pulls anonymously
    and holds no GitHub token. No placeholder origin is published because it
@@ -91,11 +91,15 @@ image, loopback-only local Compose configuration, response smoke test, and globa
 Google font provider. The image was verified locally and for `linux/amd64`; no
 VPS, DNS, registry, GitHub Environment, or production service was changed.
 
-Epic 2 implementation began on 2026-08-13. Workflow actions are pinned to
+Epic 2 implementation began on 2026-08-13. The repository was transferred to
+the `Conspiracy-Dev` organization; the OCI namespace is therefore
+`ghcr.io/conspiracy-dev/deploy-lab`. Workflow actions are pinned to
 verified full commit SHAs; pull requests gain a static-container smoke job; and
 a manual SHA/digest selection workflow is concurrency-protected and references
-the future `production` Environment. `actionlint` is installed locally through
-Homebrew. No workflow has been pushed or run from `main`; no GHCR package,
-public registry visibility, Environment, secret, GitHub setting, VPS call, or
-production release has been created. Those external steps remain blocked on the
-repository owner `iShavlovsky` and the final canonical domain.
+the `production` Environment. `actionlint` is installed locally through
+Homebrew. The repository now enforces full-SHA action pinning and has a
+read-only default workflow token; its `production` Environment accepts only
+`main`, requires review by `iShavlovsky`, and prevents self-review. No workflow
+has been pushed or run from `main`; no GHCR package, public registry visibility,
+secret, VPS call, or production release has been created. Those external steps
+remain blocked on the final canonical domain and an approved push to `main`.
