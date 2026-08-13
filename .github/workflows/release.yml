@@ -24,6 +24,8 @@ jobs:
       image: ${{ steps.image.outputs.image }}
     env:
       IMAGE_NAME: ghcr.io/conspiracy-dev/deploy-lab
+      DEPLOY_HOST: ${{ vars.PRODUCTION_HOST }}
+      DEPLOY_USER: ${{ vars.PRODUCTION_SSH_USER }}
       REVISION: ${{ inputs.revision }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -48,3 +50,30 @@ jobs:
             printf "%s\n\n" "### Selected production image"
             printf "\`%s@%s\`\n" "$IMAGE_NAME" "$digest"
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Configure SSH transport
+        env:
+          DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: |
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KNOWN_HOSTS"
+          test -n "$DEPLOY_SSH_PRIVATE_KEY"
+
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+      - name: Deploy the selected digest
+        env:
+          IMAGE_REF: ${{ steps.image.outputs.image }}
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            -i "$HOME/.ssh/id_ed25519" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "sudo /usr/local/sbin/deploy-lab $IMAGE_REF"

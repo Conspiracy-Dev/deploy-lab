@@ -1,6 +1,6 @@
 # VPS deployment plan and roadmap
 
-Status: Epic 0 and Epic 1 complete; Epic 2 protected delivery boundary ready, publication validation blocked
+Status: Epic 0–2 complete; Epic 3 implemented, with provider-console acceptance checks pending
 
 Last updated: 2026-08-13
 
@@ -22,8 +22,7 @@ HTTPS after its DNS record is ready.
 
 - Add a backend, database, form delivery, CMS, user uploads, or runtime Node
   server.
-- Deploy before the owner supplies a final domain and configures its DNS A
-  record.
+- Deploy before Epic 3 prepares and hardens the VPS.
 - Add Kubernetes, Swarm, Watchtower, Certbot, a second proxy, zero-downtime
   slots, monitoring, or off-host backups in v1.
 - Fix unrelated UI, ESLint, or development-hints debt in this branch.
@@ -38,15 +37,21 @@ HTTPS after its DNS record is ready.
 - Local generation, quality checks, Playwright, Lighthouse, and the Docker
   container smoke test passed on the pinned toolchain. Docker Desktop 4.86.0,
   Docker Engine 29.7.2, and Docker Compose 5.3.1 are available locally.
-- VPS discovery confirmed Ubuntu 24.04 amd64, one vCPU, 961 MiB RAM, 6.7 GiB
-  free disk, free TCP 80/443, outbound HTTPS, no Docker, inactive firewall,
-  and SSH currently allowing root and password login.
+- Read-only VPS audit on 2026-08-13 confirmed Ubuntu 24.04.4 amd64, one vCPU,
+  961 MiB RAM, no swap, 6.7 GiB free disk, free TCP 80/443, outbound HTTPS, no
+  Docker, inactive UFW, and SSH currently allowing root and password login.
+  No `deployer` user exists. `unattended-upgrades` is enabled, while 179 package
+  updates remain pending. The provider firewall policy is not yet confirmed.
 - The source repository is public (`Conspiracy-Dev/deploy-lab`); the selected
   delivery model is GitHub Actions, public GHCR image, direct DNS A record, one
   Caddy runtime container, and a manually approved production workflow.
 - `f7one` and `iShavlovsky` have repository `admin` access. `iShavlovsky` is
   the selected GitHub Environment production reviewer. A
   provider rescue console is available for the SSH-hardening step.
+- Canonical domain `noash.net` resolves by A record to `138.124.85.193`; it has
+  no AAAA record. Repository variable `PRODUCTION_SITE_URL` is set to
+  `https://noash.net`. The existing `www.noash.net` A record resolves elsewhere
+  and is intentionally outside this release pending a separate redirect choice.
 - Secrets and private keys belong only in GitHub Environment secrets or the
   local SSH agent. They must never enter this repository, images, command logs,
   or documentation.
@@ -167,7 +172,7 @@ Execution order for the remaining work:
    minimum needed: read-only contents by default, then `packages: write` only
    in the GHCR publishing job. Keep pull-request builds unable to push packages
    or read production secrets.
-3. **Implemented; awaiting `main` and final domain — add container CI and immutable GHCR publication.** Add a Docker
+3. **Implemented; awaiting `main` — add container CI and immutable GHCR publication.** Add a Docker
    verification job for pull requests using the existing static-container smoke
    test, with a non-production build URL. On a successful `main` run, build and
    publish only `linux/amd64` to `ghcr.io/conspiracy-dev/deploy-lab`, tagging it
@@ -211,12 +216,13 @@ the `main`-only publication job. `release.yml` accepts one lowercase
 digest, serializes releases with `production-release`, and performs no SSH
 operation or use of deployment secrets. Publication is deliberately skipped
 until repository variable `PRODUCTION_SITE_URL` is set to the real canonical
-origin. The `production` Environment is now configured exactly as specified:
+origin. It is now set to `https://noash.net`. The `production` Environment is
+configured exactly as specified:
 only branch `main`, `iShavlovsky` as required reviewer, and self-review
 disabled. Repository policy now requires full-SHA action pinning while keeping
 the default workflow token read-only. The remaining proof requires a reviewed
-push to `main`, explicit package public visibility, and the final domain; none
-were changed in this epic.
+push to `main` and explicit package public visibility. No image, registry
+package, secret, VPS service, or production release was changed in this epic.
 
 The full local closing gate also passed: the Docker smoke test and Compose
 configuration validation, static quality checks (42 unit tests), dependency
@@ -227,31 +233,99 @@ outside this deployment scope and caused no test failure.
 
 ### Epic 3 — VPS preparation and hardening
 
-Status: Pending Epic 2
+Status: Implementation complete on 2026-08-13; closing acceptance is blocked
+only on provider-firewall confirmation and a provider-console reboot proof.
+No application image has been deployed, and Epic 4 must not start yet.
 
-1. Install the official Docker Engine and Compose plugin, create persistent
-   deployment directories, and configure log rotation.
-2. Create `deployer`, its two key-based access paths, and a root-owned,
-   digest-only deployment wrapper with automatic rollback on failed smoke.
-   After the key and host identity are verified, place them as GitHub Environment
-   `production` secrets and connect the already protected manual-release
-   workflow to this wrapper.
-3. Enable firewall rules for TCP 22/80/443 and verify Docker packet filtering.
-4. Verify a second key-only SSH session and rescue console, then disable root
-   and password SSH access.
-5. Prove Docker restart after reboot and retain Caddy state across recreation.
+Goal: prepare `138.124.85.193` to run one immutable Caddy image securely,
+without cloning this repository or storing GitHub credentials on the host.
 
-Acceptance: the VPS exposes no service other than SSH/HTTP/HTTPS, does not
-store GitHub credentials, and can deploy or roll back only through the approved
-wrapper.
+Non-goals: do not build the Nuxt application on the VPS; deploy a placeholder
+or IP-only site; enable `www.noash.net`; add swap, a database, a control panel,
+Docker group membership for `deployer`, unattended container updates, or a
+second proxy.
+
+Constraints and planning findings:
+
+- Ubuntu 24.04.4 amd64 is patched and running after a verified reboot. It has
+  one vCPU, 961 MiB RAM, no swap, and about 6.1 GiB free disk after Docker and
+  Caddy validation image installation. Server-side application builds remain
+  out of scope.
+- Docker Engine 29.7.2 and Compose 5.4.0 are installed from Docker's official
+  apt repository; `docker.service` is enabled. `/etc/docker/daemon.json` uses
+  the `local` driver with 10 MiB files and three retained files.
+- SSH exposes TCP 22 only. Root and password authentication are disabled.
+  `deployer` has the Actions ED25519 key fingerprint
+  `SHA256:kWHFb/fFjkiJOPuKmj6CzCKtPTTWfa++awLgebh1vQc` and the owner recovery
+  RSA key fingerprint `SHA256:DPO9NWfnu2+Pwu4l0e+rMW+PIdZk8x52vwB8g/zcf44`.
+  The Actions key is forced to the deployment command; the owner key is an
+  unprivileged shell with no sudo capability except the digest-only wrapper.
+- UFW is enabled with default-deny inbound traffic and allows only TCP 22, 80,
+  and 443. Docker's `DOCKER-USER` chain is present and empty, and no container
+  currently publishes a port. Provider-level firewall rules cannot be inspected
+  with the available tools and still need owner confirmation.
+- `infra/production/` is the domain-aware Caddy/Compose configuration for
+  `noash.net`; the root `compose.yaml` remains loopback-only for local smoke
+  tests. The server's root-owned copy is under `/opt/deploy-lab` and has not
+  started an application container.
+
+Execution order for the remaining work:
+
+1. **Complete — maintenance and key boundary.** A maintenance window and rescue
+   console were approved. The two public keys were generated/verified by
+   fingerprint only; no private key was copied to the VPS or repository.
+2. **Complete — patch and baseline.** The interrupted package update was
+   repaired, applied, and followed by a successful key-authenticated reboot.
+   The original `/etc/sudoers` was unexpectedly empty after the repair; it was
+   restored and validated with `visudo` before adding any delegated rule.
+3. **Complete — minimal runtime.** Docker and Compose came from Docker's
+   official apt repository; no user joined the Docker group. The Caddy runtime
+   image was pulled solely to validate its production configuration.
+4. **Complete — privileged deployment boundary.** `deployer` can use only
+   `/usr/local/sbin/deploy-lab` through a strict sudoers digest regex. The
+   root-owned wrapper rejects malformed inputs, tags, extra arguments, and
+   arbitrary images; it preserves a previous digest and rolls back after a
+   failed healthy rollout. A deliberate non-existent digest was rejected after
+   Compose validation and no service was started.
+5. **Complete — runtime configuration.** `infra/production/Caddyfile` and
+   `compose.yaml` were copied root-owned to `/opt/deploy-lab`. Caddy and Compose
+   validate successfully with `DOMAIN=noash.net`; Caddy state volumes persist
+   by name, and the production compose file is the sole future publisher of
+   TCP 80/443.
+6. **Partially complete — network access.** UFW permits 22/80/443 with
+   default-deny inbound traffic; external TCP 22 and closed Docker TCP 2375
+   were checked. Provider-firewall rules cannot be verified from this workspace
+   and must be confirmed before Epic 4.
+7. **Complete — SSH hardening.** Two independent `deployer` key logins passed;
+   the Actions key cannot run arbitrary commands, `sshd -t` passed, then root
+   login and password/KbdInteractive authentication were disabled. Root SSH
+   rejection and both constrained deployment paths were rechecked.
+8. **Partially complete — host acceptance.** `docker.service` is enabled,
+   logging is bounded, ownership and wrapper rejection were proven, and the
+   Environment secrets/variables were added after the server path worked.
+   A post-Docker reboot persistence test requires the unavailable provider
+   rescue-console tool, so it remains the explicit stop condition. The Caddy
+   volume recreation and successful digest pull await the first published GHCR
+   image in later epics.
+
+Acceptance status: access, privilege, local firewall, runtime configuration,
+and Environment-secret boundaries are verified. Provider-firewall confirmation
+and a post-Docker reboot persistence test remain open; do not start Epic 4
+until both have evidence.
+
+Plain-language summary: we will prepare the server to run only the already
+built site image, not the source code. Before locking down remote access, two
+independent SSH keys and the rescue console are verified so you cannot lose
+access to the VPS. The first public site release still waits for an approved
+image from GitHub; this epic makes that release safe to perform later.
 
 ### Epic 4 — domain, TLS, and first release
 
-Status: Blocked until the owner supplies the final domain and creates its A
-record
+Status: Pending Epic 3 closing acceptance; canonical domain and public A record are ready
 
-1. Set `PRODUCTION_SITE_URL=https://<domain>` and `DOMAIN=<domain>` in GitHub
-   Environment; rebuild the selected SHA image with that exact origin.
+1. `PRODUCTION_SITE_URL=https://noash.net` is already set as a repository
+   variable for the publisher. The production host configuration fixes
+   `DOMAIN=noash.net`; rebuild the selected SHA image with that exact origin.
 2. Wait for public A-record resolution to `138.124.85.193`, then approve and
    run the manual release workflow.
 3. Prove TLS, HTTP-to-HTTPS, routes, assets, 404 status, canonical/sitemap/
@@ -323,13 +397,42 @@ static quality (including 42 unit tests), dependency checks, `pnpm build`,
 production-like static generation, Playwright (25 passed, 5 intentional skips),
 Lighthouse, secret scanning, Contour checks, and `git diff --check` all passed.
 
+### Epic 3 evidence
+
+Recorded 2026-08-13: the VPS completed its package repair/update and reboot;
+`dpkg --audit` was clean, fresh SSH key authentication worked, and Docker Engine
+29.7.2 with Compose 5.4.0 was installed from Docker's Ubuntu repository.
+`docker info` reports the `local` logging driver. The production Caddyfile
+validated against the pinned Caddy image, and production Compose validated with
+an intentionally non-existent but syntactically correct immutable image digest.
+No application container was created.
+
+The Caddy/Compose files and deployment scripts were installed root-owned under
+`/opt/deploy-lab` and `/usr/local/sbin`. A non-existent GHCR digest reached
+Compose validation then was denied by the registry, returning the expected
+wrapper failure without starting a service. The forced Actions key rejected an
+arbitrary command; the owner key remained an unprivileged `deployer` login;
+both could reach only the validated deployment boundary. `visudo -c` and
+`sshd -t` passed. UFW is active with only 22/80/443 allowed, root SSH and all
+password/KbdInteractive SSH are denied, external SSH succeeds, and Docker TCP
+2375 is closed.
+
+The GitHub `production` Environment has `PRODUCTION_HOST=138.124.85.193` and
+`PRODUCTION_SSH_USER=deployer`, plus the deploy private key and verified
+`known_hosts` as Environment secrets. `release.yml` now writes these secrets
+only to the ephemeral GitHub runner and invokes the digest-only wrapper with
+strict host-key verification. `actionlint`, shell parsing, local Caddy
+validation, and production Compose validation pass. Provider-firewall
+confirmation and the post-Docker reboot persistence test require the unavailable
+provider rescue-console tool; they remain open and prevent Epic 4.
+
 ## Risk and stop condition
 
 - Do not begin Epic 2 until the owner reviews and explicitly approves the Epic 1
   implementation and its local commit.
-- Stop Epic 4 until the owner provides the exact canonical domain and its A
-  record resolves publicly. Do not publish an IP-based site with placeholder
-  canonical URLs.
+- Stop Epic 4 until Epic 3 completes VPS preparation. Do not publish an
+  IP-based site with placeholder canonical URLs. Do not serve `www.noash.net`
+  until its DNS and redirect policy are explicitly approved.
 - Stop a VPS rollout immediately on host-key mismatch, failed second SSH login,
   invalid SSH configuration, occupied 80/443, failed image validation,
   failed health/smoke check, or wrong canonical origin; retain or restore the

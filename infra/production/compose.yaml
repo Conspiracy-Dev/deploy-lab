@@ -1,0 +1,30 @@
+services:
+  site:
+    image: ${IMAGE_REF:?Set IMAGE_REF to an immutable GHCR digest}
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN to the canonical production domain}
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget --spider --quiet --no-check-certificate --header="Host: $$DOMAIN" https://127.0.0.1/',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    ports:
+      - '80:80'
+      - '443:443'
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

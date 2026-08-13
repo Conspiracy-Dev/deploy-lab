@@ -9,13 +9,15 @@
 DeployLab is a static Nuxt 4 site: `pnpm generate` creates the deployable
 `.output/public` directory and the application has no runtime database, API,
 user uploads, or functional form delivery. The production host is VPS
-`138.124.85.193`, verified as an otherwise clean Ubuntu 24.04 amd64 instance
-with one vCPU, 961 MiB RAM, 6.7 GiB free disk space, and free TCP ports 80 and 443. Docker is not installed yet.
+`138.124.85.193`, verified as an Ubuntu 24.04 amd64 instance with one vCPU,
+961 MiB RAM, and 6.7 GiB free disk space before Docker installation.
 
-The canonical domain has not been supplied. `NUXT_PUBLIC_SITE_URL` is a
+The canonical domain is `noash.net`; its public A record resolves to
+`138.124.85.193`, and it has no AAAA record. `NUXT_PUBLIC_SITE_URL` is a
 build-time contract for canonical links, `robots.txt`, and the sitemap, so a
-production image cannot be accepted before it is rebuilt with the final
-`https://<domain>` value.
+production image must be rebuilt with `https://noash.net`. The unrelated
+`www.noash.net` A record currently resolves to a different address and is not
+part of this release without a separate redirect decision.
 
 ## Decision
 
@@ -102,4 +104,27 @@ read-only default workflow token; its `production` Environment accepts only
 `main`, requires review by `iShavlovsky`, and prevents self-review. No workflow
 has been pushed or run from `main`; no GHCR package, public registry visibility,
 secret, VPS call, or production release has been created. Those external steps
-remain blocked on the final canonical domain and an approved push to `main`.
+remain blocked on an approved push to `main`. Repository variable
+`PRODUCTION_SITE_URL` is set to `https://noash.net`; no image was published as
+a result.
+
+Epic 3 implemented the production host boundary on 2026-08-13. Ubuntu security
+updates were repaired and applied, then the VPS was rebooted and key access was
+rechecked. Docker Engine 29.7.2 and Compose 5.4.0 were installed from Docker's
+official Ubuntu repository with the bounded `local` logging driver. The host
+now holds only root-owned runtime files under `/opt/deploy-lab`, a digest-only
+rollback wrapper, persistent Caddy volumes, and the dedicated `deployer`
+account; it has no repository checkout, Node toolchain, or GitHub credential.
+The previously empty `/etc/sudoers` file was restored to a minimal valid policy
+with `/etc/sudoers.d` included before the constrained `deployer` rule was
+enabled. SSH root and password authentication are disabled after independent
+owner and Actions-key tests; UFW permits only TCP 22, 80, and 443.
+
+The protected `production` Environment now stores the Actions private deploy
+key and the verified server `known_hosts` value, plus non-secret host and user
+variables. The manual workflow copies those values only into the ephemeral
+runner SSH directory and can request the server wrapper with the resolved
+digest. No GHCR application image exists, no site container has been started,
+and no DNS or `www` change was made. A provider-firewall confirmation and a
+post-Docker reboot persistence test require the provider rescue-console tool;
+they remain the explicit Epic 3 closing blocker before any first release.

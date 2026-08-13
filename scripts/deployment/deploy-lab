@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly compose_file='/opt/deploy-lab/compose.yaml'
+readonly state_dir='/var/lib/deploy-lab'
+readonly current_env_file="$state_dir/current-image.env"
+readonly previous_env_file="$state_dir/previous-image.env"
+readonly domain='noash.net'
+readonly image_pattern='^ghcr\.io/conspiracy-dev/deploy-lab@sha256:[0-9a-f]{64}$'
+
+usage() {
+  echo "Usage: deploy-lab ghcr.io/conspiracy-dev/deploy-lab@sha256:<64-lowercase-hex>" >&2
+}
+
+if [[ $# -ne 1 || ! $1 =~ $image_pattern ]]; then
+  usage
+  exit 64
+fi
+
+readonly image_ref="$1"
+
+if [[ ! -f $compose_file ]]; then
+  echo "Missing runtime configuration: $compose_file" >&2
+  exit 78
+fi
+
+install -d -m 0750 "$state_dir"
+candidate_env_file="$(mktemp "$state_dir/candidate-image.XXXXXX")"
+cleanup() {
+  rm -f "$candidate_env_file"
+}
+trap cleanup EXIT
+
+printf 'IMAGE_REF=%s\nDOMAIN=%s\n' "$image_ref" "$domain" > "$candidate_env_file"
+
+compose() {
+  docker compose --env-file "$1" -f "$compose_file" "${@:2}"
+}
+
+verify_running_site() {
+  local attempt
+
+  for attempt in {1..18}; do
+    if curl --fail --silent --show-error --resolve "$domain:443:127.0.0.1" "https://$domain/" >/dev/null; then
+      return 0
+    fi
+    sleep 5
+  done
+
+  return 1
+}
+
+restore_previous_release() {
+  if [[ ! -f $previous_env_file ]]; then
+    echo 'No previous image is available; stopping the failed first rollout.' >&2
+    compose "$current_env_file" down --remove-orphans || true
+    rm -f "$current_env_file"
+    return 1
+  fi
+
+  echo 'Restoring the previous image digest.' >&2
+  install -m 0640 "$previous_env_file" "$current_env_file"
+  compose "$current_env_file" pull site
+  compose "$current_env_file" up --detach --remove-orphans
+  verify_running_site
+}
+
+if [[ -f $current_env_file ]]; then
+  install -m 0640 "$current_env_file" "$previous_env_file"
+fi
+
+if ! compose "$candidate_env_file" config --quiet; then
+  echo 'Compose configuration validation failed.' >&2
+  exit 78
+fi
+
+if ! compose "$candidate_env_file" pull site \
+  || ! docker run --rm --network none -e "DOMAIN=$domain" \
+    -v /opt/deploy-lab/Caddyfile:/etc/caddy/Caddyfile:ro \
+    "$image_ref" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile; then
+  echo 'The candidate image could not be pulled or its Caddy configuration is invalid.' >&2
+  exit 70
+fi
+
+install -m 0640 "$candidate_env_file" "$current_env_file"
+
+if compose "$current_env_file" up --detach --remove-orphans && verify_running_site; then
+  echo "Release is healthy: $image_ref"
+  exit 0
+fi
+
+echo 'Candidate rollout failed.' >&2
+restore_previous_release
