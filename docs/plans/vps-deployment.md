@@ -1,6 +1,6 @@
 # VPS deployment plan and roadmap
 
-Status: Epic 0–3 complete; Epic 4 is pending an approved first release
+Status: Epic 0–3 complete; Epic 4 plan ready for approval
 
 Last updated: 2026-08-13
 
@@ -316,20 +316,84 @@ image from GitHub; this epic makes that release safe to perform later.
 
 ### Epic 4 — domain, TLS, and first release
 
-Status: Pending an approved first release; canonical domain and public A record are ready
+Status: Plan ready; implementation requires an approved reviewed merge and a
+separate approval for the first public release. Canonical domain and public A
+record are ready; the GHCR package does not yet exist.
 
-1. `PRODUCTION_SITE_URL=https://noash.net` is already set as a repository
-   variable for the publisher. The production host configuration fixes
-   `DOMAIN=noash.net`; rebuild the selected SHA image with that exact origin.
-2. Wait for public A-record resolution to `138.124.85.193`, then approve and
-   run the manual release workflow.
-3. Prove TLS, HTTP-to-HTTPS, routes, assets, 404 status, canonical/sitemap/
-   robots/schema output, security/cache headers, desktop/mobile browser smoke,
-   and production Lighthouse.
-4. Record the deployed SHA and digest in this roadmap.
+Goal: publish the reviewed static image for `https://noash.net`, deploy its
+immutable digest once through the protected manual workflow, and verify the
+canonical HTTPS site end-to-end without enabling `www.noash.net`.
 
-Acceptance: the site is reachable on its canonical HTTPS origin and all static
-SEO output uses precisely that origin.
+Non-goals: do not change DNS, introduce a `www` redirect, grant broader VPS or
+GitHub privileges, add a runtime service, or rehearse rollback. The latter is
+Epic 5.
+
+Planning findings:
+
+- `noash.net` has the expected A record `138.124.85.193` and no AAAA record.
+  The unrelated `www.noash.net` A record still targets a different server and
+  must not receive traffic in this epic.
+- `PRODUCTION_SITE_URL=https://noash.net` is already present as a repository
+  variable. It is consumed while the image is built, not during deployment;
+  the image cannot be repaired by changing a VPS environment variable later.
+- The production Environment accepts only `main`, requires `iShavlovsky` to
+  approve, prevents self-review, and stores the deploy SSH key and known-host
+  data. The release workflow accepts only a full `main` SHA, resolves its
+  digest, and invokes the VPS wrapper with that digest.
+- At planning time `codex/vps-deploy` is clean but six commits ahead of
+  `origin/main`; GitHub has no `deploy-lab` container package yet. Therefore
+  the first release must follow a reviewed merge to `main` and the successful
+  `publish-image` CI job; a local image is never deployable production proof.
+
+Execution order for the remaining work:
+
+1. **Pending — approve and deliver the reviewed release boundary.** Review the
+   six deployment commits on `codex/vps-deploy`, push them only after owner
+   approval, and create/merge a reviewed pull request into `main`. Record the
+   resulting full `main` SHA. Stop if branch protection or any required CI job
+   fails; do not substitute a local SHA.
+2. **Pending — publish and verify the immutable image.** Confirm the `main`
+   workflow ran all static, browser, Lighthouse, container, and `publish-image`
+   jobs successfully. Verify its build argument was exactly
+   `NUXT_PUBLIC_SITE_URL=https://noash.net`; record the produced `linux/amd64`
+   digest and OCI source/revision labels. Confirm the new GHCR package is public
+   so the VPS can pull it anonymously. Stop if publication is absent, private,
+   tagged without a digest, or has another canonical origin.
+3. **Pending — preflight public reachability.** Immediately before release,
+   resolve public A and AAAA records from more than one resolver, confirm only
+   `noash.net` A resolves to `138.124.85.193`, and check TCP 80/443 reach the
+   VPS. Verify no existing service owns those ports and the wrapper still
+   rejects a safe invalid digest. Stop on DNS drift, an unexpected AAAA record,
+   host-key mismatch, or a reachable management port.
+4. **Pending — execute the protected first release.** Dispatch `select
+production release` with the recorded full `main` SHA and obtain the required
+   Environment approval from `iShavlovsky`. Observe its digest resolution and
+   SSH-wrapper result; the VPS must pull only the resolved immutable digest.
+   Do not rerun with a tag or bypass the Environment approval. Record workflow
+   URL, SHA, and digest after success.
+5. **Pending — perform network and content acceptance.** Verify valid TLS/SNI
+   for `noash.net`, HTTP-to-HTTPS redirect, `/` and `/privacy-policy` 200,
+   generated 404 page with HTTP 404, hashed Nuxt/font/image assets, `robots.txt`
+   and `sitemap.xml`. Confirm canonical, Open Graph, schema and sitemap URLs
+   use precisely `https://noash.net`; inspect the Caddy security headers,
+   immutable cache headers for hashed assets, no-cache HTML, and one effective
+   CSP only. Confirm `www.noash.net` remains outside this release.
+6. **Pending — browser performance acceptance.** With explicit owner approval
+   for the external browser origin `https://noash.net`, complete desktop and
+   mobile smoke checks and production Lighthouse for `/` and `/privacy-policy`.
+   Diagnose any regression before calling the release accepted; do not adjust
+   production configuration reactively without approval.
+7. **Pending — record evidence and close only Epic 4.** Add the deployed SHA,
+   digest, workflow link, timestamp, acceptance results, and any known limits
+   to this roadmap and ADR implementation record. Re-check the live container,
+   Caddy volumes, bounded Docker logging and public ports without deleting
+   certificate data. Commit documentation only with owner approval. Do not run
+   a rollback rehearsal or begin Epic 5.
+
+Acceptance: the site is reachable on its canonical HTTPS origin through the
+approved immutable digest; static SEO output uses precisely that origin; TLS,
+headers, caching, routes, 404, and browser/Lighthouse checks pass; and `www`
+remains untouched.
 
 ### Epic 5 — rollback rehearsal and handoff
 
