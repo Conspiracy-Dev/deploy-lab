@@ -22,6 +22,9 @@ export default defineNuxtConfig({
   ],
   css: ['~/assets/styles/tokens.css', '~/assets/styles/base.css'],
   runtimeConfig: {
+    notionDataSourceId: '',
+    notionToken: '',
+    trustProxy: false,
     public: {
       siteUrl: '',
     },
@@ -84,6 +87,19 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
+    routeRules: {
+      '/api/contact': {
+        security: {
+          allowedMethodsRestricter: {
+            methods: ['POST'],
+          },
+          rateLimiter: false,
+          requestSizeLimiter: {
+            maxRequestSizeInBytes: 8_192,
+          },
+        },
+      },
+    },
     prerender: {
       routes: ['/robots.txt', '/sitemap.xml'],
     },

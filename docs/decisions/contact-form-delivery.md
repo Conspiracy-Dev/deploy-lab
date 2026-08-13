@@ -1,6 +1,6 @@
 # ADR: Contact-form delivery to Notion
 
-- **Status:** Accepted — implementation pending
+- **Status:** Accepted — Epics 0–2 implemented
 - **Date:** 2026-08-13
 - **Decision owner:** Nikita Zinevich
 - **Design source:** [Contact desktop / 48:1595](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=48-1595&p=f&m=dev), [Contact mobile / 144:1236](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=144-1236&p=f&m=dev), [success / 153:75](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=153-75&p=f&m=dev)
@@ -62,6 +62,12 @@ Nginx/Caddy reverse proxy.
 10. No commit, push, deploy, Notion database creation or credential provisioning
     is authorised by this ADR alone. Each still requires the owner's explicit
     instruction at the relevant epic.
+11. The owner approved the public API outcome contract: a valid request and a
+    filled honeypot return `201 { status: 'accepted' }`; invalid fields return
+    `400 invalid_request` with only field names; invalid origin, oversized
+    body, unsupported media type, client rate limiting and delivery failure
+    return `403`, `413`, `415`, `429` and `503` respectively. The route never
+    exposes a Notion status, request ID, IP address, credential or request data.
 
 ## Consequences
 
