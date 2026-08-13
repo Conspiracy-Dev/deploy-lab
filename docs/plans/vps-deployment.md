@@ -1,6 +1,6 @@
 # VPS deployment plan and roadmap
 
-Status: Epic 0 complete; Epic 1 is blocked by local Docker Desktop
+Status: Epic 0 and Epic 1 complete; Epic 2 pending owner approval
 
 Last updated: 2026-08-13
 
@@ -35,9 +35,9 @@ HTTPS after its DNS record is ready.
 - The project requires Node `24.16.0` and pnpm `11.5.2`; `pnpm generate`
   produces the deployable `.output/public` output. `NUXT_PUBLIC_SITE_URL` is a
   required build-time production value.
-- Local generation, quality checks, Playwright, and Lighthouse passed on the
-  pinned toolchain. Docker Desktop is not installed locally, so container
-  verification is blocked until it is available.
+- Local generation, quality checks, Playwright, Lighthouse, and the Docker
+  container smoke test passed on the pinned toolchain. Docker Desktop 4.86.0,
+  Docker Engine 29.7.2, and Docker Compose 5.3.1 are available locally.
 - VPS discovery confirmed Ubuntu 24.04 amd64, one vCPU, 961 MiB RAM, 6.7 GiB
   free disk, free TCP 80/443, outbound HTTPS, no Docker, inactive firewall,
   and SSH currently allowing root and password login.
@@ -83,18 +83,42 @@ stop conditions without secrets or speculative implementation details.
 
 ### Epic 1 — reproducible static image
 
-Status: Blocked by local Docker Desktop
+Status: Complete
 
-1. Restrict Nuxt Fonts to the configured Google provider to avoid unnecessary
-   Fontshare build requests; do not add font packages.
-2. Add a multi-stage Dockerfile, `.dockerignore`, Caddy configuration, Compose
-   service, and non-secret environment example.
-3. Build with the canonical production URL as a required argument; serve only
-   generated output and return a genuine 404 for unknown routes.
-4. Add production-container smoke coverage for headers, caching, routes, SEO
-   output, and 404 behaviour.
-5. Verify Docker build, Compose validation, Caddy validation, container health,
-   and the existing static quality gate locally and in Linux CI.
+Docker Desktop 4.86.0 is installed and running locally. Docker Engine 29.7.2
+and Docker Compose 5.3.1 were verified from this worktree before implementation.
+
+Execution order for the remaining work:
+
+1. **Complete — deterministic font input.** Set the global Nuxt Fonts provider
+   to Google in addition to the existing family declarations. Run
+   `pnpm generate` and prove that the build no longer requests Fontshare. This
+   is a source-build concern; no dependency is required.
+2. **Complete — minimal image boundary.** Add a Debian-based Node `24.16.0` /
+   pnpm `11.5.2` builder, a pinned official Caddy runtime, and a `.dockerignore`
+   that excludes Git metadata, local environment files, dependencies, test
+   artifacts, and generated directories. The only builder output copied into
+   the runtime image is `.output/public` plus the Caddy configuration. Generated
+   `/_ipx` assets are already part of that static output, so the runtime has no
+   Node or IPX service.
+3. **Complete — static serving contract.** Add one Compose service with persistent
+   Caddy data/config volumes, `restart: unless-stopped`, and a loopback-only
+   local HTTP binding. Public 80/443 exposure remains a later VPS/TLS decision.
+   Require `NUXT_PUBLIC_SITE_URL` during the image build;
+   use no domain placeholder for production. Configure Caddy to serve files from
+   `/srv`, return generated `404.html` with HTTP 404, cache only hashed assets,
+   and set the agreed HTTP headers without adding a second CSP.
+4. **Complete — container acceptance test.** Add a shell-based local smoke test
+   that starts the Compose service on a non-conflicting local port, waits for a
+   health response, and checks `/`, `/privacy-policy`, generated SEO files,
+   a hashed `/_nuxt`, `/_fonts`, or `/_ipx` asset cache header, response security
+   headers, and an unknown path returning status 404. It must not need a real
+   domain or public TLS.
+5. **Complete — Linux reproducibility proof.** Run Docker build for
+   `linux/amd64`, `docker compose config -q`, `caddy validate`, image-content
+   inspection, smoke test, restart persistence, and the existing static quality
+   gate. Capture the exact Caddy digest only after these checks pass; then Epic
+   1 can be reviewed for closure and Docker CI work can begin in Epic 2.
 
 Acceptance: a clean `linux/amd64` static image can serve all public routes over
 local HTTP; no image contains `.env`, source checkout, Node runtime, or secrets.
@@ -193,13 +217,29 @@ passed, including the generated-site link checker with zero errors and zero
 warnings. Playwright reported 25 passing tests and five intentional skips.
 Lighthouse passed its assertions for `/` and `/privacy-policy`. Dependency,
 cycle, dead-code, secret, contour, and diff checks passed. Docker runtime
-validation was not run: it belongs to Epic 1 and Docker Desktop is not installed
-locally.
+validation is recorded below as Epic 1 evidence.
+
+### Epic 1 evidence
+
+Recorded 2026-08-13: global Google Fonts configuration generated the site without
+Fontshare requests. `docker compose config -q`, `caddy validate`, and
+`pnpm test:docker:smoke` passed. The smoke test builds the image, waits for its
+healthcheck on an allocated loopback port, checks public routes, SEO files,
+security/cache headers, a generated asset, a genuine 404 response, final-image
+contents, and a container restart. A separate `docker build --platform
+linux/amd64` passed with `https://deploylab.example` as the required build
+argument; the resulting Caddy-only image validated successfully and measured
+39.7 MB. Its Caddy base-image digest is
+`sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d`.
+The full closing gate was then repeated after the Epic 1 changes: formatting,
+static quality (including 42 unit tests), dependency checks, `pnpm build`,
+production-like static generation, Playwright (25 passed, 5 intentional skips),
+Lighthouse, secret scanning, Contour checks, and `git diff --check` all passed.
 
 ## Risk and stop condition
 
-- Stop Epic 1 until Docker Desktop is installed and its Docker/Compose commands
-  are usable locally.
+- Do not begin Epic 2 until the owner reviews and explicitly approves the Epic 1
+  implementation and its local commit.
 - Stop Epic 4 until the owner provides the exact canonical domain and its A
   record resolves publicly. Do not publish an IP-based site with placeholder
   canonical URLs.

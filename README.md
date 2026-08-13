@@ -46,6 +46,21 @@ machine. Set `NUXT_PUBLIC_SITE_URL` to the canonical production origin before a
 deploy; it drives canonical links, `robots.txt`, and `sitemap.xml`; the example
 origin is only a local and CI fallback.
 
+## Verify the static container
+
+Docker Desktop is required for the container check. The smoke test builds the
+static image, exposes it only on a temporary loopback port, verifies generated
+routes, SEO files, headers, assets, a real 404, and restart recovery, then
+removes its test container and volumes.
+
+```text
+pnpm test:docker:smoke
+```
+
+The image build requires `NUXT_PUBLIC_SITE_URL`; use the final HTTPS domain only
+for a release image. The local smoke test supplies a temporary localhost value
+solely to verify the container boundary.
+
 ## Work with confidence
 
 ```powershell

@@ -27,8 +27,8 @@ production image cannot be accepted before it is rebuilt with the final
 2. The image uses a multi-stage build: Node `24.16.0` and pnpm `11.5.2` on a
    Debian-based builder run `pnpm generate`; the runtime uses a pinned official
    Caddy image. The final image contains only static output and Caddy
-   configuration. The exact runtime-image digest is recorded when the image is
-   first verified.
+   configuration. The verified runtime-image digest is
+   `sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d`.
 3. GitHub Actions publishes an immutable image for each full Git commit SHA to
    the public GitHub Container Registry package
    `ghcr.io/ishavlovsky/deploy-lab`. The package is linked to this repository
@@ -83,3 +83,8 @@ repository checks. No Docker package, server configuration, GitHub Environment,
 registry package, DNS record, or production deployment has been changed. The
 detailed execution status and verification evidence live in
 `docs/plans/vps-deployment.md`.
+
+Epic 1 completed on 2026-08-13. It introduced the reproducible Node-to-Caddy
+image, loopback-only local Compose configuration, response smoke test, and global
+Google font provider. The image was verified locally and for `linux/amd64`; no
+VPS, DNS, registry, GitHub Environment, or production service was changed.
