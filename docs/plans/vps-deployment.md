@@ -1,6 +1,6 @@
 # VPS deployment plan and roadmap
 
-Status: Epic 0 and Epic 1 complete; Epic 2 pending owner approval
+Status: Epic 0 and Epic 1 complete; Epic 2 implementation prepared, external validation blocked
 
 Last updated: 2026-08-13
 
@@ -125,21 +125,102 @@ local HTTP; no image contains `.env`, source checkout, Node runtime, or secrets.
 
 ### Epic 2 — CI, registry, and approved delivery
 
-Status: Pending Epic 1
+Status: Implementation prepared; external GitHub validation blocked
 
-1. Add a Docker CI build for pull requests and SHA-addressed GHCR publication
-   from `main`; pin third-party Actions by commit SHA and grant minimum token
-   permissions.
-2. Create GitHub Environment `production` with reviewer `iShavlovsky`, guarded
-   secrets for the dedicated deployer key and `known_hosts`, and non-secret
-   domain/host variables.
-3. Add a concurrency-protected `workflow_dispatch` release flow that accepts
-   only a full SHA from `main`, deploys a digest, and reports its public URL.
-4. Confirm the first package is linked to the repository and intentionally make
-   it public before enabling anonymous VPS pulls.
+Goal: publish a reproducible `linux/amd64` static image for every approved
+`main` commit, without automatically touching the VPS. Prepare the protected
+manual release boundary; connect it to the VPS only after the wrapper and its
+key material exist in Epic 3.
 
-Acceptance: a reviewed SHA image is published and can be selected manually;
-only the approved production job can access its SSH secret.
+Non-goals: do not add automatic deployment, a PAT, Docker Hub, a second
+registry, image signing/attestations, a vulnerability-scanning platform, a
+domain placeholder, or a secret before its owner and lifecycle exist.
+
+Constraints and planning findings:
+
+- The repository is public and its default branch is `main`. No GHCR package
+  named `deploy-lab` exists yet.
+- The current account `f7one` has repository role `write`, not administrative
+  access. The GitHub Actions policy endpoints return HTTP 403. Repository owner
+  `iShavlovsky` must apply the required GitHub settings or explicitly grant the
+  required administrative access.
+- Existing `.github/workflows/ci.yml` references moving action tags. Epic 2
+  must replace every action reference in the existing and new workflows with a
+  verified full commit SHA from its official upstream repository.
+- `actionlint` 1.7.12 is installed locally through Homebrew. It is a developer
+  CLI, not an application dependency; no npm package was added.
+- A deployer SSH key and verified `known_hosts` entry cannot be created before
+  Epic 3. Therefore no production secret and no SSH command may be enabled in
+  this epic. The future release workflow is prepared and protected here, then
+  receives its secret-consuming deployment step only after Epic 3 acceptance.
+
+Execution order for the remaining work:
+
+1. **Partial — confirm GitHub ownership path and verification tool.**
+   `actionlint` 1.7.12 is installed through Homebrew. The current account
+   remains `write`-only; obtain owner `iShavlovsky`'s confirmation for Actions
+   policy and Environment settings. Record the actual configuration and tool
+   version as evidence; do not store tokens, private keys, or `known_hosts`
+   values in the repository.
+2. **Complete — harden the workflow supply chain.** Resolve each required action
+   from its official repository and pin it by full commit SHA, including the
+   existing quality workflow. Set workflow/job permissions explicitly to the
+   minimum needed: read-only contents by default, then `packages: write` only
+   in the GHCR publishing job. Keep pull-request builds unable to push packages
+   or read production secrets.
+3. **Implemented; awaiting `main` and final domain — add container CI and immutable GHCR publication.** Add a Docker
+   verification job for pull requests using the existing static-container smoke
+   test, with a non-production build URL. On a successful `main` run, build and
+   publish only `linux/amd64` to `ghcr.io/ishavlovsky/deploy-lab`, tagging it
+   with the full source SHA and recording OCI source/revision metadata. Resolve
+   and report the resulting registry digest; never publish `latest`.
+4. **Blocked — create and verify the package boundary.** After the first
+   reviewed successful publication, confirm that the package is linked to this
+   repository through OCI source metadata. Repository owner `iShavlovsky` must
+   explicitly change it to public, acknowledging that GitHub does not permit reverting a
+   public container package to private. Prove an anonymous pull of the exact
+   digest before relying on it from the VPS.
+5. **Implemented; external configuration blocked — create the protected manual-release boundary.** Repository owner
+   `iShavlovsky` creates GitHub Environment `production`, restricts it to
+   `main`, and assigns themselves as required reviewer. Add a concurrency-protected
+   `workflow_dispatch` workflow accepting exactly one full 40-character commit
+   SHA. It verifies that the SHA is reachable from `main`, resolves the matching
+   immutable GHCR digest, and exposes the selected release in the protected
+   Environment. It performs no SSH operation and has no secret until Epic 3
+   creates the deployer key, `known_hosts`, and root-owned wrapper.
+6. **Partial — test and document the boundary.** Lint all workflow YAML with
+   the approved `actionlint` tool; validate Docker/Compose locally; inspect
+   permissions, action SHAs, triggers, and absence of secret references in PR
+   jobs. After a reviewed push to `main`, inspect the Actions run, package tags,
+   OCI labels, digest pull, Environment approval wait, invalid-SHA rejection,
+   concurrency behaviour, and the fact that no VPS call occurred. Update this
+   roadmap with real run URLs/identifiers only if they contain no secrets.
+
+Acceptance: a reviewed full-SHA image is published to public GHCR and can be
+selected manually by digest. Pull-request jobs cannot publish or reach
+production secrets. The protected Environment requires `iShavlovsky` approval;
+it intentionally contains no deploy key and performs no VPS action until Epic
+3 completes the secure wrapper and key setup.
+
+Implementation evidence recorded 2026-08-13: Homebrew `actionlint` 1.7.12
+validated both workflow files. `ci.yml` now uses only full commit SHA action
+references, has read-only default permissions, runs the existing Docker smoke
+test for pull requests, and limits `packages: write` plus the GitHub token to
+the `main`-only publication job. `release.yml` accepts one lowercase
+40-character SHA, verifies it is an ancestor of `main`, resolves its GHCR
+digest, serializes releases with `production-release`, and performs no SSH
+operation or use of deployment secrets. Publication is deliberately skipped
+until repository variable `PRODUCTION_SITE_URL` is set to the real canonical
+origin. The remaining proof requires a reviewed push to `main`, owner-created
+Environment `production`, explicit package public visibility, and the final
+domain; none were changed in this epic.
+
+The full local closing gate also passed: the Docker smoke test and Compose
+configuration validation, static quality checks (42 unit tests), dependency
+checks, `pnpm build`, static generation, Playwright (25 passed, 5 intentional
+skips), Lighthouse, secret scan, Contour checks, formatting, and diff check.
+The existing 15 ESLint warnings and Nuxt development-hint warnings remain
+outside this deployment scope and caused no test failure.
 
 ### Epic 3 — VPS preparation and hardening
 
@@ -149,6 +230,9 @@ Status: Pending Epic 2
    deployment directories, and configure log rotation.
 2. Create `deployer`, its two key-based access paths, and a root-owned,
    digest-only deployment wrapper with automatic rollback on failed smoke.
+   After the key and host identity are verified, place them as GitHub Environment
+   `production` secrets and connect the already protected manual-release
+   workflow to this wrapper.
 3. Enable firewall rules for TCP 22/80/443 and verify Docker packet filtering.
 4. Verify a second key-only SSH session and rescue console, then disable root
    and password SSH access.
