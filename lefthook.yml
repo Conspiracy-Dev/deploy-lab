@@ -19,7 +19,7 @@ pre-commit:
 commit-msg:
   commands:
     conventional-commit:
-      run: pnpm exec commitlint --edit {1}
+      run: pnpm exec commitlint --edit "{1}"
 
 pre-push:
   parallel: false
