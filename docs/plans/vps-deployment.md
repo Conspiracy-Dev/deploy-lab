@@ -1,6 +1,6 @@
 # VPS deployment plan and roadmap
 
-Status: Epic 0–2 complete; Epic 3 implemented, with provider-console acceptance checks pending
+Status: Epic 0–3 complete; Epic 4 is pending an approved first release
 
 Last updated: 2026-08-13
 
@@ -233,9 +233,7 @@ outside this deployment scope and caused no test failure.
 
 ### Epic 3 — VPS preparation and hardening
 
-Status: Implementation complete on 2026-08-13; closing acceptance is blocked
-only on provider-firewall confirmation and a provider-console reboot proof.
-No application image has been deployed, and Epic 4 must not start yet.
+Status: Complete on 2026-08-13. No application image has been deployed.
 
 Goal: prepare `138.124.85.193` to run one immutable Caddy image securely,
 without cloning this repository or storing GitHub credentials on the host.
@@ -292,26 +290,23 @@ Execution order for the remaining work:
    validate successfully with `DOMAIN=noash.net`; Caddy state volumes persist
    by name, and the production compose file is the sole future publisher of
    TCP 80/443.
-6. **Partially complete — network access.** UFW permits 22/80/443 with
+6. **Complete — network access.** UFW permits 22/80/443 with
    default-deny inbound traffic; external TCP 22 and closed Docker TCP 2375
-   were checked. Provider-firewall rules cannot be verified from this workspace
-   and must be confirmed before Epic 4.
+   were checked. The owner confirmed the matching provider-firewall policy.
 7. **Complete — SSH hardening.** Two independent `deployer` key logins passed;
    the Actions key cannot run arbitrary commands, `sshd -t` passed, then root
    login and password/KbdInteractive authentication were disabled. Root SSH
    rejection and both constrained deployment paths were rechecked.
-8. **Partially complete — host acceptance.** `docker.service` is enabled,
+8. **Complete — host acceptance.** `docker.service` is enabled,
    logging is bounded, ownership and wrapper rejection were proven, and the
-   Environment secrets/variables were added after the server path worked.
-   A post-Docker reboot persistence test requires the unavailable provider
-   rescue-console tool, so it remains the explicit stop condition. The Caddy
-   volume recreation and successful digest pull await the first published GHCR
-   image in later epics.
+   Environment secrets/variables were added after the server path worked. The
+   owner-confirmed forced reboot returned SSH and the restricted deployment
+   wrapper; Docker reached the registry through that wrapper after boot. The
+   Caddy volume recreation and successful digest pull await the first published
+   GHCR image in later epics.
 
-Acceptance status: access, privilege, local firewall, runtime configuration,
-and Environment-secret boundaries are verified. Provider-firewall confirmation
-and a post-Docker reboot persistence test remain open; do not start Epic 4
-until both have evidence.
+Acceptance status: complete. Access, privilege, firewall, runtime
+configuration, Environment-secret, and post-reboot boundaries are verified.
 
 Plain-language summary: we will prepare the server to run only the already
 built site image, not the source code. Before locking down remote access, two
@@ -321,7 +316,7 @@ image from GitHub; this epic makes that release safe to perform later.
 
 ### Epic 4 — domain, TLS, and first release
 
-Status: Pending Epic 3 closing acceptance; canonical domain and public A record are ready
+Status: Pending an approved first release; canonical domain and public A record are ready
 
 1. `PRODUCTION_SITE_URL=https://noash.net` is already set as a repository
    variable for the publisher. The production host configuration fixes
@@ -422,17 +417,19 @@ The GitHub `production` Environment has `PRODUCTION_HOST=138.124.85.193` and
 `known_hosts` as Environment secrets. `release.yml` now writes these secrets
 only to the ephemeral GitHub runner and invokes the digest-only wrapper with
 strict host-key verification. `actionlint`, shell parsing, local Caddy
-validation, and production Compose validation pass. Provider-firewall
-confirmation and the post-Docker reboot persistence test require the unavailable
-provider rescue-console tool; they remain open and prevent Epic 4.
+validation, and production Compose validation pass. The owner confirmed the
+provider firewall and performed a forced reboot. Afterwards SSH by the owner
+key returned, the restricted wrapper reached Docker and the registry, TCP 22
+remained reachable, TCP 80/443 remained closed before an application release,
+and root SSH remained denied. Epic 3 is complete. Caddy volume recreation will
+be exercised only when the first published application image starts in Epic 4.
 
 ## Risk and stop condition
 
 - Do not begin Epic 2 until the owner reviews and explicitly approves the Epic 1
   implementation and its local commit.
-- Stop Epic 4 until Epic 3 completes VPS preparation. Do not publish an
-  IP-based site with placeholder canonical URLs. Do not serve `www.noash.net`
-  until its DNS and redirect policy are explicitly approved.
+- Do not publish an IP-based site with placeholder canonical URLs. Do not serve
+  `www.noash.net` until its DNS and redirect policy are explicitly approved.
 - Stop a VPS rollout immediately on host-key mismatch, failed second SSH login,
   invalid SSH configuration, occupied 80/443, failed image validation,
   failed health/smoke check, or wrong canonical origin; retain or restore the

@@ -125,6 +125,8 @@ key and the verified server `known_hosts` value, plus non-secret host and user
 variables. The manual workflow copies those values only into the ephemeral
 runner SSH directory and can request the server wrapper with the resolved
 digest. No GHCR application image exists, no site container has been started,
-and no DNS or `www` change was made. A provider-firewall confirmation and a
-post-Docker reboot persistence test require the provider rescue-console tool;
-they remain the explicit Epic 3 closing blocker before any first release.
+and no DNS or `www` change was made. The owner confirmed the provider firewall
+and performed a forced reboot; owner-key SSH, the restricted wrapper, and its
+Docker registry path returned successfully afterwards. Epic 3 is complete.
+Caddy volume recreation remains a first-release runtime check because no
+application image exists yet.
