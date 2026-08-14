@@ -65,6 +65,11 @@ export default defineNuxtConfig({
       sqliteConnector: 'native',
     },
   },
+  security: {
+    // The dev server serves every test asset through Nitro. Keep response-header
+    // coverage in E2E, but avoid exhausting the in-memory limiter during a suite.
+    rateLimiter: process.env.NODE_ENV === 'development' ? false : {},
+  },
   hooks: {
     'pages:extend'(pages) {
       if (process.env.NODE_ENV !== 'development') {
