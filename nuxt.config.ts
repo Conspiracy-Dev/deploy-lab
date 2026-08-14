@@ -35,6 +35,7 @@ export default defineNuxtConfig({
     quality: 80,
   },
   fonts: {
+    provider: 'google',
     families: [
       {
         name: 'IBM Plex Sans',

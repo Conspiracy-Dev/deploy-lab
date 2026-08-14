@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly wrapper='/usr/local/sbin/deploy-lab'
+
+read -r command target image extra <<<"${SSH_ORIGINAL_COMMAND:-}"
+
+if [[ $command != 'sudo' || $target != "$wrapper" || -z ${image:-} || -n ${extra:-} ]]; then
+  echo 'This key may only invoke the deployment wrapper with one image digest.' >&2
+  exit 64
+fi
+
+exec /usr/bin/sudo -n "$wrapper" "$image"

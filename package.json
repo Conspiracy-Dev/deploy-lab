@@ -33,6 +33,7 @@
     "task:intake:check": "node scripts/onboarding/task-intake-check.mjs",
     "test:onboarding": "node scripts/onboarding/task-intake-check.test.mjs",
     "test:e2e": "playwright test",
+    "test:docker:smoke": "bash scripts/deployment/smoke-static-container.sh",
     "test:unit": "vitest run",
     "typecheck": "nuxt typecheck"
   },
