@@ -415,16 +415,86 @@ remains untouched.
 
 ### Epic 5 — rollback rehearsal and handoff
 
-Status: Pending — Epic 4 is complete
+Status: In progress — repository release-status seam is implemented; the
+protected production exercise awaits its merge, an owner-selected subsequent
+`main` revision, an approved privileged maintenance path, and provider reboot
+access.
 
-1. Roll out a subsequent approved SHA, then deliberately return to the prior
-   digest through the same release path.
-2. Verify public smoke, TLS state, and restart persistence after rollback.
-3. Add concise deploy, rollback, and recovery commands to this document and
-   update every epic with actual evidence.
+Goal: prove that a future approved immutable release can be returned to the
+currently live immutable digest through the same protected release workflow,
+then hand over only the commands and evidence needed for normal operation.
 
-Acceptance: an operator can identify the live digest and restore the prior
-release without rebuilding on the VPS or using undocumented credentials.
+Non-goals: do not retire, erase, reboot, or otherwise alter source VPS
+`138.124.85.193`; add an availability platform; widen GitHub, Docker, or SSH
+privileges; expose registry credentials; or make a deliberately broken public
+release. This is a controlled release-and-return exercise, not a failure drill.
+
+Execution order for the remaining work:
+
+1. **Pending — select a harmless forward-release candidate.** The owner selects
+   a new full SHA already merged into `main` and published to private GHCR. It
+   must differ from live revision
+   `e6a7a52ac1f6f9a1b183a982e6d2e873a5fd9776`; the current release digest
+   `sha256:8891c68e54ab1c6423a1e277394dc38996b260f523d3bb3e5c31dacef1f742f7`
+   is recorded as the return target. Do not invent an application change merely
+   to create a candidate; if no legitimate next revision exists, use an
+   owner-reviewed operational change that still publishes a new immutable image.
+2. **Partially complete — add a read-only release-status seam.** A tested
+   repository command is ready for privileged installation as a root-owned
+   `deploy-lab-status` command that prints only the current and previous image
+   digests from `/var/lib/deploy-lab`, with no registry credential or mutable
+   environment data. Permit this exact command to the owner `deployer` user in
+   sudoers; it remains unavailable to the forced Actions key. Add a focused
+   shell test for empty, first-release, two-release, and malformed state. CI
+   runs the test before publishing a candidate image. Its VPS installation and
+   sudo rule still require an approved privileged maintenance path because the
+   current SSH and Actions boundaries intentionally cannot alter root-owned
+   scripts or sudoers. This allows an operator to identify the live digest
+   without root shell access once installed.
+3. **Pending — preflight and baseline.** Before changing the live image, record
+   status output, `docker compose ps`, Docker/restart policy, current TLS
+   certificate, and public smoke results for `/`, `/privacy-policy`,
+   `robots.txt`, `sitemap.xml`, one hashed asset, and a genuine 404. Confirm the
+   protected Environment still requires review and target DNS resolves publicly
+   to `194.87.83.103`; stop on any regression.
+4. **Pending — controlled forward release.** Dispatch the manual production
+   release workflow for the selected SHA, obtain normal `production` approval, and wait
+   for the digest-only wrapper to declare it healthy. Re-run public smoke and
+   status; prove that `current` is the candidate digest and `previous` is the
+   original live digest. A brief single-container interruption is accepted.
+5. **Pending — controlled return through the same workflow.** Dispatch the
+   same protected workflow for the original full SHA
+   `e6a7a52ac1f6f9a1b183a982e6d2e873a5fd9776`; do not use direct Docker commands
+   or edit state files. After approval, verify `current` equals the original
+   digest and `previous` equals the candidate. Repeat the complete public smoke,
+   TLS, header, cache, and 404 checks.
+6. **Pending — restart persistence.** The owner performs one normal reboot from
+   the VPS provider control panel after the return release. Do not grant
+   `deployer` permission to reboot. Verify SSH availability, netfilter policy,
+   Docker service, Caddy container health, persistent certificate state, status
+   output, and public HTTPS smoke after boot. If no provider reboot control is
+   available, stop and request a supported recovery/reboot path; do not weaken
+   SSH hardening to work around it.
+7. **Pending — handoff and closure.** Add concise normal deploy, return, status,
+   credential-rotation, and recovery instructions to this roadmap; record both
+   workflow URLs, SHAs, digests, restart evidence, and test results without
+   secrets. Run formatting, static quality, deployment-shell tests, secret scan,
+   and diff checks. Commit only after owner review. Do not start source-host
+   retirement; that remains a separate owner decision after Epic 5.
+
+Acceptance: an operator can identify the live and previous digests through the
+read-only status command; a reviewed forward image and the original image each
+reach production through the same approved workflow; the public site, TLS,
+headers, caching, routes, 404, Zabbix restriction, and post-reboot persistence
+all pass; and no source-host retirement or credential exposure occurs.
+
+Repository evidence recorded 2026-08-15: `pnpm test:deployment:status`,
+ShellCheck for the command and its test, Actionlint, `pnpm format:check`,
+`pnpm quality:static` (42 unit tests), `pnpm deps:check`,
+`pnpm deps:cycles`, and `pnpm test:docker:smoke` passed. The static quality
+gate retains its 15 pre-existing ESLint warnings and no errors. No VPS state,
+workflow dispatch, reboot, or source-host retirement was performed by this
+repository change.
 
 ## Verification
 

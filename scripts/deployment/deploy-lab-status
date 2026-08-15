@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly state_dir="${DEPLOY_LAB_STATE_DIR:-/var/lib/deploy-lab}"
+readonly image_pattern='^ghcr\.io/conspiracy-dev/deploy-lab@sha256:[0-9a-f]{64}$'
+
+usage() {
+  echo 'Usage: deploy-lab-status' >&2
+}
+
+image_from_file() {
+  local file="$1"
+  local -a values=()
+
+  [[ -e $file ]] || {
+    printf 'none\n'
+    return 0
+  }
+
+  [[ -r $file ]] || {
+    echo "Cannot read release state: $file" >&2
+    return 78
+  }
+
+  while IFS= read -r value; do
+    values+=("$value")
+  done < <(sed -n 's/^IMAGE_REF=//p' "$file")
+
+  if [[ ${#values[@]} -ne 1 || ! ${values[0]} =~ $image_pattern ]]; then
+    echo "Invalid release state: $file" >&2
+    return 78
+  fi
+
+  printf '%s\n' "${values[0]}"
+}
+
+if [[ $# -ne 0 ]]; then
+  usage
+  exit 64
+fi
+
+current_image="$(image_from_file "$state_dir/current-image.env")" || exit $?
+previous_image="$(image_from_file "$state_dir/previous-image.env")" || exit $?
+
+printf 'CURRENT=%s\n' "$current_image"
+printf 'PREVIOUS=%s\n' "$previous_image"

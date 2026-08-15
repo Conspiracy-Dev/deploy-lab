@@ -80,6 +80,12 @@ part of this release without a separate redirect decision.
     `PRODUCTION_HOST`, deploy key, and known-host values. The source
     host is retained unchanged until public acceptance and explicit owner
     retirement approval.
+11. Operators identify release state through a root-owned, read-only status
+    command that exposes only current and previous immutable image digests.
+    The owner `deployer` account receives one exact sudo permission for that
+    command; the forced Actions key does not. Installing or changing this
+    root-owned command still requires an approved privileged maintenance path,
+    rather than expanding deployment-key or `deployer` privileges.
 
 ## Consequences
 
@@ -202,3 +208,12 @@ an unknown path returns 404, immutable Nuxt assets have cache headers, and the
 configured security headers are present. A local Mac resolver temporarily
 retained the old A record; independent public resolvers already returned the
 target. Epic 5 rollback rehearsal and source-host retirement remain pending.
+
+Epic 5 implementation began on 2026-08-15. The repository now has a focused
+`deploy-lab-status` command and portable shell test for empty, first-release,
+two-release, and invalid release state. CI runs the test before a candidate
+image can be published. No status command or sudo rule has yet been installed
+on the VPS: its existing security boundary deliberately prevents it without a
+privileged maintenance path. The next `main` revision containing this work is
+the agreed harmless forward-release candidate; public rollout, return, reboot,
+and source-host retirement have not begun.
