@@ -1,12 +1,12 @@
 # VPS deployment plan and roadmap
 
-Status: Epic 0–3 complete; Epic 4 private-GHCR correction in progress
+Status: Epic 0–4 complete; production live on `194.87.83.103`
 
 Last updated: 2026-08-15
 
 ## Goal
 
-Deploy the static DeployLab site to VPS `138.124.85.193` through a reproducible,
+Deploy the static DeployLab site to target VPS `194.87.83.103` through a reproducible,
 reviewed GitHub Actions and GHCR release flow. The final domain must serve the
 generated Nuxt routes over HTTPS with correct canonical URLs, security/cache
 headers, a tested rollback path, and no source code or secrets embedded in the
@@ -37,23 +37,36 @@ HTTPS after its DNS record is ready.
 - Local generation, quality checks, Playwright, Lighthouse, and the Docker
   container smoke test passed on the pinned toolchain. Docker Desktop 4.86.0,
   Docker Engine 29.7.2, and Docker Compose 5.3.1 are available locally.
-- Read-only VPS audit on 2026-08-13 confirmed Ubuntu 24.04.4 amd64, one vCPU,
-  961 MiB RAM, no swap, 6.7 GiB free disk, free TCP 80/443, outbound HTTPS, no
-  Docker, inactive UFW, and SSH currently allowing root and password login.
-  No `deployer` user exists. `unattended-upgrades` is enabled, while 179 package
-  updates remain pending. The provider firewall policy is not yet confirmed.
+- Source VPS `138.124.85.193` is prepared and hardened but has no application
+  container. It remains unchanged until explicit owner retirement approval.
+  Target VPS `194.87.83.103` is the live production host: Ubuntu 24.04.4 amd64,
+  kernel `6.8.0-137-generic`, Docker Engine 29.7.2, Compose 5.4.0, and bounded
+  Docker `local` logging. Its ED25519 fingerprint is
+  `SHA256:M6ZafTbhTX9vwa8CeZe8aucOsTz9sD8tGUZWUV6t5cI` and is stored as the
+  protected Environment known-host value.
+- Target root/password SSH are disabled. `iptables-persistent` enforces
+  default-deny inbound traffic; public TCP 22/80/443 is allowed and Zabbix TCP
+  10050 is restricted to `92.53.116.12`, `92.53.116.111`, and `92.53.116.119`.
+  The Docker `DOCKER-USER` chain permits only published 80/443. No source,
+  Node toolchain, or GHCR credential exists outside root Docker configuration.
 - The source repository is public (`Conspiracy-Dev/deploy-lab`); the selected
   delivery model is GitHub Actions, a private GHCR image, direct DNS A record,
   one Caddy runtime container, and a manually approved production workflow.
   The release job uses its ephemeral `GITHUB_TOKEN` for GHCR reads; the VPS
   will use a distinct root-only credential limited to `read:packages`.
 - `f7one` and `iShavlovsky` have repository `admin` access. `iShavlovsky` is
-  the selected GitHub Environment production reviewer. A
-  provider rescue console is available for the SSH-hardening step.
-- Canonical domain `noash.net` resolves by A record to `138.124.85.193`; it has
-  no AAAA record. Repository variable `PRODUCTION_SITE_URL` is set to
-  `https://noash.net`. The existing `www.noash.net` A record resolves elsewhere
-  and is intentionally outside this release pending a separate redirect choice.
+  the selected GitHub Environment production reviewer. Target hardening used
+  independently verified owner and Actions SSH paths; provider-console access
+  was not required.
+- Canonical domain `noash.net` resolves by A record to target `194.87.83.103`;
+  it has no AAAA record. Repository variable
+  `PRODUCTION_SITE_URL` is set to `https://noash.net`. The existing
+  `www.noash.net` A record resolves elsewhere and is intentionally outside this
+  release pending a separate redirect choice.
+- GitHub Environment `production` contains target `PRODUCTION_HOST=194.87.83.103`,
+  `PRODUCTION_SSH_USER=deployer`, and the fresh target deploy key and known-host
+  value. No executable repository file contains either VPS IP; the workflow
+  reads `PRODUCTION_HOST` only at run time.
 - Secrets and private keys belong only in GitHub Environment secrets or the
   local SSH agent. They must never enter this repository, images, command logs,
   or documentation.
@@ -314,26 +327,68 @@ independent SSH keys and the rescue console are verified so you cannot lose
 access to the VPS. The first public site release still waits for an approved
 image from GitHub; this epic makes that release safe to perform later.
 
-### Epic 4 — domain, TLS, and first release
+### Epic 4 — VPS migration, domain, TLS, and first release
 
-Status: Private-GHCR correction in progress. Canonical domain and public A
-record are ready; an immutable image exists, but the first release is blocked
-until the corrected workflow reaches `main` and root Docker has a dedicated
-read-only GHCR credential.
+Status: Complete on 2026-08-15.
 
-Goal: publish the reviewed static image for `https://noash.net`, deploy its
-immutable digest once through the protected manual workflow, and verify the
-canonical HTTPS site end-to-end without enabling `www.noash.net`.
+Goal: prepare `194.87.83.103` as a replacement for `138.124.85.193`, publish
+the reviewed static image for `https://noash.net`, cut GitHub delivery over
+safely, and verify the canonical HTTPS site end-to-end without enabling
+`www.noash.net`.
 
 Non-goals: do not change DNS, introduce a `www` redirect, grant broader VPS or
 GitHub privileges, add a runtime service, or rehearse rollback. The latter is
 Epic 5.
 
-Planning findings:
+Execution record:
 
-- `noash.net` has the expected A record `138.124.85.193` and no AAAA record.
-  The unrelated `www.noash.net` A record still targets a different server and
-  must not receive traffic in this epic.
+1. **Complete — target audit, maintenance, and firewall.** The target initially
+   had Ubuntu 24.04.3 amd64, 961 MiB RAM, 8.9 GiB free disk, Docker 29.1.4,
+   Compose 5.0.1, 63 pending updates, root/password SSH, public Zabbix 10050,
+   and free 80/443. System packages were updated, Docker/Compose became
+   29.7.2/5.4.0, and a reboot completed on kernel `6.8.0-137-generic`.
+   `iptables-persistent` was selected after its installation removed conflicting
+   UFW. It now has default-deny INPUT and a default-deny `DOCKER-USER` policy,
+   allowing public 22/80/443 and Zabbix 10050 only from `92.53.116.12`,
+   `92.53.116.111`, and `92.53.116.119`. Rules and Docker `local` log driver
+   survived a reboot; a non-whitelisted external TCP 10050 check times out.
+2. **Complete — target runtime and access.** Root-owned Caddy/Compose files and
+   deployment wrapper were installed under `/opt/deploy-lab` and
+   `/usr/local/sbin`. A new target Actions ED25519 key is forced to the wrapper;
+   the owner key is an unprivileged `deployer` login. The only sudo rule matches
+   one immutable `ghcr.io/conspiracy-dev/deploy-lab@sha256:<64 hex>` argument.
+   Compose and Caddy validation passed. After verifying owner login and Actions
+   command rejection, root/password/KbdInteractive SSH were disabled.
+3. **Complete — private GHCR access.** The owner authenticated root Docker with
+   a classic GitHub token limited to `read:packages`. The target pulled the
+   exact private production image digest successfully; neither token nor private
+   key is recorded in this repository.
+4. **Complete — protected delivery switch.** GitHub Environment `production`
+   now uses `PRODUCTION_HOST=194.87.83.103`, `PRODUCTION_SSH_USER=deployer`, a
+   fresh Actions private key, and this target's verified known-host value. The
+   former environment secrets were replaced rather than retained in parallel.
+5. **Complete — first production release.** Public resolver checks returned
+   `194.87.83.103` for `noash.net` (with no AAAA record). Approved workflow run
+   [`31884433096`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/31884433096)
+   deployed commit `e6a7a52ac1f6f9a1b183a982e6d2e873a5fd9776` as
+   `ghcr.io/conspiracy-dev/deploy-lab@sha256:8891c68e54ab1c6423a1e277394dc38996b260f523d3bb3e5c31dacef1f742f7`.
+   The wrapper reported the release healthy.
+6. **Complete — public acceptance.** With SNI pinned to the target IP, trusted
+   HTTPS returned 200 for `/`, `/privacy-policy`, `/robots.txt`, and
+   `/sitemap.xml`; an unknown URL returned 404. HTTP returned 308 to HTTPS;
+   HSTS, nosniff, referrer, and permissions headers are present; a Nuxt JS asset
+   returns `public, max-age=31536000, immutable`. `www.noash.net` was unchanged.
+   The local Mac resolver still cached the old source A record during acceptance;
+   independent public resolvers already returned the target, so the test used
+   the resolved target IP rather than treating the local cache as a failure.
+7. **Complete — document and stop.** This roadmap and ADR record the target,
+   credentials boundary, network policy, release evidence, and remaining
+   rollback/retirement work. Epic 5 has not started.
+
+Key delivery facts:
+
+- `noash.net` has target A record `194.87.83.103` and no AAAA record. The
+  unrelated `www.noash.net` A record is outside this release.
 - `PRODUCTION_SITE_URL=https://noash.net` is already present as a repository
   variable. It is consumed while the image is built, not during deployment;
   the image cannot be repaired by changing a VPS environment variable later.
@@ -342,60 +397,16 @@ Planning findings:
   data. The release workflow accepts only a full `main` SHA, logs in to GHCR
   with its ephemeral `GITHUB_TOKEN`, resolves its digest, and invokes the VPS
   wrapper with that digest.
-- Main commit `77eaabba593e05b8885d84a82e696663c41f89d8` published the verified
-  `linux/amd64` image
-  `ghcr.io/conspiracy-dev/deploy-lab@sha256:37bf6f99c40e88f0147e8aca3b1f2220decb4b895b75be3cc15c06e076590615`.
-  Its first manual release stopped safely at the anonymous GHCR digest lookup
-  with HTTP 401. The selected correction keeps the package private; a local
-  image is never deployable production proof.
-
-Execution order for the remaining work:
-
-1. **In progress — correct and deliver the private registry boundary.** Add the
-   pinned GHCR login action before digest resolution, review and merge it into
-   `main`, then record its resulting full SHA. Stop if branch protection or any
-   required CI job fails; do not substitute a local SHA.
-2. **Pending — publish and verify the immutable image.** Confirm the corrected `main`
-   workflow ran all static, browser, Lighthouse, container, and `publish-image`
-   jobs successfully. Verify its build argument was exactly
-   `NUXT_PUBLIC_SITE_URL=https://noash.net`; record the produced `linux/amd64`
-   digest and OCI source/revision labels. Confirm the package remains private
-   and its pull requires authentication. Stop if publication is absent, tagged
-   without a digest, has another canonical origin, or has become public.
-3. **Pending — preflight public reachability.** Immediately before release,
-   resolve public A and AAAA records from more than one resolver, confirm only
-   `noash.net` A resolves to `138.124.85.193`, and check TCP 80/443 reach the
-   VPS. Verify no existing service owns those ports and the wrapper still
-   rejects a safe invalid digest. Stop on DNS drift, an unexpected AAAA record,
-   host-key mismatch, or a reachable management port.
-4. **Blocked — provision root-only registry access, then execute the protected
-   first release.** Owner creates a separate GitHub machine credential limited
-   to `read:packages` (and authorizes it for organization SSO if required),
-   then logs in as root on the VPS with `docker login --password-stdin`. Store
-   the resulting Docker config only at `/root/.docker/config.json` mode 0600;
-   never commit, paste, or add the token to a GitHub secret. Verify a direct
-   root pull of the recorded digest, then dispatch `select production release`
-   with its full `main` SHA and obtain `iShavlovsky` approval. The VPS must pull
-   only the resolved immutable digest. Do not rerun with a tag or bypass the
-   Environment approval. Record workflow URL, SHA, and digest after success.
-5. **Pending — perform network and content acceptance.** Verify valid TLS/SNI
-   for `noash.net`, HTTP-to-HTTPS redirect, `/` and `/privacy-policy` 200,
-   generated 404 page with HTTP 404, hashed Nuxt/font/image assets, `robots.txt`
-   and `sitemap.xml`. Confirm canonical, Open Graph, schema and sitemap URLs
-   use precisely `https://noash.net`; inspect the Caddy security headers,
-   immutable cache headers for hashed assets, no-cache HTML, and one effective
-   CSP only. Confirm `www.noash.net` remains outside this release.
-6. **Pending — browser performance acceptance.** With explicit owner approval
-   for the external browser origin `https://noash.net`, complete desktop and
-   mobile smoke checks and production Lighthouse for `/` and `/privacy-policy`.
-   Diagnose any regression before calling the release accepted; do not adjust
-   production configuration reactively without approval.
-7. **Pending — record evidence and close only Epic 4.** Add the deployed SHA,
-   digest, workflow link, timestamp, acceptance results, and any known limits
-   to this roadmap and ADR implementation record. Re-check the live container,
-   Caddy volumes, bounded Docker logging and public ports without deleting
-   certificate data. Commit documentation only with owner approval. Do not run
-   a rollback rehearsal or begin Epic 5.
+- The prior first release stopped safely at an anonymous GHCR digest lookup
+  with HTTP 401. The corrected `main` workflow run
+  `31880348420` passed and published the verified `linux/amd64` image
+  `ghcr.io/conspiracy-dev/deploy-lab@sha256:8891c68e54ab1c6423a1e277394dc38996b260f523d3bb3e5c31dacef1f742f7`
+  for commit `e6a7a52ac1f6f9a1b183a982e6d2e873a5fd9776`, built with
+  `NUXT_PUBLIC_SITE_URL=https://noash.net`. The owner rejected public package
+  visibility because that change is irreversible. The source VPS console is
+  currently unavailable and HIP support has been contacted, but the migration
+  does not depend on resolving that console issue. A local image is never
+  deployable production proof.
 
 Acceptance: the site is reachable on its canonical HTTPS origin through the
 approved immutable digest; static SEO output uses precisely that origin; TLS,
@@ -404,7 +415,7 @@ remains untouched.
 
 ### Epic 5 — rollback rehearsal and handoff
 
-Status: Pending Epic 4
+Status: Pending — Epic 4 is complete
 
 1. Roll out a subsequent approved SHA, then deliberately return to the prior
    digest through the same release path.
@@ -494,6 +505,34 @@ key returned, the restricted wrapper reached Docker and the registry, TCP 22
 remained reachable, TCP 80/443 remained closed before an application release,
 and root SSH remained denied. Epic 3 is complete. Caddy volume recreation will
 be exercised only when the first published application image starts in Epic 4.
+
+### Epic 4 evidence
+
+Recorded 2026-08-15: target `194.87.83.103` was patched, rebooted, and verified
+on kernel `6.8.0-137-generic`. `iptables-persistent` survived reboot with
+default-deny INPUT and `DOCKER-USER` policies; TCP 22, 80, and 443 are public,
+while TCP 10050 did not answer a non-whitelisted external client. Zabbix remains
+enabled for only `92.53.116.12`, `92.53.116.111`, and `92.53.116.119`.
+`docker info` reports the bounded `local` logging driver. The root-owned
+`/etc/docker/daemon.json` is represented by
+`infra/production/docker-daemon.json` so the operational logging policy is
+reviewable without storing host credentials.
+
+The target Caddy/Compose/wrapper validation passed; the owner `deployer` key
+worked; a fresh forced Actions key rejected an arbitrary command; and root SSH
+was rejected after `sshd -t` and SSH reload. Root Docker authenticated to the
+private registry with an owner-supplied `read:packages` token and pulled the
+exact digest. GitHub Environment values and target known hosts were replaced,
+then approved release run `31884433096` completed successfully.
+
+Public acceptance pinned `noash.net` SNI to `194.87.83.103` because the local
+Mac resolver still cached the old record: trusted HTTPS returned 200 for `/`,
+`/privacy-policy`, `/robots.txt`, and `/sitemap.xml`; HTTP redirected with 308;
+the unknown route returned 404; HSTS, referrer, permissions, and nosniff headers
+were present; and `/_nuxt/DU7F4wyR.js` returned a one-year immutable cache
+header. Public resolvers `1.1.1.1` and `8.8.8.8` returned the target A record;
+no AAAA record or `www` change was observed. Rollback rehearsal and source-host
+retirement are intentionally deferred to Epic 5.
 
 ## Risk and stop condition
 
