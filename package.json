@@ -34,6 +34,7 @@
     "test:onboarding": "node scripts/onboarding/task-intake-check.test.mjs",
     "test:e2e": "playwright test",
     "test:docker:smoke": "bash scripts/deployment/smoke-static-container.sh",
+    "test:deployment:status": "bash scripts/deployment/deploy-lab-status.test.sh",
     "test:unit": "vitest run",
     "typecheck": "nuxt typecheck"
   },
