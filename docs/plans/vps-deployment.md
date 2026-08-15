@@ -1,8 +1,8 @@
 # VPS deployment plan and roadmap
 
-Status: Epic 0–3 complete; Epic 4 plan ready for approval
+Status: Epic 0–3 complete; Epic 4 private-GHCR correction in progress
 
-Last updated: 2026-08-13
+Last updated: 2026-08-15
 
 ## Goal
 
@@ -43,8 +43,10 @@ HTTPS after its DNS record is ready.
   No `deployer` user exists. `unattended-upgrades` is enabled, while 179 package
   updates remain pending. The provider firewall policy is not yet confirmed.
 - The source repository is public (`Conspiracy-Dev/deploy-lab`); the selected
-  delivery model is GitHub Actions, public GHCR image, direct DNS A record, one
-  Caddy runtime container, and a manually approved production workflow.
+  delivery model is GitHub Actions, a private GHCR image, direct DNS A record,
+  one Caddy runtime container, and a manually approved production workflow.
+  The release job uses its ephemeral `GITHUB_TOKEN` for GHCR reads; the VPS
+  will use a distinct root-only credential limited to `read:packages`.
 - `f7one` and `iShavlovsky` have repository `admin` access. `iShavlovsky` is
   the selected GitHub Environment production reviewer. A
   provider rescue console is available for the SSH-hardening step.
@@ -178,12 +180,10 @@ Execution order for the remaining work:
    publish only `linux/amd64` to `ghcr.io/conspiracy-dev/deploy-lab`, tagging it
    with the full source SHA and recording OCI source/revision metadata. Resolve
    and report the resulting registry digest; never publish `latest`.
-4. **Blocked — create and verify the package boundary.** After the first
-   reviewed successful publication, confirm that the package is linked to this
-   repository through OCI source metadata. Repository owner `f7one` must
-   explicitly change it to public, acknowledging that GitHub does not permit reverting a
-   public container package to private. Prove an anonymous pull of the exact
-   digest before relying on it from the VPS.
+4. **Superseded by Epic 4 decision — private package boundary.** The package
+   remains private. Confirm its OCI linkage and prove authenticated retrieval
+   of the exact digest only through root Docker on the VPS. Do not make it
+   public or rely on anonymous pulls.
 5. **Complete — create the protected manual-release boundary.** Repository
    owner `f7one` created GitHub Environment `production`, restricted it to
    `main`, and assigned `iShavlovsky` as required reviewer with self-review
@@ -201,7 +201,7 @@ Execution order for the remaining work:
    concurrency behaviour, and the fact that no VPS call occurred. Update this
    roadmap with real run URLs/identifiers only if they contain no secrets.
 
-Acceptance: a reviewed full-SHA image is published to public GHCR and can be
+Acceptance: a reviewed full-SHA image is published to private GHCR and can be
 selected manually by digest. Pull-request jobs cannot publish or reach
 production secrets. The protected Environment requires `iShavlovsky` approval;
 it intentionally contains no deploy key and performs no VPS action until Epic
@@ -221,7 +221,7 @@ configured exactly as specified:
 only branch `main`, `iShavlovsky` as required reviewer, and self-review
 disabled. Repository policy now requires full-SHA action pinning while keeping
 the default workflow token read-only. The remaining proof requires a reviewed
-push to `main` and explicit package public visibility. No image, registry
+push to `main` and the selected private-package access model. No image, registry
 package, secret, VPS service, or production release was changed in this epic.
 
 The full local closing gate also passed: the Docker smoke test and Compose
@@ -316,9 +316,10 @@ image from GitHub; this epic makes that release safe to perform later.
 
 ### Epic 4 — domain, TLS, and first release
 
-Status: Plan ready; implementation requires an approved reviewed merge and a
-separate approval for the first public release. Canonical domain and public A
-record are ready; the GHCR package does not yet exist.
+Status: Private-GHCR correction in progress. Canonical domain and public A
+record are ready; an immutable image exists, but the first release is blocked
+until the corrected workflow reaches `main` and root Docker has a dedicated
+read-only GHCR credential.
 
 Goal: publish the reviewed static image for `https://noash.net`, deploy its
 immutable digest once through the protected manual workflow, and verify the
@@ -338,39 +339,45 @@ Planning findings:
   the image cannot be repaired by changing a VPS environment variable later.
 - The production Environment accepts only `main`, requires `iShavlovsky` to
   approve, prevents self-review, and stores the deploy SSH key and known-host
-  data. The release workflow accepts only a full `main` SHA, resolves its
-  digest, and invokes the VPS wrapper with that digest.
-- At planning time `codex/vps-deploy` is clean but six commits ahead of
-  `origin/main`; GitHub has no `deploy-lab` container package yet. Therefore
-  the first release must follow a reviewed merge to `main` and the successful
-  `publish-image` CI job; a local image is never deployable production proof.
+  data. The release workflow accepts only a full `main` SHA, logs in to GHCR
+  with its ephemeral `GITHUB_TOKEN`, resolves its digest, and invokes the VPS
+  wrapper with that digest.
+- Main commit `77eaabba593e05b8885d84a82e696663c41f89d8` published the verified
+  `linux/amd64` image
+  `ghcr.io/conspiracy-dev/deploy-lab@sha256:37bf6f99c40e88f0147e8aca3b1f2220decb4b895b75be3cc15c06e076590615`.
+  Its first manual release stopped safely at the anonymous GHCR digest lookup
+  with HTTP 401. The selected correction keeps the package private; a local
+  image is never deployable production proof.
 
 Execution order for the remaining work:
 
-1. **Pending — approve and deliver the reviewed release boundary.** Review the
-   six deployment commits on `codex/vps-deploy`, push them only after owner
-   approval, and create/merge a reviewed pull request into `main`. Record the
-   resulting full `main` SHA. Stop if branch protection or any required CI job
-   fails; do not substitute a local SHA.
-2. **Pending — publish and verify the immutable image.** Confirm the `main`
+1. **In progress — correct and deliver the private registry boundary.** Add the
+   pinned GHCR login action before digest resolution, review and merge it into
+   `main`, then record its resulting full SHA. Stop if branch protection or any
+   required CI job fails; do not substitute a local SHA.
+2. **Pending — publish and verify the immutable image.** Confirm the corrected `main`
    workflow ran all static, browser, Lighthouse, container, and `publish-image`
    jobs successfully. Verify its build argument was exactly
    `NUXT_PUBLIC_SITE_URL=https://noash.net`; record the produced `linux/amd64`
-   digest and OCI source/revision labels. Confirm the new GHCR package is public
-   so the VPS can pull it anonymously. Stop if publication is absent, private,
-   tagged without a digest, or has another canonical origin.
+   digest and OCI source/revision labels. Confirm the package remains private
+   and its pull requires authentication. Stop if publication is absent, tagged
+   without a digest, has another canonical origin, or has become public.
 3. **Pending — preflight public reachability.** Immediately before release,
    resolve public A and AAAA records from more than one resolver, confirm only
    `noash.net` A resolves to `138.124.85.193`, and check TCP 80/443 reach the
    VPS. Verify no existing service owns those ports and the wrapper still
    rejects a safe invalid digest. Stop on DNS drift, an unexpected AAAA record,
    host-key mismatch, or a reachable management port.
-4. **Pending — execute the protected first release.** Dispatch `select
-production release` with the recorded full `main` SHA and obtain the required
-   Environment approval from `iShavlovsky`. Observe its digest resolution and
-   SSH-wrapper result; the VPS must pull only the resolved immutable digest.
-   Do not rerun with a tag or bypass the Environment approval. Record workflow
-   URL, SHA, and digest after success.
+4. **Blocked — provision root-only registry access, then execute the protected
+   first release.** Owner creates a separate GitHub machine credential limited
+   to `read:packages` (and authorizes it for organization SSO if required),
+   then logs in as root on the VPS with `docker login --password-stdin`. Store
+   the resulting Docker config only at `/root/.docker/config.json` mode 0600;
+   never commit, paste, or add the token to a GitHub secret. Verify a direct
+   root pull of the recorded digest, then dispatch `select production release`
+   with its full `main` SHA and obtain `iShavlovsky` approval. The VPS must pull
+   only the resolved immutable digest. Do not rerun with a tag or bypass the
+   Environment approval. Record workflow URL, SHA, and digest after success.
 5. **Pending — perform network and content acceptance.** Verify valid TLS/SNI
    for `noash.net`, HTTP-to-HTTPS redirect, `/` and `/privacy-policy` 200,
    generated 404 page with HTTP 404, hashed Nuxt/font/image assets, `robots.txt`
