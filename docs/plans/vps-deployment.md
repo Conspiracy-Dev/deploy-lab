@@ -415,10 +415,11 @@ remains untouched.
 
 ### Epic 5 — rollback rehearsal and handoff
 
-Status: In progress — repository release-status seam is implemented; the
-protected production exercise awaits its merge, an owner-selected subsequent
-`main` revision, an approved privileged maintenance path, and provider reboot
-access.
+Status: In progress — the release-status seam and Zabbix ingress restriction
+are installed and verified on the target. The protected production exercise is
+paused at preflight because the live container reports `unhealthy`; its
+corrective image must be reviewed, merged, and published before any forward
+release, return, or provider reboot.
 
 Goal: prove that a future approved immutable release can be returned to the
 currently live immutable digest through the same protected release workflow,
@@ -431,34 +432,74 @@ release. This is a controlled release-and-return exercise, not a failure drill.
 
 Execution order for the remaining work:
 
-1. **Pending — select a harmless forward-release candidate.** The owner selects
-   a new full SHA already merged into `main` and published to private GHCR. It
-   must differ from live revision
+1. **Pending — select the corrected forward-release candidate.** Revision
+   `f4965680b32cb28ec9a11f8b6ee512a25d3dd1d2` was selected and published by
+   successful workflow run `31897848202`, but preflight found a healthcheck
+   defect in that image. The candidate is therefore superseded: use the next
+   full `main` SHA that contains the `curl` healthcheck correction and has
+   completed the normal private-GHCR publication workflow. It must differ from
+   live revision
    `e6a7a52ac1f6f9a1b183a982e6d2e873a5fd9776`; the current release digest
    `sha256:8891c68e54ab1c6423a1e277394dc38996b260f523d3bb3e5c31dacef1f742f7`
    is recorded as the return target. Do not invent an application change merely
    to create a candidate; if no legitimate next revision exists, use an
    owner-reviewed operational change that still publishes a new immutable image.
-2. **Partially complete — add a read-only release-status seam.** A tested
-   repository command is ready for privileged installation as a root-owned
+2. **Complete — add a read-only release-status seam.** The tested repository
+   command is installed as a root-owned
    `deploy-lab-status` command that prints only the current and previous image
    digests from `/var/lib/deploy-lab`, with no registry credential or mutable
    environment data. Permit this exact command to the owner `deployer` user in
    sudoers; it remains unavailable to the forced Actions key. Add a focused
    shell test for empty, first-release, two-release, and malformed state. CI
-   runs the test before publishing a candidate image. Its VPS installation and
-   sudo rule still require an approved privileged maintenance path because the
-   current SSH and Actions boundaries intentionally cannot alter root-owned
-   scripts or sudoers. This allows an operator to identify the live digest
-   without root shell access once installed.
+   runs the test before publishing a candidate image. On 2026-08-15, an
+   approved privileged provider-console session installed the `1004`-byte
+   script at `/usr/local/sbin/deploy-lab-status`, owned by `root:root` with
+   mode `0755`, and installed `/etc/sudoers.d/deploy-lab-status` with mode
+   `0440`. `visudo -cf` returned `parsed OK`; an execution as `deployer`
+   returned only the expected `CURRENT` and `PREVIOUS` digest values. This
+   allows an operator to identify the live digest without root shell access.
 3. **Pending — preflight and baseline.** Before changing the live image, record
    status output, `docker compose ps`, Docker/restart policy, current TLS
    certificate, and public smoke results for `/`, `/privacy-policy`,
    `robots.txt`, `sitemap.xml`, one hashed asset, and a genuine 404. Confirm the
    protected Environment still requires review and target DNS resolves publicly
    to `194.87.83.103`; stop on any regression.
+
+   Preflight evidence on 2026-08-15: the read-only status command returned the
+   live digest as both `CURRENT` and `PREVIOUS`; Docker was enabled and active;
+   the `deploy-lab-site-1` container was `running` with
+   `restart=unless-stopped`, but its Docker health state was `unhealthy`.
+   `DOCKER-USER` permits only forwarded TCP 80/443 before its terminal DROP.
+   Public HTTPS route, TLS, header, cache and 404 checks passed from the owner
+   workstation, and the GitHub `production` Environment retains required
+   review. A localhost HTTPS probe on the VPS returned `HTTP/2 200` with the
+   expected security and cache headers. The exercise is deliberately stopped:
+   Docker's five most recent healthcheck attempts all failed before executing
+   the command with `OCI runtime exec failed: ... procReady not received`, so
+   the container is still marked `unhealthy`; direct `docker exec` reproduces
+   the same failure and Docker logs show the accompanying closed-FIFO errors.
+   Kernel logs identify a cgroup pids-controller fork rejection in the site
+   container's Docker scope. The scope has no configured PID limit, but the
+   host contains 1096 `ssl_client` processes. This is the documented BusyBox
+   `wget` HTTPS zombie leak triggered by the existing healthcheck. The next
+   operational image replaces that probe with `curl`; its normal protected
+   deployment will recreate the container and remove the leaked process tree.
+   No manual `kill`, Docker restart, or direct container replacement is used.
+   `ufw` is not installed, but raw INPUT
+   policy is default-DROP and permits TCP 10050 only from `92.53.116.12`,
+   `92.53.116.111`, and `92.53.116.119`; Zabbix restriction is verified. The owner
+   workstation's `dig` replies in `198.18.0.0/15` are synthetic answers from a
+   local fake-IP DNS/TUN proxy (the same range was returned for Joker's name
+   servers), not authoritative DNS data. Independent Cloudflare and Google
+   DNS-over-HTTPS lookups both returned the expected `194.87.83.103`; the Joker
+   DNS control panel also records that A value. The corrective image adds
+   `curl` to the final Caddy image and uses a SNI-correct localhost probe. A
+   regression test rejects the former `wget --spider` probe and validates the
+   compose file with representative required variables. No release is
+   dispatched until that corrective image is reviewed, merged, and published.
+
 4. **Pending — controlled forward release.** Dispatch the manual production
-   release workflow for the selected SHA, obtain normal `production` approval, and wait
+   release workflow for the corrected selected SHA, obtain normal `production` approval, and wait
    for the digest-only wrapper to declare it healthy. Re-run public smoke and
    status; prove that `current` is the candidate digest and `previous` is the
    original live digest. A brief single-container interruption is accepted.

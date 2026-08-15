@@ -209,11 +209,30 @@ configured security headers are present. A local Mac resolver temporarily
 retained the old A record; independent public resolvers already returned the
 target. Epic 5 rollback rehearsal and source-host retirement remain pending.
 
-Epic 5 implementation began on 2026-08-15. The repository now has a focused
+Epic 5 implementation began on 2026-08-15. The repository has a focused
 `deploy-lab-status` command and portable shell test for empty, first-release,
 two-release, and invalid release state. CI runs the test before a candidate
-image can be published. No status command or sudo rule has yet been installed
-on the VPS: its existing security boundary deliberately prevents it without a
-privileged maintenance path. The next `main` revision containing this work is
-the agreed harmless forward-release candidate; public rollout, return, reboot,
-and source-host retirement have not begun.
+image can be published. A privileged provider-console session installed the
+command root-owned at `/usr/local/sbin/deploy-lab-status` (mode `0755`) and
+the exact `deployer` sudo rule in `/etc/sudoers.d/deploy-lab-status` (mode
+`0440`). Syntax and least-privilege execution were verified with `visudo -cf`
+and `sudo -u deployer sudo -n /usr/local/sbin/deploy-lab-status`; the command
+returned only the current and previous immutable digests. Revision
+`f4965680b32cb28ec9a11f8b6ee512a25d3dd1d2` was initially selected as the
+harmless forward-release candidate from successful workflow run `31897848202`,
+but is superseded by the corrective healthcheck image described below. The
+replacement candidate is the next reviewed and published `main` SHA containing
+that correction; public rollout, return, reboot, and source-host retirement
+have not begun.
+
+Preflight discovered that the Alpine BusyBox `wget` HTTPS healthcheck leaked
+`ssl_client` zombie processes in the live Caddy container until its cgroup pids
+controller rejected new forks. The site itself remained available and direct
+localhost HTTPS checks passed, but Docker could no longer run a healthcheck or
+an operator `docker exec`. The repository now installs `curl` in the final
+image and uses it for an SNI-correct HTTPS healthcheck; CI rejects the former
+`wget --spider` probe and validates the compose file with required variables.
+The corrective image must be released through the existing protected
+digest-only workflow, which recreates the affected container; no direct Docker
+restart, container deletion, or privilege expansion is permitted as a recovery
+shortcut.
