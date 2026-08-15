@@ -33,11 +33,15 @@ part of this release without a separate redirect decision.
    `sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d`.
 3. GitHub Actions verifies the static container on pull requests and publishes
    an immutable `linux/amd64` image for each full `main` commit SHA to the
-   public GitHub Container Registry package `ghcr.io/conspiracy-dev/deploy-lab`
+   private GitHub Container Registry package `ghcr.io/conspiracy-dev/deploy-lab`
    only after the owner supplies `PRODUCTION_SITE_URL`. The package is linked to
-   this repository through OCI source metadata. The server pulls anonymously
-   and holds no GitHub token. No placeholder origin is published because it
-   would make canonical links, `robots.txt`, and the sitemap incorrect.
+   this repository through OCI source metadata. The release workflow logs in
+   with its ephemeral `GITHUB_TOKEN` before resolving a digest. The VPS uses a
+   separate `read:packages` credential available only to root Docker; the
+   unprivileged `deployer` account, source repository, image, Compose files,
+   and normal environment variables never receive it. No placeholder origin is
+   published because it would make canonical links, `robots.txt`, and the
+   sitemap incorrect.
 4. Production rollout is manual. A `workflow_dispatch` release job accepts a
    full SHA from `main`, runs in GitHub Environment `production`, and requires
    approval by `iShavlovsky` before it receives deployment secrets. Automatic
@@ -71,9 +75,10 @@ part of this release without a separate redirect decision.
   changing a runtime environment variable cannot repair published SEO URLs.
 - The VPS needs only Docker, Compose, the deployment wrapper, and Caddy state;
   it does not receive source code or Node build dependencies.
-- The public GHCR package permits anonymous image pulls. Its visibility must be
-  confirmed after first publication because changing a package to public cannot
-  be reversed to private.
+- The private GHCR package requires authenticated pulls. The owner maintains a
+  dedicated credential limited to `read:packages`, revokes it on compromise,
+  and rotates it through a controlled root-only VPS login; it is not a GitHub
+  Actions secret because Actions uses its ephemeral workflow token.
 - Caddy certificate state remains persistent but is not a source of application
   data. Git and GHCR are the recovery sources for code and releases.
 
@@ -130,3 +135,13 @@ and performed a forced reboot; owner-key SSH, the restricted wrapper, and its
 Docker registry path returned successfully afterwards. Epic 3 is complete.
 Caddy volume recreation remains a first-release runtime check because no
 application image exists yet.
+
+Epic 4 private-registry correction started on 2026-08-15. The first approved
+release run correctly found the immutable image but attempted its GHCR digest
+lookup anonymously and received HTTP 401. The architecture now intentionally
+keeps the package private: the release workflow authenticates with its scoped
+ephemeral `GITHUB_TOKEN`, while the VPS will receive a separate root-only
+credential limited to `read:packages`. A repository deploy key is not used for
+registry access. The remaining first-release blocker is owner provisioning of
+that credential directly on the VPS; no token value is recorded here or in the
+repository.
