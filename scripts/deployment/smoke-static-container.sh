@@ -115,6 +115,23 @@ docker run --detach --name "$health_container" --network none \
   --volume "$work_dir/healthcheck.Caddyfile:/etc/caddy/Caddyfile:ro" \
   "$image" >/dev/null
 
+readiness_attempt=0
+while [ "$readiness_attempt" -lt 30 ]; do
+  if docker exec "$health_container" curl --fail --silent --show-error --insecure \
+    --resolve 'healthcheck.test:443:127.0.0.1' 'https://healthcheck.test/' >/dev/null 2>&1; then
+    break
+  fi
+
+  readiness_attempt=$((readiness_attempt + 1))
+  sleep 1
+done
+
+if [ "$readiness_attempt" -eq 30 ]; then
+  printf 'Timed out waiting for the HTTPS healthcheck container\n' >&2
+  docker logs "$health_container" >&2 || true
+  exit 1
+fi
+
 attempt=0
 while [ "$attempt" -lt 20 ]; do
   docker exec "$health_container" curl --fail --silent --show-error --insecure \

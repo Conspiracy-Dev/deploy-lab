@@ -472,6 +472,11 @@ Tasks:
    script rather than a new test framework. The portable Compose check,
    final-image boundary, twenty repeated SNI-correct HTTPS probes, zombie check,
    restart, routes, headers, cache, and 404 smoke passed locally.
+   The first PR run exposed a startup race in the isolated Caddy probe: the
+   first request arrived before port 443 was listening. The smoke test now has
+   a bounded 30-second readiness probe using the same HTTPS/SNI path and emits
+   Caddy logs on timeout; local verification required one retry and then passed
+   all twenty required probes without zombie processes.
 4. **Completed 2026-08-21 — obtain owner review and deliver for team-lead
    review.** The owner reviewed the complete diff and local exit-gate results,
    authorised the corrective commit, and authorised publication. Commit
