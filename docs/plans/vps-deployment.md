@@ -472,10 +472,13 @@ Tasks:
    script rather than a new test framework. The portable Compose check,
    final-image boundary, twenty repeated SNI-correct HTTPS probes, zombie check,
    restart, routes, headers, cache, and 404 smoke passed locally.
-4. **Completed 2026-08-21 — obtain owner review before delivery.** The owner
-   reviewed the complete diff and local exit-gate results, and authorised the
-   local corrective commit. Push, PR creation, workflow dispatch, and VPS
-   mutation still require their separately scoped approval.
+4. **Completed 2026-08-21 — obtain owner review and deliver for team-lead
+   review.** The owner reviewed the complete diff and local exit-gate results,
+   authorised the corrective commit, and authorised publication. Commit
+   `18d6d22` was pushed as `codex/automatic-production-deploy`; draft PR #10
+   was opened against `main` and the complete GitHub Actions suite was
+   triggered. Merge, workflow approval, and VPS mutation still require their
+   separately scoped approval.
 5. **Pending — perform the controlled production correction.** After the normal
    reviewed merge and green `main` run, use approved maintenance access to
    install the reviewed root-owned Compose file, then approve deployment of the
