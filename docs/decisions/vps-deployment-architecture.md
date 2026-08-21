@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-13
+- **Last amended:** 2026-08-21
 - **Decision owner:** Igor Shavlovsky
 
 ## Context
@@ -33,21 +34,29 @@ part of this release without a separate redirect decision.
    Caddy image. The final image contains only static output and Caddy
    configuration. The verified runtime-image digest is
    `sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d`.
-3. GitHub Actions verifies the static container on pull requests and publishes
-   an immutable `linux/amd64` image for each full `main` commit SHA to the
-   private GitHub Container Registry package `ghcr.io/conspiracy-dev/deploy-lab`
-   only after the owner supplies `PRODUCTION_SITE_URL`. The package is linked to
-   this repository through OCI source metadata. The release workflow logs in
-   with its ephemeral `GITHUB_TOKEN` before resolving a digest. The VPS uses a
-   separate `read:packages` credential available only to root Docker; the
-   unprivileged `deployer` account, source repository, image, Compose files,
-   and normal environment variables never receive it. No placeholder origin is
-   published because it would make canonical links, `robots.txt`, and the
+3. GitHub Actions verifies pull requests and repeats the complete quality suite
+   for every `main` revision. Image publication depends on every existing
+   clean-clone, contour, static, browser, Lighthouse, and container job. Only
+   then does it publish an immutable `linux/amd64` image for the full commit SHA
+   to the private GitHub Container Registry package
+   `ghcr.io/conspiracy-dev/deploy-lab`. The exact published digest is pulled
+   back and smoke-tested before it can become a release candidate. The package
+   is linked to this repository through OCI source metadata. The release
+   workflow uses its ephemeral `GITHUB_TOKEN`; the VPS uses a separate
+   `read:packages` credential available only to root Docker. The unprivileged
+   `deployer` account, source repository, image, Compose files, and normal
+   environment variables never receive that credential. No placeholder origin
+   is published because it would make canonical links, `robots.txt`, and the
    sitemap incorrect.
-4. Production rollout is manual. A `workflow_dispatch` release job accepts a
-   full SHA from `main`, runs in GitHub Environment `production`, and requires
-   approval by `iShavlovsky` before it receives deployment secrets. Automatic
-   deployments from `main` are not enabled.
+4. A successful `main` pipeline automatically prepares a production release
+   but does not deploy unattended. An unprivileged preparation job validates
+   the revision and exposes its exact immutable digest. The protected deploy
+   job then waits in GitHub Environment `production` for approval by
+   `iShavlovsky`; production SSH secrets remain unavailable until that approval.
+   The existing `workflow_dispatch` entry point remains as a protected recovery
+   and rollback path. It uses the same release implementation, accepts only a
+   full SHA from `main`, and must prove that the selected image came from a
+   successful complete quality pipeline.
 5. The VPS receives an unprivileged `deployer` user and a narrowly scoped
    root-owned deployment wrapper. The wrapper accepts only an immutable image
    digest, preserves the prior digest, verifies Compose and HTTP smoke checks,
@@ -86,11 +95,37 @@ part of this release without a separate redirect decision.
     command; the forced Actions key does not. Installing or changing this
     root-owned command still requires an approved privileged maintenance path,
     rather than expanding deployment-key or `deployer` privileges.
+12. Repository branch protection and rulesets are not part of this decision.
+    The team lead reviews merge requests and owns merge discipline. GitHub
+    Actions therefore treats any revision that reaches `main` and passes the
+    complete post-merge suite as eligible to become a reviewed production
+    candidate, including a direct push. This organisational control does not
+    weaken the deployment gate: a failed or incomplete `main` pipeline cannot
+    publish a candidate or reach the production approval job.
+13. The live BusyBox `wget` HTTPS healthcheck must be replaced before automatic
+    production preparation is enabled. The corrective image includes `curl`,
+    production Compose uses the matching SNI-correct probe, and the root-owned
+    VPS Compose file is updated only through approved owner maintenance access.
+    The former `wget` image is retained for audit history but is not a normal
+    rollback target. The first corrected image becomes known-good before a later
+    release rehearses rollback to it.
+14. Approved owner maintenance uses a preconfigured local SSH alias whose
+    private key is already loaded in the workstation SSH Agent. No private key,
+    alias value, agent socket, or SSH configuration is stored in the repository
+    or copied into GitHub Actions. Possessing the local access path does not
+    authorise a connection or command: every read-only audit, configuration
+    mutation, release, and recovery action still requires its separately scoped
+    owner approval. The dedicated `maintenance` account has owner-approved
+    passwordless `sudo` for the current Epic 5 recovery and correction work;
+    this access is separate from the `deployer` and forced Actions identities.
+    The forced Actions key remains limited to the digest-only deployment wrapper.
 
 ## Consequences
 
 - Releases are reproducible from a Git SHA and can be rolled back to the
-  previously recorded image digest without rebuilding on the VPS.
+  previously recorded compatible known-good image digest without rebuilding on
+  the VPS. A runtime configuration migration must not roll back to an image
+  that lacks the healthcheck command required by the installed Compose file.
 - `NUXT_PUBLIC_SITE_URL` must be passed while building the production image;
   changing a runtime environment variable cannot repair published SEO URLs.
 - The VPS needs only Docker, Compose, the deployment wrapper, and Caddy state;
@@ -104,6 +139,13 @@ part of this release without a separate redirect decision.
 - No Caddy volume, Docker credential, SSH private key, or host configuration is
   copied from source to target. The target obtains its own certificate after
   DNS cutover; this is safe because the site has no mutable runtime data.
+- A production release is prepared automatically after a green `main` run, but
+  a human still authorises the exact digest before deployment secrets are
+  released. Rejecting or leaving that approval pending makes no VPS change.
+- Merge-request enforcement remains an operating policy rather than a GitHub
+  branch rule. A direct `main` push that passes all checks can also reach the
+  production approval queue; the production reviewer remains the final human
+  control for that accepted risk.
 
 ## Implementation record
 
@@ -217,3 +259,29 @@ on the VPS: its existing security boundary deliberately prevents it without a
 privileged maintenance path. The next `main` revision containing this work is
 the agreed harmless forward-release candidate; public rollout, return, reboot,
 and source-host retirement have not begun.
+
+On 2026-08-18 the owner approved an amendment from manually dispatched releases
+to automatic production preparation after a complete successful `main`
+pipeline. The `production` Environment approval remains mandatory; the manual
+full-SHA dispatch remains as a protected recovery path. The owner explicitly
+kept merge enforcement with the team lead instead of adding branch protection
+or repository rulesets. Implementation is blocked first on verifying and
+correcting the live `wget` healthcheck, establishing a compatible known-good
+digest, and then proving that every existing quality job gates the exact image
+and the protected deployment.
+
+On 2026-08-21 the owner created a dedicated `maintenance` SSH identity on the
+target VPS through the provider console and approved passwordless `sudo` for
+Epic 5. The maintenance identity is distinct from GitHub, bot, `deployer`, and
+forced Actions identities; its private key remains only in the workstation SSH
+Agent and is not a repository artifact.
+
+The first read-only Epic 5 baseline found current and previous release digest
+`sha256:8891c68e54ab1c6423a1e277394dc38996b260f523d3bb3e5c31dacef1f742f7`.
+The public site returned trusted HTTPS 200, but the running Caddy container was
+unhealthy. Its installed `wget` healthcheck left 1103 processes in the container
+cgroup, including unreaped `ssl_client` zombies parented by Caddy; generic
+`docker exec /bin/true` also failed with `procReady not received`. This confirms
+the reported healthcheck failure mode. The correction is implemented and locally
+verified, but has not been committed, pushed, merged, published, or installed on
+the VPS.

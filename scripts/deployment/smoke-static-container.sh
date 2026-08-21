@@ -18,6 +18,7 @@ docker compose version >/dev/null 2>&1 || {
 }
 
 project="deploy_lab_smoke_${RANDOM}_$$"
+health_container="${project}_healthcheck"
 port="$(python3 - <<'PY'
 import socket
 
@@ -30,6 +31,7 @@ base_url="http://localhost:${port}"
 work_dir="$(mktemp -d)"
 
 cleanup() {
+  docker rm --force "$health_container" >/dev/null 2>&1 || true
   docker compose -p "$project" down --volumes --remove-orphans >/dev/null 2>&1 || true
   rm -rf "$work_dir"
 }
@@ -94,10 +96,35 @@ grep -Fq 'noindex, nofollow' "$work_dir/not-found.body"
 image="deploy-lab-static:local"
 docker run --rm --entrypoint sh "$image" -c '
   ! command -v node &&
+  command -v curl &&
   test ! -d /app &&
   test ! -e /srv/.env &&
   test -f /srv/index.html &&
   test -f /srv/404.html
 '
+
+printf '%s\n' \
+  '{' \
+  '  local_certs' \
+  '}' \
+  'healthcheck.test {' \
+  '  respond "ok"' \
+  '}' > "$work_dir/healthcheck.Caddyfile"
+
+docker run --detach --name "$health_container" --network none \
+  --volume "$work_dir/healthcheck.Caddyfile:/etc/caddy/Caddyfile:ro" \
+  "$image" >/dev/null
+
+attempt=0
+while [ "$attempt" -lt 20 ]; do
+  docker exec "$health_container" curl --fail --silent --show-error --insecure \
+    --resolve 'healthcheck.test:443:127.0.0.1' 'https://healthcheck.test/' >/dev/null
+  attempt=$((attempt + 1))
+done
+
+if docker exec "$health_container" ps -eo stat=,comm= | grep -Eq '^Z.*ssl_client$'; then
+  printf 'Repeated HTTPS healthchecks left zombie ssl_client processes\n' >&2
+  exit 1
+fi
 
 printf 'Static container smoke test passed at %s\n' "$base_url"

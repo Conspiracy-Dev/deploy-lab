@@ -7,7 +7,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          'wget --spider --quiet --no-check-certificate --header="Host: $$DOMAIN" https://127.0.0.1/',
+          'curl --fail --silent --show-error --insecure --resolve "$$DOMAIN:443:127.0.0.1" "https://$$DOMAIN/" > /dev/null',
         ]
       interval: 10s
       timeout: 5s

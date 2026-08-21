@@ -50,6 +50,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm quality:static
       - run: pnpm test:deployment:status
+      - run: pnpm test:deployment:production-compose
       - run: pnpm build
 
   browser:
