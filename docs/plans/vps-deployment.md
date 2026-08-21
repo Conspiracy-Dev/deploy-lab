@@ -1,8 +1,9 @@
 # VPS deployment plan and roadmap
 
-Status: Epic 0–4 complete; production live on `194.87.83.103`
+Status: Epic 0–4 complete; Epics 5–9 approved and pending implementation;
+production live on `194.87.83.103`
 
-Last updated: 2026-08-15
+Last updated: 2026-08-18
 
 ## Goal
 
@@ -10,13 +11,16 @@ Deploy the static DeployLab site to target VPS `194.87.83.103` through a reprodu
 reviewed GitHub Actions and GHCR release flow. The final domain must serve the
 generated Nuxt routes over HTTPS with correct canonical URLs, security/cache
 headers, a tested rollback path, and no source code or secrets embedded in the
-image.
+image. After every accepted `main` change passes the complete post-merge quality
+suite, GitHub prepares and verifies the exact production image automatically;
+deployment still waits for a human approval in Environment `production`.
 
 In plain language: the website will be packed into one small container, checked
 before release, and installed on the server only after an owner approves it.
 When a new version has a problem, the release process returns to the last known
 working version. Visitors will receive the site through the supplied domain and
-HTTPS after its DNS record is ready.
+HTTPS after its DNS record is ready. The approval screen is the final decision
+to deploy an already identified immutable image, not permission to skip tests.
 
 ## Non-goals
 
@@ -25,6 +29,9 @@ HTTPS after its DNS record is ready.
 - Deploy before Epic 3 prepares and hardens the VPS.
 - Add Kubernetes, Swarm, Watchtower, Certbot, a second proxy, zero-downtime
   slots, monitoring, or off-host backups in v1.
+- Add staging or make production deployment fully unattended.
+- Add or change branch protection, repository rulesets, merge permissions, or
+  administrator bypass settings. The team lead retains merge-request review.
 - Fix unrelated UI, ESLint, or development-hints debt in this branch.
 - Commit, push, merge, alter GitHub settings, or mutate the VPS without the
   owner's explicit review or the corresponding approved epic.
@@ -51,13 +58,27 @@ HTTPS after its DNS record is ready.
   Node toolchain, or GHCR credential exists outside root Docker configuration.
 - The source repository is public (`Conspiracy-Dev/deploy-lab`); the selected
   delivery model is GitHub Actions, a private GHCR image, direct DNS A record,
-  one Caddy runtime container, and a manually approved production workflow.
+  one Caddy runtime container, and an automatically prepared but manually
+  approved production workflow.
   The release job uses its ephemeral `GITHUB_TOKEN` for GHCR reads; the VPS
   will use a distinct root-only credential limited to `read:packages`.
 - `f7one` and `iShavlovsky` have repository `admin` access. `iShavlovsky` is
   the selected GitHub Environment production reviewer. Target hardening used
   independently verified owner and Actions SSH paths; provider-console access
   was not required.
+- `main` has no branch protection or ruleset by owner decision. The team lead
+  reviews merge requests as an operating policy. A direct push that reaches
+  `main` and passes the complete suite can therefore also become a production
+  candidate; failed or incomplete `main` runs must remain unable to publish or
+  reach the production approval job.
+- There is no staging environment. A brief single-container production
+  interruption is accepted, but every production mutation requires the scoped
+  epic approval, a known recovery path, and complete public acceptance checks.
+- Future owner maintenance uses a preconfigured local SSH alias with the
+  private key held by the workstation SSH Agent. The alias and key stay outside
+  the repository and GitHub Actions. Selecting this access mechanism does not
+  authorise a connection; read-only and mutating command scopes require
+  separate approval when their epic starts.
 - Canonical domain `noash.net` resolves by A record to target `194.87.83.103`;
   it has no AAAA record. Repository variable
   `PRODUCTION_SITE_URL` is set to `https://noash.net`. The existing
@@ -82,6 +103,10 @@ HTTPS after its DNS record is ready.
   implementation; this roadmap does not duplicate their executable settings.
 - GitHub Environment `production` owns deployment secrets and approval. The
   root-owned VPS wrapper owns privileged Docker operations.
+- GitHub Actions owns candidate provenance: every existing quality job gates
+  publication, and the exact published digest is re-pulled and smoke-tested.
+- The team lead owns merge-request review. This roadmap does not replace that
+  organisational control with repository settings.
 
 ## Plan
 
@@ -413,90 +438,281 @@ approved immutable digest; static SEO output uses precisely that origin; TLS,
 headers, caching, routes, 404, and browser/Lighthouse checks pass; and `www`
 remains untouched.
 
-### Epic 5 — rollback rehearsal and handoff
+### Epic 5 — healthcheck correction and known-good baseline
 
-Status: In progress — repository release-status seam is implemented; the
-protected production exercise awaits its merge, an owner-selected subsequent
-`main` revision, an approved privileged maintenance path, and provider reboot
-access.
+Status: In progress — baseline and local correction verified; controlled
+production correction pending reviewed delivery.
 
-Goal: prove that a future approved immutable release can be returned to the
-currently live immutable digest through the same protected release workflow,
-then hand over only the commands and evidence needed for normal operation.
+Goal: confirm the reported BusyBox `wget` failure on the live host, replace the
+production probe with a compatible `curl` probe, and establish the first image
+that is safe to use as the later rollback target.
 
-Non-goals: do not retire, erase, reboot, or otherwise alter source VPS
-`138.124.85.193`; add an availability platform; widen GitHub, Docker, or SSH
-privileges; expose registry credentials; or make a deliberately broken public
-release. This is a controlled release-and-return exercise, not a failure drill.
+Tasks:
 
-Execution order for the remaining work:
+1. **Completed 2026-08-21 — record a read-only production baseline.** The
+   dedicated maintenance identity reached the target through strict host-key
+   verification. Current and previous release were the old `wget` digest;
+   Docker reported the Caddy container `unhealthy`, its cgroup had 1103
+   processes, and its Caddy parent retained `ssl_client` zombies. Both the
+   healthcheck and a generic Docker exec failed with `procReady not received`.
+   The installed Compose checksum was
+   `d76b188784d07743b2ecabcb95e168bae1ed2c0973b188f9e2d2e7eff10b5394`.
+   Public `https://noash.net/` returned trusted HTTPS 200. This supports the
+   recorded `wget` diagnosis; no CI gate or VPS state was changed.
+2. **Completed 2026-08-21 — implement the minimal portable correction from current `main`.**
+   Add `curl` only to the final Caddy image and replace only the production HTTPS
+   healthcheck. Add a Compose regression test that uses ubiquitous `grep -Fq`
+   rather than installing `rg` on the runner. Do not cherry-pick PR #9, weaken
+   an existing check, add `continue-on-error`, or change Lighthouse/Playwright
+   acceptance.
+3. **Completed 2026-08-21 — prove the transition locally.** Validate production Compose and
+   Caddy, build the production-shaped `linux/amd64` image, run the healthcheck
+   repeatedly, verify no process accumulation, and exercise restart and public
+   static-route smoke. Add focused shell coverage for any changed deployment
+   script rather than a new test framework. The portable Compose check,
+   final-image boundary, twenty repeated SNI-correct HTTPS probes, zombie check,
+   restart, routes, headers, cache, and 404 smoke passed locally.
+   The first PR run exposed a startup race in the isolated Caddy probe: the
+   first request arrived before port 443 was listening. The smoke test now has
+   a bounded 30-second readiness probe using the same HTTPS/SNI path and emits
+   Caddy logs on timeout; local verification required one retry and then passed
+   all twenty required probes without zombie processes.
+4. **Completed 2026-08-21 — obtain owner review and deliver for team-lead
+   review.** The owner reviewed the complete diff and local exit-gate results,
+   authorised the corrective commit, and authorised publication. Commit
+   `18d6d22` was pushed as `codex/automatic-production-deploy`; draft PR #10
+   was opened against `main` and the complete GitHub Actions suite was
+   triggered. Merge, workflow approval, and VPS mutation still require their
+   separately scoped approval.
+5. **Pending — perform the controlled production correction.** After the normal
+   reviewed merge and green `main` run, use approved maintenance access to
+   install the reviewed root-owned Compose file, then approve deployment of the
+   matching corrected digest. A short single-container interruption is
+   accepted. Keep an explicit provider-console recovery path for this first
+   configuration transition because the former image lacks `curl` and is not a
+   compatible automatic rollback target.
+6. **Pending — establish image A as known-good.** Verify container health over a
+   sustained observation window, stable process count, current/previous status,
+   trusted public TLS, routes, SEO files, headers, cache behaviour, real 404,
+   firewall policy, and restart persistence. Record only workflow URL, commit
+   SHA, digest, checks, and non-secret evidence in this roadmap and ADR.
 
-1. **Pending — select a harmless forward-release candidate.** The owner selects
-   a new full SHA already merged into `main` and published to private GHCR. It
-   must differ from live revision
-   `e6a7a52ac1f6f9a1b183a982e6d2e873a5fd9776`; the current release digest
-   `sha256:8891c68e54ab1c6423a1e277394dc38996b260f523d3bb3e5c31dacef1f742f7`
-   is recorded as the return target. Do not invent an application change merely
-   to create a candidate; if no legitimate next revision exists, use an
-   owner-reviewed operational change that still publishes a new immutable image.
-2. **Partially complete — add a read-only release-status seam.** A tested
-   repository command is ready for privileged installation as a root-owned
-   `deploy-lab-status` command that prints only the current and previous image
-   digests from `/var/lib/deploy-lab`, with no registry credential or mutable
-   environment data. Permit this exact command to the owner `deployer` user in
-   sudoers; it remains unavailable to the forced Actions key. Add a focused
-   shell test for empty, first-release, two-release, and malformed state. CI
-   runs the test before publishing a candidate image. Its VPS installation and
-   sudo rule still require an approved privileged maintenance path because the
-   current SSH and Actions boundaries intentionally cannot alter root-owned
-   scripts or sudoers. This allows an operator to identify the live digest
-   without root shell access once installed.
-3. **Pending — preflight and baseline.** Before changing the live image, record
-   status output, `docker compose ps`, Docker/restart policy, current TLS
-   certificate, and public smoke results for `/`, `/privacy-policy`,
-   `robots.txt`, `sitemap.xml`, one hashed asset, and a genuine 404. Confirm the
-   protected Environment still requires review and target DNS resolves publicly
-   to `194.87.83.103`; stop on any regression.
-4. **Pending — controlled forward release.** Dispatch the manual production
-   release workflow for the selected SHA, obtain normal `production` approval, and wait
-   for the digest-only wrapper to declare it healthy. Re-run public smoke and
-   status; prove that `current` is the candidate digest and `previous` is the
-   original live digest. A brief single-container interruption is accepted.
-5. **Pending — controlled return through the same workflow.** Dispatch the
-   same protected workflow for the original full SHA
-   `e6a7a52ac1f6f9a1b183a982e6d2e873a5fd9776`; do not use direct Docker commands
-   or edit state files. After approval, verify `current` equals the original
-   digest and `previous` equals the candidate. Repeat the complete public smoke,
-   TLS, header, cache, and 404 checks.
-6. **Pending — restart persistence.** The owner performs one normal reboot from
-   the VPS provider control panel after the return release. Do not grant
-   `deployer` permission to reboot. Verify SSH availability, netfilter policy,
-   Docker service, Caddy container health, persistent certificate state, status
-   output, and public HTTPS smoke after boot. If no provider reboot control is
-   available, stop and request a supported recovery/reboot path; do not weaken
-   SSH hardening to work around it.
-7. **Pending — handoff and closure.** Add concise normal deploy, return, status,
-   credential-rotation, and recovery instructions to this roadmap; record both
-   workflow URLs, SHAs, digests, restart evidence, and test results without
-   secrets. Run formatting, static quality, deployment-shell tests, secret scan,
-   and diff checks. Commit only after owner review. Do not start source-host
-   retirement; that remains a separate owner decision after Epic 5.
+Acceptance: the live container is healthy with the SNI-correct `curl` probe;
+the old `wget` digest is explicitly excluded from normal rollback; corrected
+image A is recorded as the first compatible known-good target; and the complete
+Epic 5 exit gate passes before the epic is marked complete.
 
-Acceptance: an operator can identify the live and previous digests through the
-read-only status command; a reviewed forward image and the original image each
-reach production through the same approved workflow; the public site, TLS,
-headers, caching, routes, 404, Zabbix restriction, and post-reboot persistence
-all pass; and no source-host retirement or credential exposure occurs.
+### Epic 6 — complete CI gate and exact-artifact verification
 
-Repository evidence recorded 2026-08-15: `pnpm test:deployment:status`,
-ShellCheck for the command and its test, Actionlint, `pnpm format:check`,
-`pnpm quality:static` (42 unit tests), `pnpm deps:check`,
-`pnpm deps:cycles`, and `pnpm test:docker:smoke` passed. The static quality
-gate retains its 15 pre-existing ESLint warnings and no errors. No VPS state,
-workflow dispatch, reboot, or source-host retirement was performed by this
-repository change.
+Status: Pending Epic 5 acceptance.
+
+Goal: make every existing check block publication and prove that the exact
+private-GHCR digest proposed for production is the artifact that passed the
+production smoke test.
+
+Tasks:
+
+1. **Pending — make publication depend on every current job.** Require the full
+   Ubuntu/macOS/Windows clean-clone matrix, contour, static, browser,
+   Lighthouse, and container jobs. Preserve their commands and thresholds.
+2. **Pending — fail closed on production configuration.** A missing or invalid
+   `PRODUCTION_SITE_URL` must fail candidate creation rather than silently skip
+   it. Pull requests remain unable to publish packages or access production
+   secrets.
+3. **Pending — verify the published digest.** After the single `linux/amd64`
+   production build is pushed, resolve its immutable digest, pull that digest
+   into a separate verification job, and run the production route, canonical
+   origin, final-image boundary, Caddy, health, restart, header, cache, and 404
+   smoke against it. Expose only the verified digest to later jobs.
+4. **Pending — control overlapping candidates.** Add bounded workflow timeouts
+   and production-candidate concurrency without cancelling an in-flight SSH
+   rollout. A stale automatic candidate must stop before deployment if a newer
+   eligible `main` revision supersedes it; manual recovery remains a separate
+   reviewed path.
+5. **Pending — prove negative paths.** Demonstrate that failure of each job
+   class, an absent production variable, a failed exact-digest smoke, a pull
+   request event, and a non-`main` ref cannot reach candidate publication or
+   production approval.
+6. **Pending — close the epic with full testing and documentation.** Update this
+   roadmap with real job names and evidence, run the complete Epic 6 exit gate,
+   and present the diff for review before any commit.
+
+Acceptance: every existing check gates publication; the exact digest is tested
+after publication and before release preparation; failures and PRs have no path
+to packages or production secrets; and the complete Epic 6 exit gate passes.
+
+### Epic 7 — shared automatic and manual release orchestration
+
+Status: Pending Epic 6 acceptance.
+
+Goal: automatically prepare a verified `main` digest for production approval
+while retaining one protected manual full-SHA recovery path and one deployment
+implementation.
+
+Tasks:
+
+1. **Pending — separate preparation from protected deployment.** An
+   unprivileged job verifies the full `main` SHA, successful complete quality
+   provenance, exact image digest, and current-candidate policy. It publishes
+   the SHA and digest in the workflow summary before the protected job waits for
+   approval.
+2. **Pending — reuse one release implementation.** The green `main` workflow
+   invokes the release automatically; `workflow_dispatch` invokes the same
+   implementation for a selected full SHA. Avoid duplicated SSH, digest, or
+   rollback logic. Keep full-SHA action pinning and least-privilege workflow
+   permissions.
+3. **Pending — retain the human production gate.** Only the deployment job
+   references Environment `production`. It remains restricted to `main`,
+   prevents self-review, requires `iShavlovsky`, and receives SSH secrets only
+   after approval. Rejection or expiry makes no VPS call.
+4. **Pending — harden manual recovery.** Accept only a lowercase 40-character
+   SHA reachable from `main`; prove its image came from a successful complete
+   quality run; reject arbitrary tags, raw user-supplied digests, legacy
+   unverified candidates, and the incompatible `wget` release.
+5. **Pending — serialize and audit releases.** Keep one non-cancelling
+   `production-release` critical section, show the selected SHA/digest in the
+   summary, and preserve GitHub deployment history without logging keys,
+   credentials, host-key material, or registry tokens.
+6. **Pending — close the epic with full testing and documentation.** Cover
+   automatic, manual, rejected approval, invalid SHA, missing image, failed
+   provenance, stale candidate, and concurrent request paths; run the complete
+   Epic 7 exit gate and present the diff before commit.
+
+Acceptance: a green `main` revision automatically reaches a waiting production
+approval with its exact tested digest visible; approval is still mandatory;
+manual recovery cannot bypass provenance; both paths share one implementation;
+and the complete Epic 7 exit gate passes.
+
+### Epic 8 — deployment, rollback, and public acceptance tests
+
+Status: Pending Epic 7 acceptance.
+
+Goal: prove the least-privilege VPS boundary, automatic failure recovery, and
+public post-deploy behaviour before activating the new production path.
+
+Tasks:
+
+1. **Pending — test the root-owned wrapper as a public boundary.** Add portable
+   shell harnesses with stubbed Docker, Compose, curl, and time boundaries for
+   valid rollout, invalid digest, missing config, pull failure, Caddy failure,
+   health timeout, first-release failure, rollback success, and rollback
+   failure. Test that the forced SSH command rejects extra or altered commands.
+2. **Pending — add external post-deploy smoke.** From the GitHub runner verify
+   trusted HTTPS, HTTP redirect, `/`, `/privacy-policy`, `/robots.txt`,
+   `/sitemap.xml`, a hashed asset, security/cache headers, canonical origin, and
+   a genuine 404 after the wrapper reports success.
+3. **Pending — bind smoke to release state.** Confirm the wrapper output and
+   read-only status seam identify the exact approved digest as current. A smoke
+   failure must fail the deployment visibly and invoke only the documented
+   compatible recovery path.
+4. **Pending — prove least privilege.** Recheck strict known hosts, forced-key
+   behaviour, exact sudo rule, absence of Docker-group membership, and the fact
+   that Actions cannot edit root-owned runtime files, reboot the host, or open a
+   shell.
+5. **Pending — close the epic with full testing and documentation.** Run the
+   complete Epic 8 exit gate plus all wrapper negative cases; record evidence
+   and present the diff before commit or production activation.
+
+Acceptance: the wrapper and SSH boundary have deterministic success and failure
+coverage; external smoke verifies the public site and exact digest; no Actions
+privilege is widened; compatible rollback is automatic on failure; and the
+complete Epic 8 exit gate passes.
+
+### Epic 9 — production activation, rollback rehearsal, and handoff
+
+Status: Pending Epic 8 acceptance and separate production approval.
+
+Goal: activate the automatically prepared release path on the live host, prove
+human approval and compatible rollback end to end, and leave a concise operator
+handoff.
+
+Tasks:
+
+1. **Pending — run production preflight.** Confirm image A remains healthy and
+   is the compatible rollback target; capture status, DNS/TLS, public smoke,
+   Docker/restart state, disk/memory/process baseline, firewall policy,
+   Environment reviewer and branch policy, and provider-console recovery.
+2. **Pending — activate through a reviewed merge.** After owner review and
+   explicit commit/push approval, merge the automation change normally. Require
+   every post-merge job and exact-digest smoke to pass, then confirm the
+   automatic release waits at Environment `production` without contacting the
+   VPS.
+3. **Pending — approve and verify image B.** The reviewer compares the visible
+   SHA and digest with the successful pipeline and approves the deployment.
+   Verify wrapper success, exact current digest, complete external smoke,
+   container health, stable process count, and absence of secret leakage. A
+   short single-container interruption is accepted.
+4. **Pending — rehearse `B -> A` through manual recovery.** Select only the
+   recorded known-good image A SHA using the protected manual path, approve it,
+   and repeat exact status, health, TLS, route, SEO, header, cache, and 404
+   checks. Do not return to the incompatible `wget` digest.
+5. **Pending — prove restart persistence.** With separate owner approval, use
+   the provider control panel for one normal reboot. Verify SSH, firewall,
+   Docker, healthy container, Caddy volumes/TLS, release status, and public
+   smoke after boot; do not grant Actions reboot permission.
+6. **Pending — hand off and close.** Record the minimal normal-release, approval,
+   rejection, retry, rollback, credential-rotation, and provider-recovery
+   instructions plus workflow URLs, SHAs, digests, and non-secret evidence.
+   Run the complete Epic 9 exit gate. Update the ADR and this roadmap to final
+   observed behaviour; commit only after owner review. Source-host retirement
+   remains a separate decision.
+
+Acceptance: an eligible `main` revision automatically waits for production
+approval, the exact digest deploys only after approval, public acceptance
+passes, manual recovery proves `B -> A`, reboot persistence passes, and no
+staging, branch-rule change, widened privilege, secret exposure, or source-host
+retirement occurs.
+
+Package decision: the MVP needs no new npm or runtime orchestration library.
+Existing Bash, Docker/Compose, GitHub Actions, `actionlint`, ShellCheck, curl,
+and the project test commands cover the required seams. Image attestations or a
+workflow security scanner may be proposed later as a separate hardening task;
+they do not solve the current health, gating, artifact-parity, or rollback gaps
+and are not part of Epics 5–9.
+
+Planning record on 2026-08-18: branch `codex/automatic-production-deploy` was
+created from current `origin/main` at
+`f4965680b32cb28ec9a11f8b6ee512a25d3dd1d2`; no rejected PR #9 commit was
+reused. Read access confirmed that `ghcr.io/conspiracy-dev/deploy-lab` remains
+private and contains immutable SHA-tagged versions, including that `main`
+revision. Task-intake, formatting, contour, secret, and diff checks passed on
+Node 24.16.0 and pnpm 11.5.2. Only this roadmap and the existing VPS ADR were
+changed; no commit, push, GitHub setting, workflow run, image, Environment, or
+VPS state was changed.
+
+Access decision recorded on 2026-08-18: future approved owner maintenance will
+use a local SSH alias backed by the workstation SSH Agent. The repository will
+not contain the alias or key. Recording the choice did not start Epic 5, open an
+SSH connection, inspect the host, or authorise any production command.
 
 ## Verification
+
+### Full exit gate for every Epic 5–9
+
+An epic is not complete when only its focused test passes. Before proposing
+closure, run the following on the project Node 24 and pnpm 11.5.2 toolchain,
+read every result, update this roadmap with real evidence, and stop on failure:
+
+1. `pnpm task:intake:check --file docs/plans/vps-deployment.md` and
+   `pnpm contour:doctor:clone`.
+2. `pnpm format:check`, `pnpm quality:static`, `pnpm build`, and
+   `pnpm generate`.
+3. `pnpm test:deployment:status` and every deployment-focused test present in
+   `package.json`, including production Compose and wrapper tests once added.
+4. `pnpm test:e2e`, `pnpm lighthouse`, and `pnpm test:docker:smoke`.
+5. `pnpm deps:check`, `pnpm deps:cycles`, `pnpm dead-code`, and
+   `pnpm secrets:check`.
+6. `actionlint .github/workflows/*.yml`, ShellCheck for every deployment shell
+   file, and shell syntax checks.
+7. The epic-specific negative and production-shaped tests listed under that
+   epic. A real PR run must keep every existing check green and must not publish
+   or request production approval.
+8. `git diff --check` and `git status --short`; inspect the complete diff and
+   preserve unrelated work.
+
+Production acceptance supplements this local and CI gate; it never replaces
+it. No epic may be marked complete, committed, pushed, dispatched, or used to
+mutate the VPS merely because a narrower check passed.
 
 ### Epic 0 evidence to collect
 
@@ -507,10 +723,9 @@ repository change.
    `git status --short`.
 
 Epic 0 changes neither rendered UI nor production runtime behaviour. The full
-project gate was nevertheless run before closing the epic. Every later epic
-repeats the relevant static gate; Epic 1 adds local container proof, Epic 3
-adds VPS safety checks, and Epic 4/5 add public browser, TLS, SEO, and rollback
-proof.
+project gate was nevertheless run before closing the epic. Epics 5–9 repeat the
+full exit gate above and add their focused health, artifact, workflow, public
+acceptance, and rollback proof.
 
 Evidence recorded 2026-08-13: task-intake and Prettier checks passed;
 `quality:static` passed with 42 unit tests; Gitleaks found no secrets;
@@ -606,15 +821,38 @@ retirement are intentionally deferred to Epic 5.
 
 ## Risk and stop condition
 
-- Do not begin Epic 2 until the owner reviews and explicitly approves the Epic 1
-  implementation and its local commit.
-- Do not publish an IP-based site with placeholder canonical URLs. Do not serve
-  `www.noash.net` until its DNS and redirect policy are explicitly approved.
-- Stop a VPS rollout immediately on host-key mismatch, failed second SSH login,
-  invalid SSH configuration, occupied 80/443, failed image validation,
-  failed health/smoke check, or wrong canonical origin; retain or restore the
-  prior digest.
-- Do not modify GitHub environments, registry visibility, Docker packages,
-  firewall, SSH, DNS, or production services as part of Epic 0.
-- Do not push this branch. Later-epic commits require owner review and explicit
-  authorisation.
+- Do not commit or push this branch until the owner reviews the proposed diff
+  and explicitly authorises that delivery action. Do not merge, dispatch a
+  release, approve a deployment, change GitHub settings, or mutate the VPS by
+  inference from an earlier approval.
+- Do not inspect the SSH alias, connect to the host, or run even read-only VPS
+  commands until the owner explicitly starts the relevant epic and approves the
+  command scope. Never print, copy, persist, or request the private key.
+- Do not enable automatic production preparation until Epic 5 establishes a
+  compatible healthy image A. Never use the former `wget` digest as a normal
+  rollback target after production Compose requires `curl`.
+- Stop on a health diagnosis that contradicts the recorded `wget` evidence, a
+  host-key mismatch, unavailable owner/provider recovery access, invalid
+  root-owned configuration, failed exact-image validation, failed health or
+  public smoke, wrong canonical origin, unexpected release state, or secret in
+  output. Ask the owner rather than bypassing the failed control.
+- All existing quality checks must retain their behaviour and thresholds. Do
+  not add skips, retries that conceal failure, `continue-on-error`, weaker
+  Lighthouse/Playwright assertions, broader token/SSH/sudo permissions, or a
+  second deployment path to make the pipeline green.
+- Branch protection and rulesets remain unchanged by owner decision. The team
+  lead owns MR review; a successful direct `main` push can still reach the
+  production approval queue. If this operating policy changes, amend the ADR
+  before changing workflow eligibility.
+- Environment approval remains mandatory. A reviewer must be able to compare
+  the candidate SHA and digest with the successful pipeline before production
+  secrets are released.
+- No new package is added unless an epic exposes a concrete gap that existing
+  Bash, Docker/Compose, GitHub Actions, actionlint, ShellCheck, curl, and project
+  tests cannot cover. Present such a dependency and its trade-offs for approval
+  first.
+- Update this roadmap and the ADR when an epic changes state. Record observed
+  workflow URLs, SHAs, digests, and non-secret test evidence; do not create a
+  separate status document.
+- Do not change `www.noash.net`, registry visibility, source-host retention,
+  monitoring, DNS shape, or the no-staging decision inside this roadmap.
