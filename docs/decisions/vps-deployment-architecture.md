@@ -35,19 +35,21 @@ part of this release without a separate redirect decision.
    configuration. The verified runtime-image digest is
    `sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d`.
 3. GitHub Actions verifies pull requests and repeats the complete quality suite
-   for every `main` revision. Image publication depends on every existing
-   clean-clone, contour, static, browser, Lighthouse, and container job. Only
-   then does it publish an immutable `linux/amd64` image for the full commit SHA
-   to the private GitHub Container Registry package
-   `ghcr.io/conspiracy-dev/deploy-lab`. The exact published digest is pulled
-   back and smoke-tested before it can become a release candidate. The package
-   is linked to this repository through OCI source metadata. The release
-   workflow uses its ephemeral `GITHUB_TOKEN`; the VPS uses a separate
-   `read:packages` credential available only to root Docker. The unprivileged
-   `deployer` account, source repository, image, Compose files, and normal
-   environment variables never receive that credential. No placeholder origin
-   is published because it would make canonical links, `robots.txt`, and the
-   sitemap incorrect.
+   for every `main` revision. The existing `quality` workflow, including its
+   configured publication job and its checks, is an owner-protected boundary and
+   must not be changed by the automatic-deployment work. It publishes an
+   immutable `linux/amd64` image for the full commit SHA to the private GitHub
+   Container Registry package `ghcr.io/conspiracy-dev/deploy-lab`. A separate,
+   read-only workflow may run only after that `quality` workflow completes
+   successfully for a `main` push; it resolves the existing digest and
+   smoke-tests it before it can become a release candidate. The package is
+   linked to this repository through OCI source metadata. The release workflow
+   uses its ephemeral `GITHUB_TOKEN`; the VPS uses a separate `read:packages`
+   credential available only to root Docker. The unprivileged `deployer`
+   account, source repository, image, Compose files, and normal environment
+   variables never receive that credential. No placeholder origin is published
+   because it would make canonical links, `robots.txt`, and the sitemap
+   incorrect.
 4. A successful `main` pipeline automatically prepares a production release
    but does not deploy unattended. An unprivileged preparation job validates
    the revision and exposes its exact immutable digest. The protected deploy
@@ -267,8 +269,8 @@ full-SHA dispatch remains as a protected recovery path. The owner explicitly
 kept merge enforcement with the team lead instead of adding branch protection
 or repository rulesets. Implementation is blocked first on verifying and
 correcting the live `wget` healthcheck, establishing a compatible known-good
-digest, and then proving that every existing quality job gates the exact image
-and the protected deployment.
+digest, and then independently verifying the exact image after the existing
+quality workflow completes without modifying that workflow's gate.
 
 On 2026-08-21 the owner created a dedicated `maintenance` SSH identity on the
 target VPS through the provider console and approved passwordless `sudo` for
@@ -301,3 +303,18 @@ public HTTPS, `/`, `/privacy-policy`, `robots.txt`, `sitemap.xml`, a real 404,
 security headers, immutable Nuxt asset caching, expected listeners, and the
 default-drop firewall policy were rechecked. Image A is the first compatible
 known-good rollback target; the old `wget` digest is audit history only.
+
+On 2026-08-22, the owner explicitly prohibited changes to the CI/CD gate
+configured by `iShavlovsky`. Epic 6 therefore adds an independent read-only
+`workflow_run` verifier instead of changing `quality` or the protected release
+workflow. It accepts only a successful `quality` run originating from a `main`
+push, resolves the already-published SHA tag to an immutable digest, checks OCI
+source/revision labels, smoke-tests that digest, and records a bounded artifact
+only while the same revision remains current `main`. It has no Environment,
+SSH, VPS access, repository/Environment secret, cache, or package-write
+permission. Local policy, static-image, Compose, actionlint, and ShellCheck
+evidence is complete. The full local Node `24.16.0` gate passed, including
+typecheck, static quality (42 unit tests), dependency checks, build, generate,
+Playwright (25 passed, 5 expected skips), Lighthouse, secret scan, task-intake,
+and diff checks. A reviewed PR and resulting `main` run remain required before
+this decision has live candidate evidence or may enable Epic 7.

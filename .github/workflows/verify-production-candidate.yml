@@ -1,0 +1,122 @@
+name: verify production candidate
+
+on:
+  workflow_run:
+    workflows: [quality]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-candidate
+  cancel-in-progress: true
+
+jobs:
+  assess-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      eligible: ${{ steps.policy.outputs.eligible }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - id: policy
+        name: Apply candidate policy
+        env:
+          QUALITY_WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          QUALITY_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          SOURCE_EVENT: ${{ github.event.workflow_run.event }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          REVISION: ${{ github.event.workflow_run.head_sha }}
+          PRODUCTION_SITE_URL: ${{ vars.PRODUCTION_SITE_URL }}
+        run: bash scripts/deployment/production-candidate-policy.sh
+
+  verify-candidate:
+    needs: assess-candidate
+    if: needs.assess-candidate.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    env:
+      IMAGE_NAME: ghcr.io/conspiracy-dev/deploy-lab
+      REVISION: ${{ github.event.workflow_run.head_sha }}
+      PRODUCTION_SITE_URL: ${{ vars.PRODUCTION_SITE_URL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Confirm the candidate is current main
+        id: current-main
+        run: |
+          git fetch --no-tags origin main
+          CURRENT_MAIN_REVISION="$(git rev-parse origin/main)"
+          export CURRENT_MAIN_REVISION
+          bash scripts/deployment/production-candidate-policy.sh
+        env:
+          QUALITY_WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          QUALITY_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          SOURCE_EVENT: ${{ github.event.workflow_run.event }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          REVISION: ${{ github.event.workflow_run.head_sha }}
+          PRODUCTION_SITE_URL: ${{ vars.PRODUCTION_SITE_URL }}
+      - name: Stop stale candidate verification
+        if: steps.current-main.outputs.eligible != 'true'
+        run: |
+          printf '%s\n' '### Production candidate not recorded' >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' 'The quality revision is no longer current main.' >> "$GITHUB_STEP_SUMMARY"
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        if: steps.current-main.outputs.eligible == 'true'
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        if: steps.current-main.outputs.eligible == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Resolve and pull the published digest
+        id: image
+        if: steps.current-main.outputs.eligible == 'true'
+        run: |
+          digest="$(docker buildx imagetools inspect "$IMAGE_NAME:$REVISION" --format "{{.Manifest.Digest}}")"
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          image_ref="$IMAGE_NAME@$digest"
+          docker pull "$image_ref"
+
+          revision_label="$(docker image inspect "$image_ref" --format "{{ index .Config.Labels \"org.opencontainers.image.revision\" }}")"
+          source_label="$(docker image inspect "$image_ref" --format "{{ index .Config.Labels \"org.opencontainers.image.source\" }}")"
+          [ "$revision_label" = "$REVISION" ]
+          [ "$source_label" = "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" ]
+
+          printf 'image_ref=%s\n' "$image_ref" >> "$GITHUB_OUTPUT"
+      - name: Smoke the exact published image
+        if: steps.current-main.outputs.eligible == 'true'
+        env:
+          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
+          EXPECTED_SITE_URL: ${{ vars.PRODUCTION_SITE_URL }}
+        run: bash scripts/deployment/smoke-static-image.sh
+      - name: Record verified candidate evidence
+        if: steps.current-main.outputs.eligible == 'true'
+        env:
+          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
+          QUALITY_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          printf '{"schema_version":1,"quality_run_id":%s,"revision":"%s","image_ref":"%s"}\n' \
+            "$QUALITY_RUN_ID" "$REVISION" "$IMAGE_REF" > "$RUNNER_TEMP/production-candidate.json"
+          {
+            printf '%s\n\n' '### Verified production candidate'
+            printf '%s\n' "Revision: \`$REVISION\`"
+            printf '%s\n' "Image: \`$IMAGE_REF\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: steps.current-main.outputs.eligible == 'true'
+        with:
+          name: production-candidate-${{ github.event.workflow_run.head_sha }}
+          path: ${{ runner.temp }}/production-candidate.json
+          if-no-files-found: error
+          retention-days: 30

@@ -3,7 +3,7 @@
 Status: Epic 0–4 complete; Epics 5–9 approved and pending implementation;
 production live on `194.87.83.103`
 
-Last updated: 2026-08-18
+Last updated: 2026-08-22
 
 ## Goal
 
@@ -103,8 +103,10 @@ to deploy an already identified immutable image, not permission to skip tests.
   implementation; this roadmap does not duplicate their executable settings.
 - GitHub Environment `production` owns deployment secrets and approval. The
   root-owned VPS wrapper owns privileged Docker operations.
-- GitHub Actions owns candidate provenance: every existing quality job gates
-  publication, and the exact published digest is re-pulled and smoke-tested.
+- GitHub Actions owns candidate provenance: the current `quality` workflow and
+  its publication behaviour remain unchanged; Epic 6 adds a separate read-only
+  verification of the exact digest only after that workflow completes
+  successfully on `main`.
 - The team lead owns merge-request review. This roadmap does not replace that
   organisational control with repository settings.
 
@@ -510,44 +512,91 @@ the old `wget` digest is explicitly excluded from normal rollback; corrected
 image A is recorded as the first compatible known-good target; and the complete
 Epic 5 exit gate passes before the epic is marked complete.
 
-### Epic 6 — complete CI gate and exact-artifact verification
+### Epic 6 — independent candidate verification
 
-Status: Pending Epic 5 acceptance.
+Status: Implementation complete locally on 2026-08-22; formal acceptance
+awaits a reviewed PR and its subsequent `main` run. The owner prohibited any
+change to the existing CI/CD gate configured by `iShavlovsky`.
 
-Goal: make every existing check block publication and prove that the exact
-private-GHCR digest proposed for production is the artifact that passed the
-production smoke test.
+Goal: without changing current CI/CD, independently verify the exact private
+GHCR artifact from a successful completed `quality` run on `main`, then retain
+immutable evidence for Epic 7 to prepare a protected production approval.
+
+Boundary: Epic 6 does not edit `.github/workflows/ci.yml` or
+`.github/workflows/release.yml`; it does not change current publication,
+checks, dependencies, thresholds, triggers, permissions, branch policy,
+Environment, or approval rules. It adds no VPS access, deployment, approval,
+or secret use.
 
 Tasks:
 
-1. **Pending — make publication depend on every current job.** Require the full
-   Ubuntu/macOS/Windows clean-clone matrix, contour, static, browser,
-   Lighthouse, and container jobs. Preserve their commands and thresholds.
-2. **Pending — fail closed on production configuration.** A missing or invalid
-   `PRODUCTION_SITE_URL` must fail candidate creation rather than silently skip
-   it. Pull requests remain unable to publish packages or access production
-   secrets.
-3. **Pending — verify the published digest.** After the single `linux/amd64`
-   production build is pushed, resolve its immutable digest, pull that digest
-   into a separate verification job, and run the production route, canonical
-   origin, final-image boundary, Caddy, health, restart, header, cache, and 404
-   smoke against it. Expose only the verified digest to later jobs.
-4. **Pending — control overlapping candidates.** Add bounded workflow timeouts
-   and production-candidate concurrency without cancelling an in-flight SSH
-   rollout. A stale automatic candidate must stop before deployment if a newer
-   eligible `main` revision supersedes it; manual recovery remains a separate
-   reviewed path.
-5. **Pending — prove negative paths.** Demonstrate that failure of each job
-   class, an absent production variable, a failed exact-digest smoke, a pull
-   request event, and a non-`main` ref cannot reach candidate publication or
-   production approval.
-6. **Pending — close the epic with full testing and documentation.** Update this
-   roadmap with real job names and evidence, run the complete Epic 6 exit gate,
-   and present the diff for review before any commit.
+1. **Complete locally — establish a fail-closed candidate policy.** Add a small Bash
+   policy script and fixtures that receive the completed workflow event, source
+   event, branch, revision, and `PRODUCTION_SITE_URL`. Only a successful
+   `quality` workflow originating from a `push` to `main` with a valid absolute
+   HTTPS origin is eligible. Pull requests, other refs, failed or cancelled
+   runs report ineligible without registry access; an eligible `main` run with
+   a missing or invalid origin fails. Do not add an npm package merely to parse
+   workflow YAML.
+2. **Complete locally — add an independent post-quality workflow.** Add a new,
+   SHA-pinned workflow triggered by completion of the existing `quality`
+   workflow. It runs only for a successful `push` to `main`, with explicit
+   `contents: read` and `packages: read` permissions, no Environment, and no
+   repository or Environment secrets. It must neither invoke nor alter a job
+   in the existing CI/CD workflows.
+3. **Complete locally; live evidence pending — resolve the existing immutable artifact.** From the completed
+   quality run's `head_sha`, retrieve the already-published GHCR SHA tag, resolve
+   its digest, and form one immutable `IMAGE_REF`. Verify OCI source and
+   revision metadata against that exact SHA. Do not rebuild, republish, retag,
+   or grant `packages: write`; failure to find a matching published image fails
+   the independent verification.
+4. **Complete locally; GHCR evidence pending — smoke the published artifact, not a rebuild.** Extract the
+   final-image/Caddy smoke into a reusable existing-Bash script accepting
+   `IMAGE_REF` and expected canonical origin. The independent workflow pulls
+   exactly the resolved digest and proves generated routes, canonical origin,
+   final-image boundary, SNI health, restart, security headers, cache, and a
+   real 404. It does not access the VPS.
+5. **Complete locally; cancellation evidence pending — preserve provenance without promotion.** Run independent
+   verification in a bounded `production-candidate` concurrency group with
+   stale candidates cancelled. Before recording success, compare its revision
+   with current `origin/main`; a superseded candidate succeeds only as
+   ineligible and records no candidate. A successful current candidate writes
+   its SHA/digest and verification outcome to the workflow summary and an
+   immutable, retention-bounded artifact for Epic 7 to revalidate. Keep this
+   group distinct from non-cancelling `production-release`.
+6. **Complete locally; GitHub event evidence pending — prove positive and negative paths.** Run policy fixtures for a
+   valid completed `main` run, pull request, non-`main`, failed/cancelled run,
+   absent/invalid origin, and stale revision. Make the published-image smoke
+   fail for a bad image reference and missing/incorrect canonical origin. Use a
+   reviewed `main` run as evidence that the independent workflow starts only
+   after `quality` completes, while its failure has no path to secrets,
+   production approval, or VPS mutation.
+7. **In progress — close with evidence and review.** Run actionlint, ShellCheck,
+   focused policy/image tests, and the full local gate. Record actual workflow
+   run, SHA, digest, cancellation evidence, and no-secret outcome in this
+   roadmap and ADR. Present the full diff for owner review; commit, push, PR,
+   workflow dispatch, Environment approval, and VPS mutation remain separately
+   authorised.
 
-Acceptance: every existing check gates publication; the exact digest is tested
-after publication and before release preparation; failures and PRs have no path
-to packages or production secrets; and the complete Epic 6 exit gate passes.
+Acceptance: the pre-existing CI/CD gate is byte-for-byte unchanged; only a
+successful completed `quality` run from `main` can start the independent
+read-only candidate verification; the exact existing digest is smoke-tested
+without rebuilding; stale or invalid candidates have no record usable for
+promotion; and the complete Epic 6 exit gate passes.
+
+Local evidence 2026-08-22: `ci.yml` and `release.yml` have no diff. The new
+`verify production candidate` workflow has read-only default permissions and
+grants `packages: read` only to the exact-image verification job; it has no
+Environment, SSH, VPS command, cache, or `packages: write`. Policy fixtures
+covered a valid `main` run, pull request, non-`main`, failed/cancelled quality,
+absent/invalid origin, and stale revision. The reusable image smoke passed
+against the local image; its bad-image and wrong-canonical negative paths
+failed as required. `actionlint`, ShellCheck, and the existing Compose smoke
+passed. The full local gate on Node `24.16.0` also passed: formatting,
+typecheck, static quality (42 unit tests), dependency checks, build, generate,
+Playwright (25 passed, 5 expected skips), Lighthouse, secret scan, task-intake,
+and diff checks. A reviewed GitHub PR/main run is still required before this
+epic can be marked complete or provide a candidate for Epic 7.
 
 ### Epic 7 — shared automatic and manual release orchestration
 
