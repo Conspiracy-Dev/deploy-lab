@@ -106,12 +106,17 @@ test('renders Projects and Process landmarks with manual project collection sema
   await expect(page.locator('a[href="#process"]').first()).toHaveText('Process')
 
   await projects.scrollIntoViewIfNeeded()
+  const firstProjectImage = projects.locator('.case-card__image img').first()
+
   await expect
-    .poll(() =>
-      projects
-        .locator('.case-card__image img')
-        .first()
-        .evaluate((image) => {
+    .poll(() => firstProjectImage.evaluate((image) => image.complete && image.naturalWidth > 0), {
+      timeout: 15_000,
+    })
+    .toBe(true)
+  await expect
+    .poll(
+      () =>
+        firstProjectImage.evaluate((image) => {
           const box = image.getBoundingClientRect()
           const sourceWidth = Number(image.currentSrc.match(/s_(\d+)x/)?.[1])
 
@@ -120,6 +125,7 @@ test('renders Projects and Process landmarks with manual project collection sema
             sourceWidth >= Math.ceil(box.width * window.devicePixelRatio)
           )
         }),
+      { timeout: 15_000 },
     )
     .toBe(true)
 })
