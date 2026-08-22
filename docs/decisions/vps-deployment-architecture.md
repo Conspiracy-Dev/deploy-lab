@@ -316,5 +316,12 @@ permission. Local policy, static-image, Compose, actionlint, and ShellCheck
 evidence is complete. The full local Node `24.16.0` gate passed, including
 typecheck, static quality (42 unit tests), dependency checks, build, generate,
 Playwright (25 passed, 5 expected skips), Lighthouse, secret scan, task-intake,
-and diff checks. A reviewed PR and resulting `main` run remain required before
-this decision has live candidate evidence or may enable Epic 7.
+and diff checks. PR #12 merged as
+`c05cec286966919f1778ba106370dcc6c0986d29`; its successful `quality` run
+automatically triggered successful `verify production candidate` run
+`32565982468`. That run confirmed current `main`, resolved and smoke-tested
+`ghcr.io/conspiracy-dev/deploy-lab@sha256:f138699caf90a0c76f54554a143f8e4fa693fe3bbc89ccfdfdbff7e346ed7fb8`,
+validated OCI provenance, and retained its bounded evidence artifact. The
+positive live evidence completes Epic 6; stale/cancelled cases remain covered
+by its fail-closed fixtures. This did not grant an Environment, SSH, VPS,
+custom-secret, cache, or package-write capability.

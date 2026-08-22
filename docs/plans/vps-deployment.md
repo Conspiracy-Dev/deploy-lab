@@ -514,9 +514,8 @@ Epic 5 exit gate passes before the epic is marked complete.
 
 ### Epic 6 — independent candidate verification
 
-Status: Implementation complete locally on 2026-08-22; formal acceptance
-awaits a reviewed PR and its subsequent `main` run. The owner prohibited any
-change to the existing CI/CD gate configured by `iShavlovsky`.
+Status: Complete 2026-08-22. The owner prohibited any change to the existing
+CI/CD gate configured by `iShavlovsky`.
 
 Goal: without changing current CI/CD, independently verify the exact private
 GHCR artifact from a successful completed `quality` run on `main`, then retain
@@ -530,7 +529,7 @@ or secret use.
 
 Tasks:
 
-1. **Complete locally — establish a fail-closed candidate policy.** Add a small Bash
+1. **Complete — establish a fail-closed candidate policy.** Add a small Bash
    policy script and fixtures that receive the completed workflow event, source
    event, branch, revision, and `PRODUCTION_SITE_URL`. Only a successful
    `quality` workflow originating from a `push` to `main` with a valid absolute
@@ -538,25 +537,25 @@ Tasks:
    runs report ineligible without registry access; an eligible `main` run with
    a missing or invalid origin fails. Do not add an npm package merely to parse
    workflow YAML.
-2. **Complete locally — add an independent post-quality workflow.** Add a new,
+2. **Complete — add an independent post-quality workflow.** Add a new,
    SHA-pinned workflow triggered by completion of the existing `quality`
    workflow. It runs only for a successful `push` to `main`, with explicit
    `contents: read` and `packages: read` permissions, no Environment, and no
    repository or Environment secrets. It must neither invoke nor alter a job
    in the existing CI/CD workflows.
-3. **Complete locally; live evidence pending — resolve the existing immutable artifact.** From the completed
+3. **Complete — resolve the existing immutable artifact.** From the completed
    quality run's `head_sha`, retrieve the already-published GHCR SHA tag, resolve
    its digest, and form one immutable `IMAGE_REF`. Verify OCI source and
    revision metadata against that exact SHA. Do not rebuild, republish, retag,
    or grant `packages: write`; failure to find a matching published image fails
    the independent verification.
-4. **Complete locally; GHCR evidence pending — smoke the published artifact, not a rebuild.** Extract the
+4. **Complete — smoke the published artifact, not a rebuild.** Extract the
    final-image/Caddy smoke into a reusable existing-Bash script accepting
    `IMAGE_REF` and expected canonical origin. The independent workflow pulls
    exactly the resolved digest and proves generated routes, canonical origin,
    final-image boundary, SNI health, restart, security headers, cache, and a
    real 404. It does not access the VPS.
-5. **Complete locally; cancellation evidence pending — preserve provenance without promotion.** Run independent
+5. **Complete — preserve provenance without promotion.** Run independent
    verification in a bounded `production-candidate` concurrency group with
    stale candidates cancelled. Before recording success, compare its revision
    with current `origin/main`; a superseded candidate succeeds only as
@@ -564,14 +563,14 @@ Tasks:
    its SHA/digest and verification outcome to the workflow summary and an
    immutable, retention-bounded artifact for Epic 7 to revalidate. Keep this
    group distinct from non-cancelling `production-release`.
-6. **Complete locally; GitHub event evidence pending — prove positive and negative paths.** Run policy fixtures for a
+6. **Complete — prove positive and negative paths.** Run policy fixtures for a
    valid completed `main` run, pull request, non-`main`, failed/cancelled run,
    absent/invalid origin, and stale revision. Make the published-image smoke
    fail for a bad image reference and missing/incorrect canonical origin. Use a
    reviewed `main` run as evidence that the independent workflow starts only
    after `quality` completes, while its failure has no path to secrets,
    production approval, or VPS mutation.
-7. **In progress — close with evidence and review.** Run actionlint, ShellCheck,
+7. **Complete — close with evidence and review.** Run actionlint, ShellCheck,
    focused policy/image tests, and the full local gate. Record actual workflow
    run, SHA, digest, cancellation evidence, and no-secret outcome in this
    roadmap and ADR. Present the full diff for owner review; commit, push, PR,
@@ -595,8 +594,20 @@ failed as required. `actionlint`, ShellCheck, and the existing Compose smoke
 passed. The full local gate on Node `24.16.0` also passed: formatting,
 typecheck, static quality (42 unit tests), dependency checks, build, generate,
 Playwright (25 passed, 5 expected skips), Lighthouse, secret scan, task-intake,
-and diff checks. A reviewed GitHub PR/main run is still required before this
-epic can be marked complete or provide a candidate for Epic 7.
+and diff checks.
+
+Live evidence 2026-08-22: PR #12 merged as
+`c05cec286966919f1778ba106370dcc6c0986d29`. Its successful
+[`quality` run](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/32565684305)
+automatically triggered the successful
+[`verify production candidate` run](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/32565982468).
+The verifier confirmed the revision was current `main`, resolved and pulled
+`ghcr.io/conspiracy-dev/deploy-lab@sha256:f138699caf90a0c76f54554a143f8e4fa693fe3bbc89ccfdfdbff7e346ed7fb8`,
+validated its OCI provenance, and smoke-tested that exact image. It retained
+the 341-byte `production-candidate-c05cec286966919f1778ba106370dcc6c0986d29`
+artifact. The stale/cancelled paths remain covered by the fail-closed policy
+fixtures; this positive run used neither an Environment, SSH, VPS access,
+custom secret, cache, nor package-write permission.
 
 ### Epic 7 — shared automatic and manual release orchestration
 
