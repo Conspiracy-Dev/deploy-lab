@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-13
-- **Last amended:** 2026-08-21
+- **Last amended:** 2026-08-22
 - **Decision owner:** Igor Shavlovsky
 
 ## Context
@@ -282,6 +282,22 @@ The public site returned trusted HTTPS 200, but the running Caddy container was
 unhealthy. Its installed `wget` healthcheck left 1103 processes in the container
 cgroup, including unreaped `ssl_client` zombies parented by Caddy; generic
 `docker exec /bin/true` also failed with `procReady not received`. This confirms
-the reported healthcheck failure mode. The correction is implemented and locally
-verified, but has not been committed, pushed, merged, published, or installed on
-the VPS.
+the reported healthcheck failure mode.
+
+On 2026-08-21, PR #10 was merged as `c74c8d49cad2ab305a33d48d8443440c0f270e09`.
+Its complete `main` quality run published the immutable corrected image
+`ghcr.io/conspiracy-dev/deploy-lab@sha256:653f0283674afa6e840ddecd712b6b13b7e61c8e89ba8f8a326022e6135a0bfb`.
+Following Environment `production` approval, the protected release workflow
+installed that image. Approved maintenance replaced the root-owned Compose file
+after checksum and `docker compose config` validation; the old file remains as
+a root-owned recovery copy. The installed corrected Compose checksum is
+`055c8f53963f527f02e3582814e26d1d135a5d191095caac23282c067ee71bf2`.
+
+On 2026-08-22, image A was verified healthy after more than seventeen hours,
+with one cgroup process and no `ssl_client` zombies. Current image A and the
+former `wget` image were recorded as current and previous release respectively.
+A controlled container restart returned to healthy in six seconds; trusted
+public HTTPS, `/`, `/privacy-policy`, `robots.txt`, `sitemap.xml`, a real 404,
+security headers, immutable Nuxt asset caching, expected listeners, and the
+default-drop firewall policy were rechecked. Image A is the first compatible
+known-good rollback target; the old `wget` digest is audit history only.

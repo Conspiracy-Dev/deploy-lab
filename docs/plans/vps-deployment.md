@@ -440,8 +440,8 @@ remains untouched.
 
 ### Epic 5 — healthcheck correction and known-good baseline
 
-Status: In progress — baseline and local correction verified; controlled
-production correction pending reviewed delivery.
+Status: Complete 2026-08-22 — image A is the verified compatible known-good
+baseline.
 
 Goal: confirm the reported BusyBox `wget` failure on the live host, replace the
 production probe with a compatible `curl` probe, and establish the first image
@@ -484,18 +484,26 @@ Tasks:
    was opened against `main` and the complete GitHub Actions suite was
    triggered. Merge, workflow approval, and VPS mutation still require their
    separately scoped approval.
-5. **Pending — perform the controlled production correction.** After the normal
-   reviewed merge and green `main` run, use approved maintenance access to
-   install the reviewed root-owned Compose file, then approve deployment of the
-   matching corrected digest. A short single-container interruption is
-   accepted. Keep an explicit provider-console recovery path for this first
-   configuration transition because the former image lacks `curl` and is not a
-   compatible automatic rollback target.
-6. **Pending — establish image A as known-good.** Verify container health over a
-   sustained observation window, stable process count, current/previous status,
-   trusted public TLS, routes, SEO files, headers, cache behaviour, real 404,
-   firewall policy, and restart persistence. Record only workflow URL, commit
-   SHA, digest, checks, and non-secret evidence in this roadmap and ADR.
+5. **Completed 2026-08-21 — perform the controlled production correction.** PR
+   #10 merged as `c74c8d49cad2ab305a33d48d8443440c0f270e09`; its complete green
+   `main` run published image A,
+   `ghcr.io/conspiracy-dev/deploy-lab@sha256:653f0283674afa6e840ddecd712b6b13b7e61c8e89ba8f8a326022e6135a0bfb`.
+   Approved maintenance checksum- and Compose-validated the root-owned
+   `curl` Compose file (`055c8f53963f527f02e3582814e26d1d135a5d191095caac23282c067ee71bf2`)
+   and retained the prior root-owned file as a recovery copy. After manual
+   `production` approval, protected release workflow
+   [32483198218](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/32483198218)
+   deployed the matching immutable digest successfully. The provider-console
+   recovery path was retained; the old `wget` digest was not used for rollback.
+6. **Completed 2026-08-22 — establish image A as known-good.** Before the
+   restart test image A had been healthy for more than seventeen hours with one
+   cgroup process and no `ssl_client` zombies. Current recorded image is A;
+   previous is the old `wget` digest. A controlled container restart returned
+   healthy in six seconds and public trusted HTTPS passed afterward. `/`,
+   `/privacy-policy`, `/robots.txt`, and `/sitemap.xml` returned 200; an unknown
+   path returned 404; security headers and immutable Nuxt asset caching were
+   present. Firewall policy remained default-drop with expected 22/80/443
+   access, and Docker listeners remained on 80/443.
 
 Acceptance: the live container is healthy with the SNI-correct `curl` probe;
 the old `wget` digest is explicitly excluded from normal rollback; corrected
