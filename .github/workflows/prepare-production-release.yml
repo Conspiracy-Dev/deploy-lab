@@ -1,0 +1,21 @@
+name: prepare production release
+
+on:
+  workflow_run:
+    workflows: [verify production candidate]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  actions: read
+  contents: read
+  packages: read
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success'
+    uses: ./.github/workflows/production-release.yml
+    with:
+      release_source: automatic
+      revision: ${{ github.event.workflow_run.head_sha }}
+      candidate_run_id: ${{ github.event.workflow_run.id }}

@@ -611,7 +611,8 @@ custom secret, cache, nor package-write permission.
 
 ### Epic 7 — shared automatic and manual release orchestration
 
-Status: Pending Epic 6 acceptance.
+Status: Implementation complete locally on 2026-08-22; live approval evidence
+awaits a reviewed PR and its subsequent `main` run.
 
 Goal: automatically prepare a verified `main` digest for production approval
 while retaining one protected manual full-SHA recovery path and one deployment
@@ -619,29 +620,29 @@ implementation.
 
 Tasks:
 
-1. **Pending — separate preparation from protected deployment.** An
+1. **Complete locally — separate preparation from protected deployment.** An
    unprivileged job verifies the full `main` SHA, successful complete quality
    provenance, exact image digest, and current-candidate policy. It publishes
    the SHA and digest in the workflow summary before the protected job waits for
    approval.
-2. **Pending — reuse one release implementation.** The green `main` workflow
+2. **Complete locally — reuse one release implementation.** The green `main` workflow
    invokes the release automatically; `workflow_dispatch` invokes the same
    implementation for a selected full SHA. Avoid duplicated SSH, digest, or
    rollback logic. Keep full-SHA action pinning and least-privilege workflow
    permissions.
-3. **Pending — retain the human production gate.** Only the deployment job
+3. **Complete locally — retain the human production gate.** Only the deployment job
    references Environment `production`. It remains restricted to `main`,
    prevents self-review, requires `iShavlovsky`, and receives SSH secrets only
    after approval. Rejection or expiry makes no VPS call.
-4. **Pending — harden manual recovery.** Accept only a lowercase 40-character
+4. **Complete locally — harden manual recovery.** Accept only a lowercase 40-character
    SHA reachable from `main`; prove its image came from a successful complete
    quality run; reject arbitrary tags, raw user-supplied digests, legacy
    unverified candidates, and the incompatible `wget` release.
-5. **Pending — serialize and audit releases.** Keep one non-cancelling
+5. **Complete locally — serialize and audit releases.** Keep one non-cancelling
    `production-release` critical section, show the selected SHA/digest in the
    summary, and preserve GitHub deployment history without logging keys,
    credentials, host-key material, or registry tokens.
-6. **Pending — close the epic with full testing and documentation.** Cover
+6. **In progress — close the epic with full testing and documentation.** Cover
    automatic, manual, rejected approval, invalid SHA, missing image, failed
    provenance, stale candidate, and concurrent request paths; run the complete
    Epic 7 exit gate and present the diff before commit.
@@ -650,6 +651,25 @@ Acceptance: a green `main` revision automatically reaches a waiting production
 approval with its exact tested digest visible; approval is still mandatory;
 manual recovery cannot bypass provenance; both paths share one implementation;
 and the complete Epic 7 exit gate passes.
+
+Local evidence 2026-08-22: `.github/workflows/release.yml` remains the manual
+`workflow_dispatch` entry point, but now calls the new shared
+`production-release.yml`; the new `prepare-production-release.yml` calls that
+same workflow only after successful `verify production candidate`. The shared
+preparation job requires a lowercase full SHA reachable from `main`, a matching
+successful `quality` push, one unexpired candidate evidence artifact, the exact
+candidate digest, and matching OCI source/revision labels. Automatic releases
+also reject a SHA superseded by current `main`; manual recovery may select an
+older reachable SHA only when all of the same provenance evidence remains
+available. The known incompatible `wget` digest is rejected. Only the shared
+`deploy` job declares `production`, so its SSH secrets are unavailable during
+preparation and are released only after the existing Environment approval.
+`production-release` remains non-cancelling. Focused policy cases cover valid
+automatic/manual requests, stale automatic candidate, failed quality, digest
+and OCI mismatch, legacy image, and malformed SHA; actionlint, ShellCheck and
+the current GitHub API evidence lookup pass. No workflow dispatch, Environment
+approval, SSH connection, or VPS mutation occurred. A reviewed `main` run is
+still required to prove the automatic path reaches the protected approval job.
 
 ### Epic 8 — deployment, rollback, and public acceptance tests
 
