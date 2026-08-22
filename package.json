@@ -34,6 +34,8 @@
     "test:onboarding": "node scripts/onboarding/task-intake-check.test.mjs",
     "test:e2e": "playwright test",
     "test:docker:smoke": "bash scripts/deployment/smoke-static-container.sh",
+    "test:docker:image": "bash scripts/deployment/smoke-static-image.sh",
+    "test:deployment:candidate-policy": "bash scripts/deployment/production-candidate-policy.test.sh",
     "test:deployment:production-compose": "bash scripts/deployment/production-compose.test.sh",
     "test:deployment:status": "bash scripts/deployment/deploy-lab-status.test.sh",
     "test:unit": "vitest run",
