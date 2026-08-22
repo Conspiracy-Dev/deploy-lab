@@ -325,3 +325,15 @@ validated OCI provenance, and retained its bounded evidence artifact. The
 positive live evidence completes Epic 6; stale/cancelled cases remain covered
 by its fail-closed fixtures. This did not grant an Environment, SSH, VPS,
 custom-secret, cache, or package-write capability.
+
+On 2026-08-22, the owner decided to retain `release.yml` as the manual recovery
+entry point while replacing its direct SSH and digest logic with a shared
+reusable production-release workflow. The same reusable workflow is called by
+an independent automatic preparation workflow after a verified candidate run.
+Its unprivileged preparation validates full-SHA ancestry, successful `quality`
+provenance, bounded candidate evidence, immutable digest, OCI labels, and the
+legacy-image denylist. Its sole `production` job receives Environment-scoped
+SSH material only after the existing required reviewer approves. This preserves
+one implementation for automatic and manual release selection without changing
+the `quality` CI gate; a post-merge live run remains necessary before Epic 7 is
+accepted.

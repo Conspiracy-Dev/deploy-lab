@@ -1,0 +1,271 @@
+name: production release implementation
+
+on:
+  workflow_call:
+    inputs:
+      release_source:
+        description: automatic for a candidate workflow or manual for recovery
+        required: true
+        type: string
+      revision:
+        description: Full commit SHA selected for release
+        required: true
+        type: string
+      candidate_run_id:
+        description: Verified candidate workflow run ID for automatic preparation
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  packages: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      eligible: ${{ steps.policy.outputs.eligible }}
+      image_ref: ${{ steps.image.outputs.image_ref }}
+    env:
+      CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+      IMAGE_NAME: ghcr.io/conspiracy-dev/deploy-lab
+      RELEASE_SOURCE: ${{ inputs.release_source }}
+      REVISION: ${{ inputs.revision }}
+      PRODUCTION_SITE_URL: ${{ vars.PRODUCTION_SITE_URL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.revision }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify the selected revision belongs to main
+        run: |
+          [[ "$REVISION" =~ ^[0-9a-f]{40}$ ]]
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$REVISION" origin/main
+          printf 'CURRENT_MAIN_REVISION=%s\n' "$(git rev-parse origin/main)" >> "$GITHUB_ENV"
+      - id: evidence
+        name: Retrieve verified candidate evidence
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          api() {
+            curl --fail --location --silent --show-error \
+              --header "Authorization: Bearer $GITHUB_TOKEN" \
+              --header 'Accept: application/vnd.github+json' \
+              --header 'X-GitHub-Api-Version: 2022-11-28' \
+              "$GITHUB_API_URL$1"
+          }
+
+          candidate_run_id="$CANDIDATE_RUN_ID"
+          if [ -z "$candidate_run_id" ]; then
+            runs="$(api "/repos/$GITHUB_REPOSITORY/actions/workflows/verify-production-candidate.yml/runs?branch=main&event=workflow_run&status=success&per_page=100")"
+            candidate_run_id="$(python3 - "$REVISION" "$runs" <<'PY'
+          import json
+          import sys
+
+          revision, payload = sys.argv[1:]
+          for run in json.loads(payload).get('workflow_runs', []):
+              if (
+                  run.get('name') == 'verify production candidate'
+                  and run.get('conclusion') == 'success'
+                  and run.get('event') == 'workflow_run'
+                  and run.get('head_branch') == 'main'
+                  and run.get('head_sha') == revision
+              ):
+                  print(run['id'])
+                  break
+          PY
+          )"
+          fi
+
+          [[ "$candidate_run_id" =~ ^[0-9]+$ ]]
+          candidate_run="$(api "/repos/$GITHUB_REPOSITORY/actions/runs/$candidate_run_id")"
+          python3 - "$REVISION" "$candidate_run" <<'PY'
+          import json
+          import sys
+
+          revision, payload = sys.argv[1:]
+          run = json.loads(payload)
+          if not (
+              run.get('name') == 'verify production candidate'
+              and run.get('conclusion') == 'success'
+              and run.get('event') == 'workflow_run'
+              and run.get('head_branch') == 'main'
+              and run.get('head_sha') == revision
+          ):
+              raise SystemExit('Candidate workflow provenance did not match the selected revision')
+          PY
+
+          artifacts="$(api "/repos/$GITHUB_REPOSITORY/actions/runs/$candidate_run_id/artifacts")"
+          archive_url="$(python3 - "$REVISION" "$artifacts" <<'PY'
+          import json
+          import sys
+
+          revision, payload = sys.argv[1:]
+          expected_name = f'production-candidate-{revision}'
+          matches = [
+              artifact for artifact in json.loads(payload).get('artifacts', [])
+              if artifact.get('name') == expected_name and not artifact.get('expired')
+          ]
+          if len(matches) != 1:
+              raise SystemExit('Expected exactly one unexpired production candidate artifact')
+          print(matches[0]['archive_download_url'])
+          PY
+          )"
+
+          archive="$RUNNER_TEMP/production-candidate.zip"
+          curl --fail --location --silent --show-error \
+            --header "Authorization: Bearer $GITHUB_TOKEN" \
+            --header 'Accept: application/vnd.github+json' \
+            --header 'X-GitHub-Api-Version: 2022-11-28' \
+            "$archive_url" --output "$archive"
+          evidence="$RUNNER_TEMP/production-candidate.json"
+          unzip -p "$archive" production-candidate.json > "$evidence"
+
+          python3 - "$REVISION" "$evidence" >> "$GITHUB_OUTPUT" <<'PY'
+          import json
+          import re
+          import sys
+
+          revision, evidence_path = sys.argv[1:]
+          with open(evidence_path, encoding='utf-8') as source:
+              evidence = json.load(source)
+
+          image_ref = evidence.get('image_ref', '')
+          quality_run_id = evidence.get('quality_run_id')
+          if not (
+              evidence == {
+                  'schema_version': 1,
+                  'quality_run_id': quality_run_id,
+                  'revision': revision,
+                  'image_ref': image_ref,
+              }
+              and isinstance(quality_run_id, int)
+              and quality_run_id > 0
+              and re.fullmatch(r'ghcr\.io/conspiracy-dev/deploy-lab@sha256:[0-9a-f]{64}', image_ref)
+          ):
+              raise SystemExit('Production candidate artifact schema or revision is invalid')
+
+          print(f'candidate_image_ref={image_ref}')
+          print(f'quality_run_id={quality_run_id}')
+          PY
+      - name: Verify quality provenance
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          QUALITY_RUN_ID: ${{ steps.evidence.outputs.quality_run_id }}
+        run: |
+          quality_run="$(curl --fail --location --silent --show-error \
+            --header "Authorization: Bearer $GITHUB_TOKEN" \
+            --header 'Accept: application/vnd.github+json' \
+            --header 'X-GitHub-Api-Version: 2022-11-28' \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$QUALITY_RUN_ID")"
+          python3 - "$quality_run" >> "$GITHUB_ENV" <<'PY'
+          import json
+          import sys
+
+          run = json.loads(sys.argv[1])
+          for output, key in (
+              ('QUALITY_WORKFLOW_NAME', 'name'),
+              ('QUALITY_CONCLUSION', 'conclusion'),
+              ('QUALITY_EVENT', 'event'),
+              ('QUALITY_BRANCH', 'head_branch'),
+              ('QUALITY_REVISION', 'head_sha'),
+          ):
+              value = run.get(key, '')
+              if not isinstance(value, str):
+                  raise SystemExit(f'Unexpected quality workflow field: {key}')
+              print(f'{output}={value}')
+          PY
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: image
+        name: Resolve the verified immutable digest
+        env:
+          CANDIDATE_IMAGE_REF: ${{ steps.evidence.outputs.candidate_image_ref }}
+        run: |
+          digest="$(docker buildx imagetools inspect "$IMAGE_NAME:$REVISION" --format "{{.Manifest.Digest}}")"
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          image_ref="$IMAGE_NAME@$digest"
+          docker pull "$image_ref"
+
+          revision_label="$(docker image inspect "$image_ref" --format "{{ index .Config.Labels \"org.opencontainers.image.revision\" }}")"
+          source_label="$(docker image inspect "$image_ref" --format "{{ index .Config.Labels \"org.opencontainers.image.source\" }}")"
+          printf 'RESOLVED_IMAGE_REF=%s\nIMAGE_REVISION_LABEL=%s\nIMAGE_SOURCE_LABEL=%s\n' \
+            "$image_ref" "$revision_label" "$source_label" >> "$GITHUB_ENV"
+          printf 'image_ref=%s\n' "$image_ref" >> "$GITHUB_OUTPUT"
+      - id: policy
+        name: Apply release policy
+        env:
+          CANDIDATE_IMAGE_REF: ${{ steps.evidence.outputs.candidate_image_ref }}
+        run: bash scripts/deployment/production-release-policy.sh
+      - name: Reject an ineligible manual release
+        if: inputs.release_source == 'manual' && steps.policy.outputs.eligible != 'true'
+        run: |
+          printf '%s\n' 'Manual release did not satisfy provenance policy.' >&2
+          exit 1
+      - name: Record release preparation
+        if: steps.policy.outputs.eligible == 'true'
+        env:
+          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
+        run: |
+          {
+            printf '%s\n\n' '### Production release ready for approval'
+            printf 'Revision: \x60%s\x60\n' "$REVISION"
+            printf 'Image: \x60%s\x60\n' "$IMAGE_REF"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Record superseded automatic candidate
+        if: inputs.release_source == 'automatic' && steps.policy.outputs.eligible != 'true'
+        run: |
+          printf '%s\n' '### Production release not prepared' >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' 'The verified candidate is no longer current main.' >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    needs: prepare
+    if: needs.prepare.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    permissions:
+      contents: read
+    env:
+      DEPLOY_HOST: ${{ vars.PRODUCTION_HOST }}
+      DEPLOY_USER: ${{ vars.PRODUCTION_SSH_USER }}
+      IMAGE_REF: ${{ needs.prepare.outputs.image_ref }}
+    steps:
+      - name: Configure approved SSH transport
+        env:
+          DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: |
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KNOWN_HOSTS"
+          test -n "$DEPLOY_SSH_PRIVATE_KEY"
+
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+      - name: Deploy the selected immutable digest
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            -i "$HOME/.ssh/id_ed25519" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "sudo /usr/local/sbin/deploy-lab $IMAGE_REF"
