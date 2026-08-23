@@ -349,3 +349,25 @@ selected release, so this restores rather than relaxes provenance validation.
 It does not change `ci.yml`, permissions, secrets, approval, SSH, or VPS
 behaviour; a green post-merge automatic preparation run is still required for
 Epic 7 acceptance.
+
+On 2026-08-23, two approved attempts of automatic release `32626473239` proved
+that the reusable deployment boundary was not receiving the `production`
+Environment secrets: both `DEPLOY_SSH_PRIVATE_KEY` and
+`DEPLOY_SSH_KNOWN_HOSTS` were empty at the first validation step. The owner had
+already re-saved both values through GitHub CLI from their local sources, so
+the failure was not caused by stale secret values. The empty-value validation
+stopped before SSH configuration, connection, or VPS mutation. The owner
+therefore approved a narrow architectural correction: the reusable
+`production-release.yml` workflow owns only unprivileged candidate
+preparation and returns explicit eligibility and immutable-image outputs;
+`prepare-production-release.yml` and the retained manual `release.yml` each
+own a direct protected `production` deployment job. Those two jobs use the
+same existing strict SSH options and root-owned digest-only wrapper, and share
+the fixed non-cancelling `production-release` concurrency group. The minimal
+inline transport duplication is intentional: it avoids a post-approval
+checkout or helper-action supply-chain boundary, while `secrets: inherit`,
+repository-level secrets, and repository deploy keys are rejected because they
+would broaden the existing Environment-scoped secret boundary. This does not
+modify `ci.yml`, approval rules, SSH/VPS permissions, or the release policy.
+Only a reviewed post-merge automatic run can validate the corrected secret
+injection path.
