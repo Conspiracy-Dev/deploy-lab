@@ -337,3 +337,15 @@ SSH material only after the existing required reviewer approves. This preserves
 one implementation for automatic and manual release selection without changing
 the `quality` CI gate; a post-merge live run remains necessary before Epic 7 is
 accepted.
+
+On 2026-08-23, the first automatic preparation run `32595571596` stopped in
+the shared policy before requesting Environment approval. The candidate artifact
+had already been schema-validated against the selected revision, but the
+workflow exported only its immutable digest and quality-run ID; the required
+candidate revision was consequently empty at the policy boundary. The
+correction exports that validated artifact revision and passes it to the
+existing policy input. The policy still requires exact SHA equality with the
+selected release, so this restores rather than relaxes provenance validation.
+It does not change `ci.yml`, permissions, secrets, approval, SSH, or VPS
+behaviour; a green post-merge automatic preparation run is still required for
+Epic 7 acceptance.

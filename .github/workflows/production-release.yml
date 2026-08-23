@@ -155,6 +155,7 @@ jobs:
               raise SystemExit('Production candidate artifact schema or revision is invalid')
 
           print(f'candidate_image_ref={image_ref}')
+          print(f'candidate_revision={revision}')
           print(f'quality_run_id={quality_run_id}')
           PY
       - name: Verify quality provenance
@@ -209,6 +210,7 @@ jobs:
         name: Apply release policy
         env:
           CANDIDATE_IMAGE_REF: ${{ steps.evidence.outputs.candidate_image_ref }}
+          CANDIDATE_REVISION: ${{ steps.evidence.outputs.candidate_revision }}
         run: bash scripts/deployment/production-release-policy.sh
       - name: Reject an ineligible manual release
         if: inputs.release_source == 'manual' && steps.policy.outputs.eligible != 'true'
