@@ -728,6 +728,15 @@ skips), Lighthouse, static-container smoke, secret scan, actionlint, ShellCheck
 shell syntax, and diff checks. Only a reviewed later `main` run can prove GitHub
 injects the Environment secrets into this direct job.
 
+Clean-clone correction 2026-08-23: PR #17's Windows clean-clone job failed
+while `pnpm setup` bootstrapped the verified Gitleaks binary from its official
+release; macOS and Ubuntu clean clones passed, and the release workflows were
+not involved. The failure reported only `fetch failed` before the security scan
+could run. The bootstrap now makes at most three 30-second attempts for each
+official checksum manifest and archive download, then still requires their
+SHA-256 match before installing the local binary. This changes neither
+`ci.yml`, the quality gate, registry/VPS access, nor the secret boundary.
+
 ### Epic 8 — deployment, rollback, and public acceptance tests
 
 Status: Pending Epic 7 acceptance.
