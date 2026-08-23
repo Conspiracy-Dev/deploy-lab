@@ -3,7 +3,7 @@
 Status: Epic 0–4 complete; Epics 5–9 approved and pending implementation;
 production live on `194.87.83.103`
 
-Last updated: 2026-08-22
+Last updated: 2026-08-23
 
 ## Goal
 
@@ -642,10 +642,14 @@ Tasks:
    `production-release` critical section, show the selected SHA/digest in the
    summary, and preserve GitHub deployment history without logging keys,
    credentials, host-key material, or registry tokens.
-6. **In progress — close the epic with full testing and documentation.** Cover
-   automatic, manual, rejected approval, invalid SHA, missing image, failed
-   provenance, stale candidate, and concurrent request paths; run the complete
-   Epic 7 exit gate and present the diff before commit.
+6. **In progress — repair live preparation and close with full testing and
+   documentation.** The first automatic preparation run
+   [`32595571596`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/32595571596)
+   stopped before the production approval because the verified candidate SHA
+   was not passed from its artifact parser to the release-policy step. Export
+   and pass that SHA without changing `ci.yml`, then run the complete Epic 7
+   exit gate. The reviewed `main` run must reach the protected approval job;
+   do not approve or deploy as part of this task.
 
 Acceptance: a green `main` revision automatically reaches a waiting production
 approval with its exact tested digest visible; approval is still mandatory;
@@ -670,6 +674,27 @@ and OCI mismatch, legacy image, and malformed SHA; actionlint, ShellCheck and
 the current GitHub API evidence lookup pass. No workflow dispatch, Environment
 approval, SSH connection, or VPS mutation occurred. A reviewed `main` run is
 still required to prove the automatic path reaches the protected approval job.
+
+Live diagnostic 2026-08-23: the first automatic preparation run
+[`32595571596`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/32595571596)
+verified ancestry, candidate evidence, quality provenance, immutable digest,
+and OCI labels, then stopped in `Apply release policy` before Environment
+approval. Its artifact parser had validated that `revision` equalled the
+selected SHA but exported only the digest and quality-run ID. The policy
+correctly failed closed because its required `CANDIDATE_REVISION` input was
+empty. The corrective change exports that already verified artifact field and
+passes it to the same policy; it neither modifies `ci.yml` nor adds permissions,
+secrets, VPS access, retries, or another release path. Live approval evidence
+remains pending a reviewed merge and green post-merge runs.
+
+Correction verification 2026-08-23: on Node `24.16.0`, task intake,
+clone-contour, formatting, typecheck, lint, style lint, slop scan, 42 unit
+tests, all deployment policy/Compose/status fixtures, build, generate, E2E
+(25 passed, 5 expected skips), Lighthouse, static-container smoke, dependency
+and cycle checks, dead-code, secret scan, actionlint, ShellCheck, shell syntax,
+and diff checks passed. Existing lint warnings in unrelated UI components
+remain warnings only. No workflow dispatch, Environment approval, SSH
+connection, or VPS mutation occurred.
 
 ### Epic 8 — deployment, rollback, and public acceptance tests
 
