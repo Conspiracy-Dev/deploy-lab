@@ -611,8 +611,9 @@ custom secret, cache, nor package-write permission.
 
 ### Epic 7 — shared automatic and manual release orchestration
 
-Status: Implementation complete locally on 2026-08-22; live approval evidence
-awaits a reviewed PR and its subsequent `main` run.
+Status: Corrected locally on 2026-08-23; production Environment secrets were
+empirically unavailable inside the reusable deploy job despite two approved
+attempts. A reviewed `main` run must validate the direct protected deploy job.
 
 Goal: automatically prepare a verified `main` digest for production approval
 while retaining one protected manual full-SHA recovery path and one deployment
@@ -625,11 +626,13 @@ Tasks:
    provenance, exact image digest, and current-candidate policy. It publishes
    the SHA and digest in the workflow summary before the protected job waits for
    approval.
-2. **Complete locally — reuse one release implementation.** The green `main` workflow
-   invokes the release automatically; `workflow_dispatch` invokes the same
-   implementation for a selected full SHA. Avoid duplicated SSH, digest, or
-   rollback logic. Keep full-SHA action pinning and least-privilege workflow
-   permissions.
+2. **Complete locally — share candidate selection and constrain the deploy
+   boundary.** The green `main` workflow and `workflow_dispatch` invoke the
+   same reusable selection/policy implementation for a selected full SHA. The
+   minimal audited SSH transport is duplicated only in the two direct protected
+   jobs, avoiding a post-approval checkout or secret forwarding across the
+   reusable-workflow boundary. Keep full-SHA action pinning and least-privilege
+   workflow permissions.
 3. **Complete locally — retain the human production gate.** Only the deployment job
    references Environment `production`. It remains restricted to `main`,
    prevents self-review, requires `iShavlovsky`, and receives SSH secrets only
@@ -639,22 +642,26 @@ Tasks:
    quality run; reject arbitrary tags, raw user-supplied digests, legacy
    unverified candidates, and the incompatible `wget` release.
 5. **Complete locally — serialize and audit releases.** Keep one non-cancelling
-   `production-release` critical section, show the selected SHA/digest in the
-   summary, and preserve GitHub deployment history without logging keys,
-   credentials, host-key material, or registry tokens.
-6. **In progress — repair live preparation and close with full testing and
-   documentation.** The first automatic preparation run
+   `production-release` critical section on the direct deployment jobs, show
+   the selected SHA/digest in the summary, and preserve GitHub deployment
+   history without logging keys, credentials, host-key material, or registry
+   tokens.
+6. **In progress — validate the corrected protected boundary and close with
+   full testing and documentation.** The first automatic preparation run
    [`32595571596`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/32595571596)
    stopped before the production approval because the verified candidate SHA
    was not passed from its artifact parser to the release-policy step. Export
-   and pass that SHA without changing `ci.yml`, then run the complete Epic 7
-   exit gate. The reviewed `main` run must reach the protected approval job;
-   do not approve or deploy as part of this task.
+   and pass that SHA without changing `ci.yml`. Two later approved attempts
+   reached the reusable deployment job but received empty Environment-secret
+   values, including after both secrets were re-saved through `gh`. Move only
+   the protected deployment jobs to the top-level callers, then run the
+   complete Epic 7 exit gate. The reviewed `main` run must reach the protected
+   approval job; do not approve or deploy as part of this task.
 
 Acceptance: a green `main` revision automatically reaches a waiting production
 approval with its exact tested digest visible; approval is still mandatory;
-manual recovery cannot bypass provenance; both paths share one implementation;
-and the complete Epic 7 exit gate passes.
+manual recovery cannot bypass provenance; both paths share the same candidate
+selection/policy; and the complete Epic 7 exit gate passes.
 
 Local evidence 2026-08-22: `.github/workflows/release.yml` remains the manual
 `workflow_dispatch` entry point, but now calls the new shared
@@ -665,8 +672,8 @@ successful `quality` push, one unexpired candidate evidence artifact, the exact
 candidate digest, and matching OCI source/revision labels. Automatic releases
 also reject a SHA superseded by current `main`; manual recovery may select an
 older reachable SHA only when all of the same provenance evidence remains
-available. The known incompatible `wget` digest is rejected. Only the shared
-`deploy` job declares `production`, so its SSH secrets are unavailable during
+available. The known incompatible `wget` digest is rejected. The protected
+deployment job declares `production`, so its SSH secrets are unavailable during
 preparation and are released only after the existing Environment approval.
 `production-release` remains non-cancelling. Focused policy cases cover valid
 automatic/manual requests, stale automatic candidate, failed quality, digest
@@ -695,6 +702,40 @@ and cycle checks, dead-code, secret scan, actionlint, ShellCheck, shell syntax,
 and diff checks passed. Existing lint warnings in unrelated UI components
 remain warnings only. No workflow dispatch, Environment approval, SSH
 connection, or VPS mutation occurred.
+
+Environment-boundary correction 2026-08-23: both Environment secrets were
+re-saved through `gh` from their local sources, and GitHub reported their
+updated metadata. Nevertheless, the initial and re-run attempts of approved
+automatic release `32626473239` reached `Configure approved SSH transport`
+with both `DEPLOY_SSH_KNOWN_HOSTS` and `DEPLOY_SSH_PRIVATE_KEY` empty. The
+first non-empty assertion failed before either SSH configuration or a VPS
+connection, so the server was not mutated. The shared reusable workflow now
+does only unprivileged candidate preparation and declares explicit `eligible`
+and `image_ref` outputs. Each top-level caller owns a direct `production`
+deployment job that consumes its own Environment variables and secrets after
+approval, uses the existing strict SSH command and digest-only wrapper, and
+joins the same non-cancelling `production-release` group. The two small inline
+transport copies are deliberate: a helper script or action would require a
+post-approval checkout, and `secrets: inherit` would broaden the secret
+boundary. No repository deploy key, repository-level secret, `ci.yml` change,
+new dependency, or VPS action is part of this correction. Local static and
+full-gate evidence passed on Node `24.16.0`: task-intake and clean-clone
+contour checks, formatting, typecheck, lint, style lint, slop scan, 42 unit
+tests, candidate/release policy fixtures, Compose/status fixtures, dependency
+and cycle checks, dead-code, build, generate, Playwright (25 passed, 5 expected
+skips), Lighthouse, static-container smoke, secret scan, actionlint, ShellCheck
+(with the pre-existing unrelated `SC2034` retry-counter warning excluded),
+shell syntax, and diff checks. Only a reviewed later `main` run can prove GitHub
+injects the Environment secrets into this direct job.
+
+Clean-clone correction 2026-08-23: PR #17's Windows clean-clone job failed
+while `pnpm setup` bootstrapped the verified Gitleaks binary from its official
+release; macOS and Ubuntu clean clones passed, and the release workflows were
+not involved. The failure reported only `fetch failed` before the security scan
+could run. The bootstrap now makes at most three 30-second attempts for each
+official checksum manifest and archive download, then still requires their
+SHA-256 match before installing the local binary. This changes neither
+`ci.yml`, the quality gate, registry/VPS access, nor the secret boundary.
 
 ### Epic 8 — deployment, rollback, and public acceptance tests
 

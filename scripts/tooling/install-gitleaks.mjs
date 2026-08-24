@@ -8,6 +8,8 @@ import { GITLEAKS_VERSION, gitleaksArtifact, managedGitleaksPath } from './gitle
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const RELEASE_BASE = `https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}`
+const DOWNLOAD_ATTEMPTS = 3
+const DOWNLOAD_TIMEOUT_MS = 30_000
 
 function fail(message) {
   throw new Error(`Gitleaks bootstrap: ${message}`)
@@ -113,13 +115,30 @@ function sha256(buffer) {
 }
 
 async function fetchBytes(url) {
-  const response = await fetch(url)
+  let lastError
 
-  if (!response.ok) {
-    fail(`download failed for ${url}: HTTP ${response.status}`)
+  for (let attempt = 1; attempt <= DOWNLOAD_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      return Buffer.from(await response.arrayBuffer())
+    } catch (error) {
+      lastError = error
+
+      if (attempt < DOWNLOAD_ATTEMPTS) {
+        console.warn(
+          `Gitleaks bootstrap: download attempt ${attempt}/${DOWNLOAD_ATTEMPTS} failed; retrying`,
+        )
+      }
+    }
   }
 
-  return Buffer.from(await response.arrayBuffer())
+  const message = lastError instanceof Error ? lastError.message : String(lastError)
+  fail(`download failed for ${url} after ${DOWNLOAD_ATTEMPTS} attempts: ${message}`)
 }
 
 async function main() {
