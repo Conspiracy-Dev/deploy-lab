@@ -422,5 +422,12 @@ digest healthy; if a candidate fails and the recorded compatible prior digest
 recovers, it returns a non-zero result so GitHub records a failed deployment.
 The new independent runner smoke has no Environment, SSH, package-write, or
 VPS mutation authority. Local public smoke against the canonical production
-origin passed. The remaining acceptance evidence is one reviewed merge and its
-approved post-merge run, including that runner-only smoke.
+origin passed. Final live acceptance completed in
+[run `32841779571`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/32841779571):
+the reviewed `main` revision `7146a28cbfd7b6aac34822b53b113b34a8bb065c`
+passed release policy, the protected deployment of
+`ghcr.io/conspiracy-dev/deploy-lab@sha256:9ffb672694827fe54def0de62984bba023f35df68306f2cbd8d13bd7dbe2802f`
+reported that exact digest healthy, and the independent public-smoke job passed
+against the canonical production origin. The early local TLS connection retry
+during container startup did not bypass health verification; the wrapper only
+reported success after its retry and public-route checks passed.

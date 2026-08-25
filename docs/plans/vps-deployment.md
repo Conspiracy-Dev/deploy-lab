@@ -1,8 +1,6 @@
 # VPS deployment plan and roadmap
 
-Status: Epics 0–7 complete; Epic 8 implementation is complete and awaits
-reviewed merge plus post-merge public-smoke acceptance; production live on
-`194.87.83.103`
+Status: Epics 0–8 complete; production live on `194.87.83.103`
 
 Last updated: 2026-08-25
 
@@ -759,8 +757,8 @@ SHA-256 match before installing the local binary. This changes neither
 
 ### Epic 8 — deployment, rollback, and public acceptance tests
 
-Status: Implementation complete 2026-08-25; awaiting reviewed merge and the
-first approved post-merge GitHub-runner public-smoke acceptance.
+Status: Complete 2026-08-25. The reviewed merge, protected approval, exact
+digest deployment, and independent GitHub-runner public smoke all succeeded.
 
 Goal: prove the least-privilege VPS boundary, automatic failure recovery, and
 public post-deploy behaviour before activating the new production path.
@@ -828,15 +826,20 @@ Execution plan:
    `authorized_keys` and directory have restrictive modes; key-authenticated
    access through the pinned host key works. It is distinct from the
    `maintenance` and forced Actions identities and has no sudo privilege.
-7. **In progress — complete the exit gate and review.** Local wrapper negative
+7. **Complete — complete the exit gate and review.** Local wrapper negative
    cases, public-smoke tests, full local quality gate, and owner-authorised live
    evidence are complete. The root wrapper is installed as `root:root 0755`
    with SHA-256 `706c31d4dce8be05c4becf5b2052033f79b0ebe328707f45662280bed032d7b0`;
    its current and recorded previous immutable digests were checked through the
    read-only status seam, and the public smoke against `https://noash.net`
-   passed without a rollout. Remaining acceptance is a reviewed merge followed
-   by the existing approval-gated deployment and its new unprivileged
-   GitHub-runner public-smoke job. It must pass before this epic is closed.
+   passed without a rollout. Live acceptance then completed in
+   [run `32841779571`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/32841779571):
+   the `main` revision `7146a28cbfd7b6aac34822b53b113b34a8bb065c` passed
+   provenance and release policy, the required `production` reviewer approved
+   deployment of
+   `ghcr.io/conspiracy-dev/deploy-lab@sha256:9ffb672694827fe54def0de62984bba023f35df68306f2cbd8d13bd7dbe2802f`,
+   the wrapper reported that exact digest healthy, and the separate
+   least-privilege `public-smoke` job passed against `https://noash.net`.
 
 Acceptance: the wrapper and SSH boundary have deterministic success and failure
 coverage; external smoke verifies the public site and exact digest; no Actions
