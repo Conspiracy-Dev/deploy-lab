@@ -2,11 +2,11 @@
 
 set -euo pipefail
 
-readonly compose_file='/opt/deploy-lab/compose.yaml'
-readonly state_dir='/var/lib/deploy-lab'
+readonly compose_file="${DEPLOY_LAB_COMPOSE_FILE:-/opt/deploy-lab/compose.yaml}"
+readonly state_dir="${DEPLOY_LAB_STATE_DIR:-/var/lib/deploy-lab}"
 readonly current_env_file="$state_dir/current-image.env"
 readonly previous_env_file="$state_dir/previous-image.env"
-readonly domain='noash.net'
+readonly domain="${DEPLOY_LAB_DOMAIN:-noash.net}"
 readonly image_pattern='^ghcr\.io/conspiracy-dev/deploy-lab@sha256:[0-9a-f]{64}$'
 
 usage() {
@@ -51,6 +51,14 @@ verify_running_site() {
   return 1
 }
 
+verify_public_site() {
+  local path
+
+  for path in / /privacy-policy /robots.txt /sitemap.xml; do
+    curl --fail --silent --show-error "https://$domain$path" >/dev/null
+  done
+}
+
 restore_previous_release() {
   if [[ ! -f $previous_env_file ]]; then
     echo 'No previous image is available; stopping the failed first rollout.' >&2
@@ -61,9 +69,10 @@ restore_previous_release() {
 
   echo 'Restoring the previous image digest.' >&2
   install -m 0640 "$previous_env_file" "$current_env_file"
-  compose "$current_env_file" pull site
-  compose "$current_env_file" up --detach --remove-orphans
-  verify_running_site
+  compose "$current_env_file" pull site \
+    && compose "$current_env_file" up --detach --remove-orphans \
+    && verify_running_site \
+    && verify_public_site
 }
 
 if [[ -f $current_env_file ]]; then
@@ -85,10 +94,18 @@ fi
 
 install -m 0640 "$candidate_env_file" "$current_env_file"
 
-if compose "$current_env_file" up --detach --remove-orphans && verify_running_site; then
+if compose "$current_env_file" up --detach --remove-orphans \
+  && verify_running_site \
+  && verify_public_site; then
   echo "Release is healthy: $image_ref"
   exit 0
 fi
 
 echo 'Candidate rollout failed.' >&2
-restore_previous_release
+if restore_previous_release; then
+  echo 'Previous release restored after candidate failure.' >&2
+  exit 75
+fi
+
+echo 'Previous release could not be restored.' >&2
+exit 70

@@ -1,9 +1,10 @@
 # VPS deployment plan and roadmap
 
-Status: Epic 0–4 complete; Epics 5–9 approved and pending implementation;
-production live on `194.87.83.103`
+Status: Epics 0–7 complete; Epic 8 implementation is complete and awaits
+reviewed merge plus post-merge public-smoke acceptance; production live on
+`194.87.83.103`
 
-Last updated: 2026-08-23
+Last updated: 2026-08-25
 
 ## Goal
 
@@ -51,11 +52,15 @@ to deploy an already identified immutable image, not permission to skip tests.
   Docker `local` logging. Its ED25519 fingerprint is
   `SHA256:M6ZafTbhTX9vwa8CeZe8aucOsTz9sD8tGUZWUV6t5cI` and is stored as the
   protected Environment known-host value.
-- Target root/password SSH are disabled. `iptables-persistent` enforces
-  default-deny inbound traffic; public TCP 22/80/443 is allowed and Zabbix TCP
-  10050 is restricted to `92.53.116.12`, `92.53.116.111`, and `92.53.116.119`.
-  The Docker `DOCKER-USER` chain permits only published 80/443. No source,
-  Node toolchain, or GHCR credential exists outside root Docker configuration.
+- Target root and password SSH are disabled. The 2026-08-25 correction loads
+  `/etc/ssh/sshd_config.d/00-deploy-lab-hardening.conf` before cloud-init's
+  conflicting `50-cloud-init.conf`; `sshd -t` and `sshd -T` confirm
+  `PermitRootLogin no`, `PasswordAuthentication no`, and
+  `KbdInteractiveAuthentication no`. `iptables-persistent` enforces default-deny
+  inbound traffic; public TCP 22/80/443 is allowed and Zabbix TCP 10050 is
+  restricted to `92.53.116.12`, `92.53.116.111`, and `92.53.116.119`. The Docker
+  `DOCKER-USER` chain permits only published 80/443. No source, Node toolchain,
+  or GHCR credential exists outside root Docker configuration.
 - The source repository is public (`Conspiracy-Dev/deploy-lab`); the selected
   delivery model is GitHub Actions, a private GHCR image, direct DNS A record,
   one Caddy runtime container, and an automatically prepared but manually
@@ -611,9 +616,9 @@ custom secret, cache, nor package-write permission.
 
 ### Epic 7 — shared automatic and manual release orchestration
 
-Status: Corrected locally on 2026-08-23; production Environment secrets were
-empirically unavailable inside the reusable deploy job despite two approved
-attempts. A reviewed `main` run must validate the direct protected deploy job.
+Status: Complete 2026-08-24. The reviewed automatic `main` run reached the
+direct protected job after Environment approval and deployed its verified
+immutable digest successfully.
 
 Goal: automatically prepare a verified `main` digest for production approval
 while retaining one protected manual full-SHA recovery path and one deployment
@@ -646,8 +651,8 @@ Tasks:
    the selected SHA/digest in the summary, and preserve GitHub deployment
    history without logging keys, credentials, host-key material, or registry
    tokens.
-6. **In progress — validate the corrected protected boundary and close with
-   full testing and documentation.** The first automatic preparation run
+6. **Complete — validate the corrected protected boundary and close with full
+   testing and documentation.** The first automatic preparation run
    [`32595571596`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/32595571596)
    stopped before the production approval because the verified candidate SHA
    was not passed from its artifact parser to the release-policy step. Export
@@ -728,6 +733,21 @@ skips), Lighthouse, static-container smoke, secret scan, actionlint, ShellCheck
 shell syntax, and diff checks. Only a reviewed later `main` run can prove GitHub
 injects the Environment secrets into this direct job.
 
+Live acceptance 2026-08-24: PR #17 merged as
+`f0bd90efea1c520e9c35b2fd9c36978962b19890`. Its successful
+[`prepare production release` run](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/32698404280)
+was triggered by the verified-candidate `workflow_run` from `main`. The
+unprivileged `release / prepare` job accepted the candidate as
+`verified-release-candidate`, returned `eligible=true`, and selected
+`ghcr.io/conspiracy-dev/deploy-lab@sha256:8a4542659e704b61c3c5e136f3833803f47835a945c34c90e32b48617935edd9`.
+After the required Environment approval, the direct `deploy` job received both
+masked SSH Environment secrets, used strict host-key verification, pulled that
+exact digest, recreated the single production container, and reported it
+healthy. The successful run proves the new secret boundary without changing
+`ci.yml` or bypassing the existing approval/quality gates. Epic 8 remains the
+separate owner-approved scope for external post-deploy smoke and rollback
+rehearsal.
+
 Clean-clone correction 2026-08-23: PR #17's Windows clean-clone job failed
 while `pnpm setup` bootstrapped the verified Gitleaks binary from its official
 release; macOS and Ubuntu clean clones passed, and the release workflows were
@@ -739,33 +759,84 @@ SHA-256 match before installing the local binary. This changes neither
 
 ### Epic 8 — deployment, rollback, and public acceptance tests
 
-Status: Pending Epic 7 acceptance.
+Status: Implementation complete 2026-08-25; awaiting reviewed merge and the
+first approved post-merge GitHub-runner public-smoke acceptance.
 
 Goal: prove the least-privilege VPS boundary, automatic failure recovery, and
 public post-deploy behaviour before activating the new production path.
 
-Tasks:
+Execution plan:
 
-1. **Pending — test the root-owned wrapper as a public boundary.** Add portable
-   shell harnesses with stubbed Docker, Compose, curl, and time boundaries for
-   valid rollout, invalid digest, missing config, pull failure, Caddy failure,
-   health timeout, first-release failure, rollback success, and rollback
-   failure. Test that the forced SSH command rejects extra or altered commands.
-2. **Pending — add external post-deploy smoke.** From the GitHub runner verify
-   trusted HTTPS, HTTP redirect, `/`, `/privacy-policy`, `/robots.txt`,
-   `/sitemap.xml`, a hashed asset, security/cache headers, canonical origin, and
-   a genuine 404 after the wrapper reports success.
-3. **Pending — bind smoke to release state.** Confirm the wrapper output and
-   read-only status seam identify the exact approved digest as current. A smoke
-   failure must fail the deployment visibly and invoke only the documented
-   compatible recovery path.
-4. **Pending — prove least privilege.** Recheck strict known hosts, forced-key
-   behaviour, exact sudo rule, absence of Docker-group membership, and the fact
-   that Actions cannot edit root-owned runtime files, reboot the host, or open a
-   shell.
-5. **Pending — close the epic with full testing and documentation.** Run the
-   complete Epic 8 exit gate plus all wrapper negative cases; record evidence
-   and present the diff before commit or production activation.
+0. **Complete — recovery authority after an
+   off-host failure.** The recommended design keeps the forced Actions key and
+   sudo rule unchanged. The root-owned wrapper performs its own public-route
+   checks before it prints success; a failure restores only the recorded
+   compatible previous digest and exits non-zero, so the deployment is visibly
+   failed. A separate unprivileged GitHub-runner smoke repeats the public view
+   after that success and has no SSH material or recovery command. If that
+   independent runner observes a network-only false negative, it fails the run
+   visibly but does not mutate production. Granting it automatic remote
+   rollback would require a new forced SSH/sudo command and widen Actions
+   authority, so it is not proposed without a separate owner decision.
+1. **Complete — make the root wrapper deterministically testable.** Added a
+   portable Bash harness around the existing `deploy-lab` and
+   `deploy-lab-ssh-command` seams. Stub only Docker, Compose, curl, sleep, and
+   time/file boundaries; retain the production defaults and validate that an
+   untrusted SSH command cannot select test paths or commands. Cover valid
+   rollout, invalid digest, missing configuration, Compose validation failure,
+   pull failure, invalid Caddy configuration, health timeout, failed first
+   rollout, successful compatible rollback, and failed rollback.
+2. **Complete — make a recovered rollout fail visibly.** The wrapper's
+   result contract so successful rollback after a failed candidate is recorded
+   but still exits non-zero. Preserve the current and previous digest state;
+   never roll back to the denylisted former `wget` image. Prove the exact
+   expected state and exit result in the harness, including the forced-command
+   rejection cases.
+3. **Complete — add independent public smoke without production credentials.**
+   A small portable smoke script and an unprivileged workflow job run
+   only after the direct protected deployment succeeds. It will use the
+   canonical public origin and verify trusted HTTPS, HTTP-to-HTTPS redirect,
+   `/`, `/privacy-policy`, `/robots.txt`, `/sitemap.xml`, one discovered hashed
+   asset, security and cache headers, canonical origin, and a genuine 404. The
+   job receives no Environment, SSH, package-write, or VPS permission; it does
+   not modify `ci.yml` or its quality gate.
+4. **Complete — bind the evidence to the selected release.** The deploy
+   step to confirm the wrapper's success line contains the exact immutable
+   digest selected by the existing release policy. The public-smoke job consumes
+   that same reviewed digest as data. Recheck `deploy-lab-status` through the
+   separately authorised read-only maintenance path and compare its `CURRENT`
+   value with the workflow digest. A mismatch, public-smoke failure, or failed
+   wrapper recovery stops the release as failed; only the wrapper can make an
+   automatic compatible rollback.
+5. **Complete — verify the least-privilege boundary on the live host.** With
+   separately authorised read-only maintenance commands, recheck pinned known
+   host verification, the forced key's exact-command rejection, the exact sudo
+   allow-list, no `deployer` Docker-group membership, root ownership and modes
+   of runtime files/state, and the absence of shell, reboot, firewall, or file
+   editing capability for Actions. The 2026-08-24 audit confirmed all of those
+   checks, then corrected password hardening without a deployment, container
+   restart, reboot, or provider-console use. The initial audit found cloud-init's
+   `50-cloud-init.conf` set `PasswordAuthentication yes`; a root-owned `00-`
+   prefixed hardening file wins OpenSSH's first-value parsing. The checked final
+   effective configuration disables root, password, and keyboard-interactive
+   authentication. Pinned-host owner and maintenance logins work; the Actions
+   key still rejects arbitrary commands, `deployer` remains outside Docker, and
+   the owner account has no sudo capability.
+6. **Complete — add a personal Ed25519 SSH key.** The owner selected
+   `nikitazinevich_macbook` and its separate passphrase-protected Ed25519 key
+   (fingerprint `SHA256:miJbekBZe6vduMPhiOl9mu/y6RIHbNpbw26KRTQ4Dwo`). Its
+   `authorized_keys` and directory have restrictive modes; key-authenticated
+   access through the pinned host key works. It is distinct from the
+   `maintenance` and forced Actions identities and has no sudo privilege.
+7. **In progress — complete the exit gate and review.** Local wrapper negative
+   cases, public-smoke tests, full local quality gate, and owner-authorised live
+   evidence are complete. The root wrapper is installed as `root:root 0755`
+   with SHA-256 `706c31d4dce8be05c4becf5b2052033f79b0ebe328707f45662280bed032d7b0`;
+   its current and recorded previous immutable digests were checked through the
+   read-only status seam, and the public smoke against `https://noash.net`
+   passed without a rollout. Remaining acceptance is a reviewed merge followed
+   by the existing approval-gated deployment and its new unprivileged
+   GitHub-runner public-smoke job. It must pass before this epic is closed.
 
 Acceptance: the wrapper and SSH boundary have deterministic success and failure
 coverage; external smoke verifies the public site and exact digest; no Actions

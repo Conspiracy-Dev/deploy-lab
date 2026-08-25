@@ -52,7 +52,7 @@ jobs:
           chmod 0600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
       - name: Deploy the selected immutable digest
         run: |
-          ssh \
+          deploy_output="$(ssh \
             -o BatchMode=yes \
             -o ConnectTimeout=15 \
             -o IdentitiesOnly=yes \
@@ -60,4 +60,26 @@ jobs:
             -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
             -i "$HOME/.ssh/id_ed25519" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
-            "sudo /usr/local/sbin/deploy-lab $IMAGE_REF"
+            "sudo /usr/local/sbin/deploy-lab $IMAGE_REF")"
+          printf '%s\n' "$deploy_output"
+          grep -Fqx "Release is healthy: $IMAGE_REF" <<< "$deploy_output"
+
+  public-smoke:
+    needs: [release, deploy]
+    if: needs.release.outputs.eligible == 'true' && needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      IMAGE_REF: ${{ needs.release.outputs.image_ref }}
+      PUBLIC_ORIGIN: ${{ vars.PRODUCTION_SITE_URL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.revision }}
+          persist-credentials: false
+      - name: Verify the approved digest's public site
+        run: |
+          [[ "$IMAGE_REF" =~ ^ghcr\.io/conspiracy-dev/deploy-lab@sha256:[0-9a-f]{64}$ ]]
+          bash scripts/deployment/smoke-production-public.sh "$PUBLIC_ORIGIN"

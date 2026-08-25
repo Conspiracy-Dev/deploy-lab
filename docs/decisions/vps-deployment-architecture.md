@@ -121,6 +121,11 @@ part of this release without a separate redirect decision.
     passwordless `sudo` for the current Epic 5 recovery and correction work;
     this access is separate from the `deployer` and forced Actions identities.
     The forced Actions key remains limited to the digest-only deployment wrapper.
+15. Password authentication is disabled. The owner uses a dedicated
+    `nikitazinevich_macbook` account and a separate Ed25519 key held in the
+    workstation SSH Agent. This account receives no `NOPASSWD sudo` privilege.
+    It is distinct from the emergency-maintenance and forced Actions identities;
+    adding a personal key does not widen deployment or root authority.
 
 ## Consequences
 
@@ -371,3 +376,51 @@ would broaden the existing Environment-scoped secret boundary. This does not
 modify `ci.yml`, approval rules, SSH/VPS permissions, or the release policy.
 Only a reviewed post-merge automatic run can validate the corrected secret
 injection path.
+
+That validation completed on 2026-08-24. The reviewed merge
+`f0bd90efea1c520e9c35b2fd9c36978962b19890` triggered successful automatic
+release run `32698404280`: unprivileged preparation accepted the verified
+candidate, and the approved direct `production` job received masked
+Environment SSH secrets, used strict host-key verification, and deployed
+`ghcr.io/conspiracy-dev/deploy-lab@sha256:8a4542659e704b61c3c5e136f3833803f47835a945c34c90e32b48617935edd9`.
+The root-owned wrapper reported that digest healthy after recreating the
+production container. This is live evidence that the direct caller boundary
+preserves approval-gated secret injection without changing `ci.yml`, quality,
+or SSH/VPS privilege.
+
+Epic 8's authorised read-only audit on 2026-08-24 found a conflicting live SSH
+state: `sshd -T` reports `passwordauthentication yes`. Root login and
+keyboard-interactive authentication remain disabled, and the forced Actions key
+still rejects an arbitrary command. The `deployer` account is outside the Docker
+group; its sudo policy permits only the digest-regex deployment wrapper and the
+read-only status command; root owns the runtime files and state directory.
+Password SSH is therefore not treated as hardened. The planned wrapper update,
+production smoke activation, and Epic 8 closure remain blocked until a separate
+owner-authorised correction is applied and both maintenance and forced-key
+access paths are rechecked.
+
+On 2026-08-25, the owner resolved that discrepancy by reaffirming password SSH
+as disabled and selecting a dedicated personal account,
+`nikitazinevich_macbook`, with its own passphrase-protected Ed25519 key. The
+account was created without sudo authority; its public-key fingerprint is
+`SHA256:miJbekBZe6vduMPhiOl9mu/y6RIHbNpbw26KRTQ4Dwo`. The existing
+maintenance key, the forced Actions key, and this owner key were independently
+verified through pinned host-key SSH before and after the change.
+
+The cause was OpenSSH's first-value parsing across included files:
+cloud-init's `50-cloud-init.conf` set `PasswordAuthentication yes`, so the
+later `99-deploy-lab-hardening.conf` could not override it. A root-owned,
+mode-`0600` `00-deploy-lab-hardening.conf` now precedes it. `sshd -t` succeeded,
+the SSH service was reloaded, and `sshd -T` reports `permitrootlogin no`,
+`passwordauthentication no`, and `kbdinteractiveauthentication no`. This did
+not deploy or restart the application, reboot the VPS, change the forced
+Actions command, or grant the owner account sudo.
+
+The root-owned deployment wrapper was also installed after local syntax and
+isolated negative-case tests. It verifies the public routes before declaring a
+digest healthy; if a candidate fails and the recorded compatible prior digest
+recovers, it returns a non-zero result so GitHub records a failed deployment.
+The new independent runner smoke has no Environment, SSH, package-write, or
+VPS mutation authority. Local public smoke against the canonical production
+origin passed. The remaining acceptance evidence is one reviewed merge and its
+approved post-merge run, including that runner-only smoke.
