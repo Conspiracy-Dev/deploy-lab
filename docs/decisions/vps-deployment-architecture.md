@@ -431,3 +431,15 @@ reported that exact digest healthy, and the independent public-smoke job passed
 against the canonical production origin. The early local TLS connection retry
 during container startup did not bypass health verification; the wrapper only
 reported success after its retry and public-route checks passed.
+
+On 2026-09-01, the owner approved a narrow manual-recovery compatibility
+fallback after run `32848022798` safely rejected image A: the image's 2026-08-21
+SHA predates the candidate-verification workflow introduced on 2026-08-22, so
+no candidate artifact can exist. Only `workflow_dispatch` may fall back to one
+successful historical `quality` push run for the exact SHA on `main`; it still
+must resolve the immutable GHCR digest and prove matching OCI revision and
+source labels before the existing Environment approval. Automatic releases
+continue to require candidate evidence, and this decision changes neither
+`ci.yml`, quality thresholds, reviewers, secrets, permissions, nor VPS
+authority. The historical fallback remains subject to the same digest-only
+wrapper and independent public smoke.

@@ -66,6 +66,7 @@ image_revision_label="${IMAGE_REVISION_LABEL:-}"
 image_source_label="${IMAGE_SOURCE_LABEL:-}"
 site_url="${PRODUCTION_SITE_URL:-}"
 current_main_revision="${CURRENT_MAIN_REVISION:-}"
+provenance_source="${PROVENANCE_SOURCE:-}"
 
 case "$release_source" in
   automatic | manual) ;;
@@ -77,9 +78,24 @@ esac
 
 require_revision "$revision"
 require_revision "$quality_revision"
-require_revision "$candidate_revision"
-require_image_ref "$candidate_image_ref"
 require_image_ref "$resolved_image_ref"
+
+case "$provenance_source" in
+  verified-candidate)
+    require_revision "$candidate_revision"
+    require_image_ref "$candidate_image_ref"
+    ;;
+  historical-quality)
+    if [ "$release_source" != 'manual' ]; then
+      emit false 'historical-quality-manual-only'
+      exit 0
+    fi
+    ;;
+  *)
+    printf 'PROVENANCE_SOURCE must be verified-candidate or historical-quality\n' >&2
+    exit 1
+    ;;
+esac
 
 if ! valid_https_origin "$site_url"; then
   printf 'PRODUCTION_SITE_URL must be an absolute HTTPS origin without a path, query, or fragment\n' >&2
@@ -95,9 +111,11 @@ if [ "$quality_workflow_name" != 'quality' ] \
   exit 0
 fi
 
-if [ "$candidate_revision" != "$revision" ] || [ "$candidate_image_ref" != "$resolved_image_ref" ]; then
-  emit false 'candidate-evidence-mismatch'
-  exit 0
+if [ "$provenance_source" = 'verified-candidate' ]; then
+  if [ "$candidate_revision" != "$revision" ] || [ "$candidate_image_ref" != "$resolved_image_ref" ]; then
+    emit false 'candidate-evidence-mismatch'
+    exit 0
+  fi
 fi
 
 if [ "$image_revision_label" != "$revision" ] || [ "$image_source_label" != "${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-Conspiracy-Dev/deploy-lab}" ]; then
@@ -119,4 +137,4 @@ if [ "$release_source" = 'automatic' ]; then
   fi
 fi
 
-emit true 'verified-release-candidate'
+emit true "$provenance_source"
