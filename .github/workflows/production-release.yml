@@ -43,9 +43,10 @@ jobs:
       REVISION: ${{ inputs.revision }}
       PRODUCTION_SITE_URL: ${{ vars.PRODUCTION_SITE_URL }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Check out the current release policy
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ inputs.revision }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Verify the selected revision belongs to main
