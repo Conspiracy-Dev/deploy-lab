@@ -176,7 +176,9 @@ local HTTP; no image contains `.env`, source checkout, Node runtime, or secrets.
 
 ### Epic 2 — CI, registry, and approved delivery
 
-Status: Protected delivery boundary ready; GHCR publication validation blocked
+Status: Complete. Subsequent approved production runs resolved immutable GHCR
+digests, deployed them through the protected boundary, and verified the public
+site; the former publication-validation block is historical only.
 
 Goal: publish a reproducible `linux/amd64` static image for every approved
 `main` commit, without automatically touching the VPS. Prepare the protected
@@ -848,42 +850,102 @@ complete Epic 8 exit gate passes.
 
 ### Epic 9 — production activation, rollback rehearsal, and handoff
 
-Status: Pending Epic 8 acceptance and separate production approval.
+Status: In progress 2026-08-25. Epic 8 acceptance completed in run `32841779571`;
+the automatic merge and first approved production deployment are now recorded
+as completed Epic 9 evidence. Manual recovery rehearsal, reboot persistence,
+and handoff remain separately approved work.
 
 Goal: activate the automatically prepared release path on the live host, prove
 human approval and compatible rollback end to end, and leave a concise operator
 handoff.
 
-Tasks:
+Non-goals: do not change `.github/workflows/ci.yml`, branch rules, Environment
+reviewers, SSH/sudo/firewall privileges, secrets, packages, or source-host
+lifecycle. Do not allow Actions to reboot the VPS or make an unprivileged
+public smoke job mutate production.
 
-1. **Pending — run production preflight.** Confirm image A remains healthy and
-   is the compatible rollback target; capture status, DNS/TLS, public smoke,
-   Docker/restart state, disk/memory/process baseline, firewall policy,
-   Environment reviewer and branch policy, and provider-console recovery.
-2. **Pending — activate through a reviewed merge.** After owner review and
-   explicit commit/push approval, merge the automation change normally. Require
-   every post-merge job and exact-digest smoke to pass, then confirm the
-   automatic release waits at Environment `production` without contacting the
-   VPS.
-3. **Pending — approve and verify image B.** The reviewer compares the visible
-   SHA and digest with the successful pipeline and approves the deployment.
-   Verify wrapper success, exact current digest, complete external smoke,
-   container health, stable process count, and absence of secret leakage. A
-   short single-container interruption is accepted.
-4. **Pending — rehearse `B -> A` through manual recovery.** Select only the
-   recorded known-good image A SHA using the protected manual path, approve it,
-   and repeat exact status, health, TLS, route, SEO, header, cache, and 404
-   checks. Do not return to the incompatible `wget` digest.
-5. **Pending — prove restart persistence.** With separate owner approval, use
-   the provider control panel for one normal reboot. Verify SSH, firewall,
-   Docker, healthy container, Caddy volumes/TLS, release status, and public
-   smoke after boot; do not grant Actions reboot permission.
-6. **Pending — hand off and close.** Record the minimal normal-release, approval,
-   rejection, retry, rollback, credential-rotation, and provider-recovery
-   instructions plus workflow URLs, SHAs, digests, and non-secret evidence.
-   Run the complete Epic 9 exit gate. Update the ADR and this roadmap to final
-   observed behaviour; commit only after owner review. Source-host retirement
-   remains a separate decision.
+Constraints: all read-only host work uses `deploy-lab-maintenance` and pinned
+host-key verification; release changes use only the existing approval-gated
+GitHub workflow. The known-good target is image A, not the former incompatible
+`wget` image. The manual workflow accepts a full `main` commit SHA, so the
+preflight must resolve the image-A SHA and match its image label/digest before
+any recovery request. A short single-container interruption is acceptable only
+for the separately approved rehearsal or reboot.
+
+Ownership seam: the root-owned wrapper owns digest deployment and compatible
+automatic recovery; GitHub Environment `production` owns human approval and
+secret injection; the external smoke owns only public observation; the provider
+console remains the out-of-band recovery path. Owner maintenance access is
+diagnostic and installation-only, never a replacement deployment path.
+
+Execution plan:
+
+1. **Complete — run production preflight (read-only).** Capture `CURRENT` and
+   `PREVIOUS` through `deploy-lab-status`, resolve the current B and known-good
+   A source SHAs/digests from GHCR provenance, and compare them with the
+   recorded state. Recheck trusted DNS/TLS, public smoke, container health and
+   restart policy, disk/memory/process baseline, firewall/listeners, strict SSH
+   access, Environment reviewer, and provider-console availability. Stop if A
+   is not a compatible labelled ancestor or if any public/health check fails.
+   The 2026-08-25 read-only checks passed: B is
+   `9ffb672694827fe54def0de62984bba023f35df68306f2cbd8d13bd7dbe2802f`,
+   healthy with zero restarts; `PREVIOUS` is the compatible intermediate
+   `8a4542659e704b61c3c5e136f3833803f47835a945c34c90e32b48617935edd9`;
+   rehearsal target A is instead the distinct known-good
+   `653f0283674afa6e840ddecd712b6b13b7e61c8e89ba8f8a326022e6135a0bfb`
+   from reachable `main` SHA `c74c8d49cad2ab305a33d48d8443440c0f270e09`.
+   Public smoke, DNS, TLS, Docker, SSH, firewall, resources, and Environment
+   policy passed. The owner confirmed that the provider console is accessible
+   for out-of-band recovery; it remains unused unless SSH or Docker control is
+   actually lost.
+2. **Complete — activate through a reviewed merge.** PR #18 merged as
+   `7146a28cbfd7b6aac34822b53b113b34a8bb065c`; run
+   [`32841779571`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/32841779571)
+   proved automatic preparation paused at the required `production` approval
+   without bypassing the existing quality gate.
+3. **Complete — approve and verify image B.** The required reviewer approved
+   that run, which deployed
+   `ghcr.io/conspiracy-dev/deploy-lab@sha256:9ffb672694827fe54def0de62984bba023f35df68306f2cbd8d13bd7dbe2802f`.
+   The wrapper confirmed the exact digest healthy and independent public smoke
+   passed.
+4. **In progress — rehearse `B -> A` through manual recovery.** The authorised
+   dispatch of `release.yml` for A SHA `c74c8d49cad2ab305a33d48d8443440c0f270e09`
+   created [run `32848022798`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/32848022798),
+   which failed safely in `release / prepare`; deploy and public-smoke were
+   skipped, so production did not change. The selected SHA is reachable from
+   `main`, but image A predates the 2026-08-22
+   `verify-production-candidate.yml` workflow and therefore has no required
+   candidate-evidence run/artifact. The current manual policy correctly rejected
+   it rather than weakening provenance. The owner approved a narrow reviewed
+   fallback: when only manual recovery lacks candidate evidence, the release
+   must require one successful historical `quality` push run for the exact
+   `main` SHA plus the existing immutable digest and OCI-label checks. Automatic
+   releases still require candidate evidence. After that implementation merges,
+   repeat the exact A dispatch and require the reviewer approval; do not use an
+   arbitrary digest.
+5. **Blocked by task 4 — prove restart persistence.** After the manual
+   rehearsal is accepted, obtain separate approval for one normal provider-panel
+   reboot. Verify SSH, firewall, Docker, Caddy volumes/TLS, release status, and
+   public smoke after boot. Do not grant Actions reboot permission or use a
+   reboot as a workaround for a failed health check.
+6. **Blocked by tasks 4–5 — hand off and close.** Record the normal release, approval,
+   rejection, retry, rollback, credential rotation, and provider recovery
+   procedures with workflow URLs, full SHAs, digests, and non-secret evidence.
+   Run the complete Epic 9 exit gate, update ADR and roadmap with observed
+   behaviour, and request review before commit. Source-host retirement remains
+   a separate decision.
+
+Verification: each production-affecting action must have the matching GitHub
+run, exact SHA/digest comparison, wrapper status, independent public smoke,
+and read-only host evidence. Epic closure additionally requires the local full
+exit gate, a reviewed documentation diff, and no unexpected privilege or
+secret-scope change.
+
+Risk and stop condition: stop before dispatching recovery if image-A mapping,
+health, provenance, or public checks disagree; stop before reboot if recovery
+is not accepted; use the provider console only for an actual loss of SSH/Docker
+control. Any failed rollout must remain visibly failed even if the wrapper
+restores the recorded compatible image.
 
 Acceptance: an eligible `main` revision automatically waits for production
 approval, the exact digest deploys only after approval, public acceptance

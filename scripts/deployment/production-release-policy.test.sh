@@ -46,6 +46,7 @@ base_case=(
   'QUALITY_EVENT=push'
   'QUALITY_BRANCH=main'
   "QUALITY_REVISION=$revision"
+  'PROVENANCE_SOURCE=verified-candidate'
   "CANDIDATE_REVISION=$revision"
   "CANDIDATE_IMAGE_REF=$image_ref"
   "RESOLVED_IMAGE_REF=$image_ref"
@@ -56,11 +57,24 @@ base_case=(
 )
 
 legacy_case=("${base_case[@]}")
-legacy_case[8]="CANDIDATE_IMAGE_REF=$legacy_image_ref"
-legacy_case[9]="RESOLVED_IMAGE_REF=$legacy_image_ref"
+legacy_case[9]="CANDIDATE_IMAGE_REF=$legacy_image_ref"
+legacy_case[10]="RESOLVED_IMAGE_REF=$legacy_image_ref"
+
+historical_manual_case=("${base_case[@]}")
+historical_manual_case[0]='RELEASE_SOURCE=manual'
+historical_manual_case[7]='PROVENANCE_SOURCE=historical-quality'
+historical_manual_case[8]='CANDIDATE_REVISION='
+historical_manual_case[9]='CANDIDATE_IMAGE_REF='
+
+historical_automatic_case=("${base_case[@]}")
+historical_automatic_case[7]='PROVENANCE_SOURCE=historical-quality'
+historical_automatic_case[8]='CANDIDATE_REVISION='
+historical_automatic_case[9]='CANDIDATE_IMAGE_REF='
 
 run_case 'verified automatic candidate' 0 true "${base_case[@]}"
 run_case 'manual verified historical candidate' 0 true "${base_case[@]/RELEASE_SOURCE=automatic/RELEASE_SOURCE=manual}" "CURRENT_MAIN_REVISION=$other_revision"
+run_case 'manual historical quality recovery' 0 true "${historical_manual_case[@]}"
+run_case 'automatic historical quality recovery' 0 false "${historical_automatic_case[@]}"
 run_case 'automatic stale candidate' 0 false "${base_case[@]/CURRENT_MAIN_REVISION=$revision/CURRENT_MAIN_REVISION=$other_revision}"
 run_case 'failed quality provenance' 0 false "${base_case[@]/QUALITY_CONCLUSION=success/QUALITY_CONCLUSION=failure}"
 run_case 'candidate image differs from resolved digest' 0 false "${base_case[@]/RESOLVED_IMAGE_REF=$image_ref/RESOLVED_IMAGE_REF=$other_image_ref}"

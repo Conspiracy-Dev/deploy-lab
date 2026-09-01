@@ -67,6 +67,32 @@ jobs:
               "$GITHUB_API_URL$1"
           }
 
+          use_historical_quality_evidence() {
+            quality_runs="$(api "/repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?branch=main&event=push&status=success&head_sha=$REVISION&per_page=100")"
+            quality_run_id="$(python3 - "$REVISION" "$quality_runs" <<'PY'
+          import json
+          import sys
+
+          revision, payload = sys.argv[1:]
+          matches = [
+              run for run in json.loads(payload).get('workflow_runs', [])
+              if (
+                  run.get('name') == 'quality'
+                  and run.get('conclusion') == 'success'
+                  and run.get('event') == 'push'
+                  and run.get('head_branch') == 'main'
+                  and run.get('head_sha') == revision
+              )
+          ]
+          if len(matches) == 1:
+              print(matches[0]['id'])
+          PY
+            )"
+            [[ "$quality_run_id" =~ ^[0-9]+$ ]]
+            printf 'provenance_source=historical-quality\ncandidate_revision=%s\nquality_run_id=%s\n' \
+              "$REVISION" "$quality_run_id" >> "$GITHUB_OUTPUT"
+          }
+
           candidate_run_id="$CANDIDATE_RUN_ID"
           if [ -z "$candidate_run_id" ]; then
             runs="$(api "/repos/$GITHUB_REPOSITORY/actions/workflows/verify-production-candidate.yml/runs?branch=main&event=workflow_run&status=success&per_page=100")"
@@ -89,7 +115,15 @@ jobs:
           )"
           fi
 
-          [[ "$candidate_run_id" =~ ^[0-9]+$ ]]
+          if ! [[ "$candidate_run_id" =~ ^[0-9]+$ ]]; then
+            if [ "$RELEASE_SOURCE" = 'manual' ]; then
+              use_historical_quality_evidence
+              exit 0
+            fi
+            printf '%s\n' 'No verified candidate evidence exists for the automatic release.' >&2
+            exit 1
+          fi
+
           candidate_run="$(api "/repos/$GITHUB_REPOSITORY/actions/runs/$candidate_run_id")"
           python3 - "$REVISION" "$candidate_run" <<'PY'
           import json
@@ -118,11 +152,19 @@ jobs:
               artifact for artifact in json.loads(payload).get('artifacts', [])
               if artifact.get('name') == expected_name and not artifact.get('expired')
           ]
-          if len(matches) != 1:
-              raise SystemExit('Expected exactly one unexpired production candidate artifact')
-          print(matches[0]['archive_download_url'])
+          if len(matches) == 1:
+              print(matches[0]['archive_download_url'])
           PY
           )"
+
+          if [ -z "$archive_url" ]; then
+            if [ "$RELEASE_SOURCE" = 'manual' ]; then
+              use_historical_quality_evidence
+              exit 0
+            fi
+            printf '%s\n' 'Expected exactly one unexpired production candidate artifact.' >&2
+            exit 1
+          fi
 
           archive="$RUNNER_TEMP/production-candidate.zip"
           curl --fail --location --silent --show-error \
@@ -157,6 +199,7 @@ jobs:
           ):
               raise SystemExit('Production candidate artifact schema or revision is invalid')
 
+          print('provenance_source=verified-candidate')
           print(f'candidate_image_ref={image_ref}')
           print(f'candidate_revision={revision}')
           print(f'quality_run_id={quality_run_id}')
@@ -214,6 +257,7 @@ jobs:
         env:
           CANDIDATE_IMAGE_REF: ${{ steps.evidence.outputs.candidate_image_ref }}
           CANDIDATE_REVISION: ${{ steps.evidence.outputs.candidate_revision }}
+          PROVENANCE_SOURCE: ${{ steps.evidence.outputs.provenance_source }}
         run: bash scripts/deployment/production-release-policy.sh
       - name: Reject an ineligible manual release
         if: inputs.release_source == 'manual' && steps.policy.outputs.eligible != 'true'
