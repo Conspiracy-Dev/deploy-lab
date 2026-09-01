@@ -920,9 +920,16 @@ Execution plan:
    fallback: when only manual recovery lacks candidate evidence, the release
    must require one successful historical `quality` push run for the exact
    `main` SHA plus the existing immutable digest and OCI-label checks. Automatic
-   releases still require candidate evidence. After that implementation merges,
-   repeat the exact A dispatch and require the reviewer approval; do not use an
-   arbitrary digest.
+   releases still require candidate evidence. PR #20 merged the fallback as
+   `991e460b7782991a6fd00efb43856cba392abae5`. The first post-merge retry,
+   [run `33492839794`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/33492839794),
+   again stopped before approval and VPS access: the workflow passed the full
+   JSON response for 100 historical quality runs as a `python3` argument and
+   exceeded the runner's argument-size limit. The follow-up correction writes
+   both candidate and historical run responses to `$RUNNER_TEMP` before Python
+   parses them, preserving the exact-SHA quality and OCI checks. It requires a
+   reviewed merge before one further exact A dispatch and reviewer approval;
+   do not use an arbitrary digest.
 5. **Blocked by task 4 — prove restart persistence.** After the manual
    rehearsal is accepted, obtain separate approval for one normal provider-panel
    reboot. Verify SSH, firewall, Docker, Caddy volumes/TLS, release status, and

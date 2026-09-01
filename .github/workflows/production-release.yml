@@ -68,22 +68,24 @@ jobs:
           }
 
           use_historical_quality_evidence() {
-            quality_runs="$(api "/repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?branch=main&event=push&status=success&head_sha=$REVISION&per_page=100")"
+            quality_runs="$RUNNER_TEMP/historical-quality-runs.json"
+            api "/repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?branch=main&event=push&status=success&head_sha=$REVISION&per_page=100" > "$quality_runs"
             quality_run_id="$(python3 - "$REVISION" "$quality_runs" <<'PY'
           import json
           import sys
 
-          revision, payload = sys.argv[1:]
-          matches = [
-              run for run in json.loads(payload).get('workflow_runs', [])
-              if (
-                  run.get('name') == 'quality'
-                  and run.get('conclusion') == 'success'
-                  and run.get('event') == 'push'
-                  and run.get('head_branch') == 'main'
-                  and run.get('head_sha') == revision
-              )
-          ]
+          revision, payload_path = sys.argv[1:]
+          with open(payload_path, encoding='utf-8') as source:
+              matches = [
+                  run for run in json.load(source).get('workflow_runs', [])
+                  if (
+                      run.get('name') == 'quality'
+                      and run.get('conclusion') == 'success'
+                      and run.get('event') == 'push'
+                      and run.get('head_branch') == 'main'
+                      and run.get('head_sha') == revision
+                  )
+              ]
           if len(matches) == 1:
               print(matches[0]['id'])
           PY
@@ -95,13 +97,16 @@ jobs:
 
           candidate_run_id="$CANDIDATE_RUN_ID"
           if [ -z "$candidate_run_id" ]; then
-            runs="$(api "/repos/$GITHUB_REPOSITORY/actions/workflows/verify-production-candidate.yml/runs?branch=main&event=workflow_run&status=success&per_page=100")"
-            candidate_run_id="$(python3 - "$REVISION" "$runs" <<'PY'
+            candidate_runs="$RUNNER_TEMP/verified-candidate-runs.json"
+            api "/repos/$GITHUB_REPOSITORY/actions/workflows/verify-production-candidate.yml/runs?branch=main&event=workflow_run&status=success&per_page=100" > "$candidate_runs"
+            candidate_run_id="$(python3 - "$REVISION" "$candidate_runs" <<'PY'
           import json
           import sys
 
-          revision, payload = sys.argv[1:]
-          for run in json.loads(payload).get('workflow_runs', []):
+          revision, payload_path = sys.argv[1:]
+          with open(payload_path, encoding='utf-8') as source:
+              runs = json.load(source).get('workflow_runs', [])
+          for run in runs:
               if (
                   run.get('name') == 'verify production candidate'
                   and run.get('conclusion') == 'success'
