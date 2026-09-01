@@ -443,3 +443,15 @@ continue to require candidate evidence, and this decision changes neither
 `ci.yml`, quality thresholds, reviewers, secrets, permissions, nor VPS
 authority. The historical fallback remains subject to the same digest-only
 wrapper and independent public smoke.
+
+On 2026-09-01, the first post-merge recovery retry
+[`33492839794`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/33492839794)
+failed safely before Environment approval because its 100-run historical-quality
+JSON response was supplied as a `python3` command-line argument, exceeding the
+runner argument-size limit. Candidate selection and deployment did not run, so
+the VPS retained image B. The correction stores both candidate-run and
+historical-quality-run API responses in `$RUNNER_TEMP` and passes only the
+temporary-file path to Python. It does not alter the API query, exact-SHA
+matching, quality policy, `ci.yml`, approval boundary, secrets, SSH, or VPS
+authority; it makes the already-approved historical fallback executable at the
+existing API page size.
