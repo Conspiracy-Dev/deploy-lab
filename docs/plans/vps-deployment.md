@@ -927,9 +927,15 @@ Execution plan:
    JSON response for 100 historical quality runs as a `python3` argument and
    exceeded the runner's argument-size limit. The follow-up correction writes
    both candidate and historical run responses to `$RUNNER_TEMP` before Python
-   parses them, preserving the exact-SHA quality and OCI checks. It requires a
-   reviewed merge before one further exact A dispatch and reviewer approval;
-   do not use an arbitrary digest.
+   parses them, preserving the exact-SHA quality and OCI checks. The second
+   post-merge retry, [run `33494490972`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/33494490972),
+   proved that correction and reached exact-digest policy preparation, then
+   stopped before approval because checkout of historical SHA A lacked the
+   subsequently introduced policy script. The follow-up checkout correction
+   runs the immutable current workflow revision while A remains solely the
+   inspected provenance/image target. It requires a reviewed merge before one
+   further exact A dispatch and reviewer approval; do not use an arbitrary
+   digest.
 5. **Blocked by task 4 — prove restart persistence.** After the manual
    rehearsal is accepted, obtain separate approval for one normal provider-panel
    reboot. Verify SSH, firewall, Docker, Caddy volumes/TLS, release status, and

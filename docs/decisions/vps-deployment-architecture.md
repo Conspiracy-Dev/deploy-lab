@@ -455,3 +455,13 @@ temporary-file path to Python. It does not alter the API query, exact-SHA
 matching, quality policy, `ci.yml`, approval boundary, secrets, SSH, or VPS
 authority; it makes the already-approved historical fallback executable at the
 existing API page size.
+
+The subsequent retry, [run `33494490972`](https://github.com/Conspiracy-Dev/deploy-lab/actions/runs/33494490972),
+proved the temporary-file correction and all historical provenance checks, then
+stopped before approval because it checked out image A's pre-policy source tree
+and could not find `production-release-policy.sh`. The reusable workflow now
+checks out the immutable current workflow revision (`github.sha`) for its
+release-policy code; selected historical SHA remains the independently
+validated input to ancestry, quality, GHCR digest, and OCI-label checks. This
+does not make historical source code executable in the release job, weaken its
+provenance, or change `ci.yml`, approvals, secrets, SSH, or VPS authority.
