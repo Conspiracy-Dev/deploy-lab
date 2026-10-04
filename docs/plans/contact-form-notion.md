@@ -316,7 +316,7 @@ hints remain unrelated baseline diagnostics.
 
 ### Epic 4 — deployment readiness and owner review
 
-Status: Source ready for review — production acceptance pending private configuration and first migration
+Status: Private file provisioned; source review, first migration and live acceptance pending
 
 #### Confirmed delivery constraint
 
@@ -347,10 +347,12 @@ digest; existing publication and protected production approval remain in place.
      required for this epic.
 
 2. **E4.2 — Prepare the approved private runtime configuration**
-   - [ ] Provision `NUXT_NOTION_TOKEN` and `NUXT_NOTION_DATA_SOURCE_ID` only in
-         root-owned mode-0600 `/opt/deploy-lab/contact.env`, read for `api` only. Keep
-         `NUXT_PUBLIC_SITE_URL` equal to the final public origin in every build or
-         runtime location required by the selected deployment target.
+   - [x] Provision `NUXT_NOTION_TOKEN` and `NUXT_NOTION_DATA_SOURCE_ID` only in
+         root-owned mode-0600 `/opt/deploy-lab/contact.env`. A read-only check
+         confirms file safety and entry format; values remain private.
+   - [x] Prepare Compose to read the private file for `api` only and preserve
+         the canonical public URL. Live runtime isolation remains part of the
+         first migration acceptance.
    - [ ] Confirm the Notion integration has access only to the target contact
          data source and can insert content. Do not print, commit, paste into
          a browser, or add any secret to `.env.example`.
@@ -364,9 +366,9 @@ digest; existing publication and protected production approval remain in place.
          hybrid digest before using routine digest-only rollback.
 
 3. **E4.3 — Run one owner-approved, production live smoke**
-   - [ ] Before sending it, agree the exact clearly marked test values and whether
-         the resulting Notion page is retained. Do not invent a personal email or
-         delete a database entry automatically.
+   - [x] Agree the exact clearly marked test Name, Email, Message and retention.
+         The owner's email stays outside Git. Send only after the reviewed
+         production migration; do not delete the resulting entry automatically.
    - [ ] Submit once through the real Contact UI at the canonical origin. Verify
          one `201 { status: 'accepted' }` response, the success notice at 390 px
          and 1440 px, and exactly one Notion page with the approved Name, Email,
@@ -437,14 +439,62 @@ Read-only public verification on 2026-10-04 returned HTTP 200 for the homepage
 and HTTP 404 for `GET /api/contact`, consistent with the still-static live
 release. No production POST, VPS mutation, image publication or push occurred.
 
-Remaining Epic 4 work: provision the Insert Content integration and private
-VPS configuration; review and publish the source through the existing release
+Remaining Epic 4 work: confirm runtime authorization of the Insert Content
+integration; review and publish the source through the existing release
 gate; perform the first full-configuration migration; agree exact test values
 and retention; submit once and verify exactly one Notion row; then record the
 accepted production revision and close Epic 4. No next epic is authorized.
 
-Stop condition: stop production migration/live acceptance until private
-configuration, code review and exact live-test values/retention are resolved.
+Provisioning support — 2026-10-04: owner-requested workstation helpers now
+provide SSH connection, editor-based private configuration and value-redacted
+file checks through the existing maintenance identity and pinned host key.
+The alias/key stay outside Git. These helpers do not release or restart the
+site and have not been run against production; E4.2 provisioning and live
+Notion acceptance remain open.
+
+Helper verification — 2026-10-04: ShellCheck and Bash syntax checks passed.
+Mocked SSH tests proved pinned host-key options, production-host/account
+restrictions and exact remote-program quoting. An isolated, network-disabled
+Docker test proved file creation, preservation of existing values, rejection of
+unsafe permissions, symlinks/hard links, missing/duplicate/malformed entries
+and non-execution of configuration text, without secret output. Formatting,
+the static quality gate (64 tests; 15 existing ESLint warnings), secret scan,
+task-intake and diff checks passed. No VPS command or Notion request ran.
+
+Production preflight — 2026-10-04: after the owner's provisioning, the
+value-redacted read-only check confirmed the private file is root-owned,
+mode 0600, without symlink/hard-link redirection, and has both valid-format
+entries. The owner confirmed access is limited to the contact database; actual
+Notion authorization remains unproven until the site's own live request.
+The current static container is healthy, public page smoke passes and
+`GET /api/contact` returns 404. The installed read-only status command reports
+current digest `653f0283674afa6e840ddecd712b6b13b7e61c8e89ba8f8a326022e6135a0bfb`
+and previous digest `7212bd3f7bcd15e9983b348f62fa6bc0ad1aee60a11b869de2d55dbc64de15f7`.
+GitHub main remains
+`3ec752039f1d05b2ac01cb266bfcdd0135cb6bed`; no contact-form PR exists yet.
+The owner authorized branch publication and a PR for review, not merge or
+production release. The latest manual release's deploy job succeeded but its
+public-smoke job failed; the current independent public smoke passes. No
+workflow was rerun. Default Git SSH authentication currently fails; publication
+requires verified access or owner-approved HTTPS through the existing GitHub
+CLI identity. The CLI lacks `admin:public_key`, so it cannot verify private
+account key-management metadata; no scope expansion or SSH configuration
+change was made. Test Name `DeployLab Epic 4 smoke`, Message
+`Тест контактной формы, Epic 4` and retention are approved, but the exact test
+email has not been supplied. No live POST or production mutation occurred.
+
+Owner clarification — 2026-10-04: the exact test email was supplied privately;
+all live-test values and retention are now agreed. The owner approved temporary
+HTTPS Git transport using the existing authenticated CLI account `f7one`,
+without changing `origin`, global Git/SSH configuration or token scopes.
+Branch publication and PR creation are authorized; merge, first production
+migration and the live submission remain subject to review/release approval.
+The current static source revision matches remote main, so no rebase is needed.
+The repeated helper and static quality gates passed; no next epic was started.
+
+Stop condition: stop production migration/live acceptance until code review,
+a verified main image and explicit release approval are resolved. Private file
+provisioning and exact live-test values/retention are now confirmed.
 Stop the live smoke on any secret or personal-data exposure,
 unexpected Notion schema/access result, or a result other than one clearly
 identifiable page.

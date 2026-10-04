@@ -1,8 +1,10 @@
 # Contact-form release and operation
 
 Status: source implementation locally verified; production migration and live
-Notion acceptance pending. The owner confirmed on 2026-10-04 that the Notion
-token has not yet been provisioned.
+Notion acceptance pending. On 2026-10-04 the owner provisioned private
+configuration; a subsequent read-only VPS check verified root ownership,
+mode 0600 and both configuration entries without revealing values. Token
+authorization and live delivery are not yet proven.
 
 ## Runtime
 
@@ -44,6 +46,44 @@ also needs the canonical public URL. Do not print `docker compose config` with
 live secrets; use `config --quiet`. Local tests use synthetic values and do not
 send a request to Notion.
 
+### Owner configuration helpers
+
+From the repository root on the workstation, use the already approved local
+SSH alias for the maintenance account. The alias and key remain in the local
+SSH configuration, not in this repository. The commands prompt for the alias;
+an optional second argument supplies it explicitly.
+
+```bash
+bash scripts/deployment/contact-vps.sh connect
+bash scripts/deployment/contact-vps.sh setup
+bash scripts/deployment/contact-vps.sh check
+```
+
+Run each command on the workstation, not inside the VPS shell. After `connect`,
+use `exit` to return to the workstation before running `setup` or `check`.
+
+`connect` opens a terminal. `setup` runs a scoped root helper through the
+existing passwordless maintenance sudo path and opens the VPS `nano` editor.
+Enter only `NUXT_NOTION_TOKEN` and `NUXT_NOTION_DATA_SOURCE_ID` there; save with
+Ctrl+O, Enter and exit with Ctrl+X. A missing editor or unexpected permissions
+stops the operation without installing packages or widening privileges.
+Existing content is never automatically replaced. Do not screenshot the editor.
+
+`check` validates root ownership, mode 0600, absence of symlink/hard-link
+redirection and both configuration entries without displaying values or
+executing the file. It does not authenticate to Notion. All commands require
+the existing maintenance identity on the documented production host, strict
+host-key verification and SSH-Agent authentication; forwarding is disabled.
+They do not install scripts on the VPS, deploy images, restart containers or
+change SSH/sudo privileges. Run setup only for owner-approved provisioning;
+possession of the alias alone does not authorize production operations.
+
+Verify these helpers locally with `bash scripts/deployment/contact-vps.test.sh`
+and `bash scripts/deployment/contact-env.test.sh`. The latter requires the
+existing `deploy-lab-static:local` image and Docker; it uses a disposable,
+network-disabled container with synthetic configuration and no production
+volumes.
+
 `/contact-health` is accessible only within the API service. A 200 proves that
 the process can respond and private values are nonempty; it does not prove
 that the token is authorized. Missing values return 503 without disclosing
@@ -61,8 +101,8 @@ which value is absent. Caddy returns a static 404 for this path.
    forced-command/sudo boundary. Do not grant the deployer Docker access.
 4. Pull the verified digest. Check its `dev.deploy-lab.runtime=contact-v1`
    label, validate Caddy, and run Compose `config --quiet` with that digest
-   and `DOMAIN=noash.net`. Start both services with `up --detach --wait
---wait-timeout 120`. This initial operation precedes the ordinary wrapper
+   and `DOMAIN=noash.net`. Start both services with
+   `up --detach --wait --wait-timeout 120`. This initial operation precedes the ordinary wrapper
    because the wrapper deliberately rejects a static current release.
 5. Verify pages, TLS, SEO files, assets, 404 and `GET /api/contact` → 405. Check
    internal API readiness and run the agreed single live request below. If
@@ -88,8 +128,11 @@ rollback. Verify both the successful path and failed-candidate restoration.
 
 ## Live acceptance and diagnostics
 
-Agree exact test Name, Email and Message, and whether to retain the row. The
-owner requested a test email but has not yet supplied its address. Submit once
+The owner approved Name `DeployLab Epic 4 smoke`, Message
+`Тест контактной формы, Epic 4` and retaining the row. The exact test email
+address was supplied privately and must not be copied into repository
+documentation. All test values are agreed; production release approval is
+still required. Submit once
 through the real form. Confirm 201, the success notice at 390 and 1440 px, and
 exactly one Notion row with the agreed values, Status `New` and Submitted at.
 Do not create a substitute row with the Notion MCP: acceptance must prove the
