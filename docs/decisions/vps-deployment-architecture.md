@@ -1,11 +1,16 @@
-# ADR: VPS static deployment architecture
+# ADR: VPS deployment architecture
 
 - **Status:** Accepted
 - **Date:** 2026-08-13
-- **Last amended:** 2026-08-22
+- **Last amended:** 2026-10-04 — contact runtime source profile; live migration pending
 - **Decision owner:** Igor Shavlovsky
 
 ## Context
+
+The static production release described below is the historical v1 baseline.
+The approved 2026-10-04 contact-runtime amendment adds one internal Nitro
+service; see the amendment before applying current repository runtime files.
+This source change has not itself migrated the live VPS.
 
 DeployLab is a static Nuxt 4 site: `pnpm generate` creates the deployable
 `.output/public` directory and the application has no runtime database, API,
@@ -153,6 +158,36 @@ part of this release without a separate redirect decision.
   branch rule. A direct `main` push that passes all checks can also reach the
   production approval queue; the production reviewer remains the final human
   control for that accepted risk.
+
+## Contact runtime amendment — 2026-10-04
+
+For contact-form Epic 4, the owner approved a static Caddy service plus one
+internal Node/Nitro service. This supersedes decisions 1–2's exclusion of a
+runtime API for the new source profile. Public pages, assets, SEO files, TLS
+and the real 404 continue to be served by Caddy. Only `/api/contact` is
+forwarded to Nitro. The API has no public port, receives sanitized forwarded
+headers, and runs as the `node` user with a read-only filesystem.
+
+Both Compose services use the same immutable GHCR digest. The image is based
+on pinned Node 24.16.0 Debian slim and includes the pinned Caddy binary plus
+Nuxt's server and public output. Caddy's default command is preserved, so the
+existing publication workflow does not require a new package or tag. The API
+service overrides the command. Existing human production approval is retained.
+
+Private Notion configuration is supplied only to `api` from root-owned mode-0600
+`/opt/deploy-lab/contact.env`. The API's internal `/contact-health` route checks
+configuration presence without an external request. Rollout waits for both
+Compose health checks and checks that public `GET /api/contact` returns 405;
+these checks do not create a Notion page or prove credential validity.
+
+The first transition is a reviewed owner-maintenance operation, not an
+ordinary digest-only deployment. Preserve the complete known-good static
+configuration and image-state bundle before replacing the runtime files.
+The wrapper refuses a current static image and incompatible candidate images.
+After live acceptance, compatible hybrid releases update and roll back both
+services together. Downgrading to static requires restoring that full bundle.
+The initial live transition and Notion acceptance remain pending; the contact
+runbook and roadmap hold the actionable steps and current evidence.
 
 ## Implementation record
 

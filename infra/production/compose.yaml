@@ -1,4 +1,25 @@
 services:
+  api:
+    image: ${IMAGE_REF:?Set IMAGE_REF to an immutable GHCR digest}
+    command: ['node', '/app/.output/server/index.mjs']
+    user: node
+    env_file:
+      - ${CONTACT_ENV_FILE:-/opt/deploy-lab/contact.env}
+    environment:
+      NUXT_PUBLIC_SITE_URL: https://${DOMAIN:?Set DOMAIN to the canonical production domain}
+      NUXT_TRUST_PROXY: 'true'
+      NITRO_HOST: '0.0.0.0'
+      NITRO_PORT: '3000'
+    healthcheck:
+      test: ['CMD', 'curl', '--fail', '--silent', 'http://127.0.0.1:3000/contact-health']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /tmp
   site:
     image: ${IMAGE_REF:?Set IMAGE_REF to an immutable GHCR digest}
     environment:

@@ -1,8 +1,8 @@
 # Contact form → Notion implementation plan
 
-Status: Epics 0–3 complete; Epic 4 pending
+Status: Epics 0–3 complete; Epic 4 source ready for review, live delivery pending
 
-Last updated: 2026-08-13
+Last updated: 2026-10-04
 
 ## Goal
 
@@ -20,12 +20,20 @@ layout and use the supplied success design after a successful submission.
 
 ## Constraints
 
-- Production is a single Nuxt/Nitro Node.js process behind Nginx/Caddy; static
-  `nuxt generate` output alone cannot serve the API.
-- Notion is the only delivery destination. The target database will be created
-  under `Лендинг DeployLab` during Epic 1.
-- The current form is visual-only. Documentation must not describe a functional
-  API until its implementation and verification are complete.
+- Current production is the live static Caddy release at `https://noash.net`.
+  Its image runs `nuxt generate`, copies only `.output/public` into Caddy and
+  cannot serve the source branch's `/api/contact` route or private Notion
+  configuration.
+- Functional delivery requires an explicitly approved Nuxt/Nitro Node.js
+  runtime behind a trusted proxy; static `nuxt generate` output alone cannot
+  serve the API.
+- Notion is the only delivery destination. Epic 1 created the target database
+  under `Лендинг DeployLab`; its five-property schema was reconfirmed read-only
+  during Epic 4.
+- This branch contains the implemented and tested form, but production remains
+  visual-only until the runtime migration and live verification are complete.
+  Public documentation must not describe a functional production API before
+  that proof exists.
 - Use existing Nuxt, Vue, Zod, `$fetch`, `nuxt-security` and UI primitives. No
   new runtime package is justified for this scope.
 - Form inputs are Name 2–100, Email valid and ≤200, Message 10–2000 and
@@ -308,17 +316,144 @@ hints remain unrelated baseline diagnostics.
 
 ### Epic 4 — deployment readiness and owner review
 
-Status: Pending
+Status: Source ready for review — production acceptance pending private configuration and first migration
 
-1. Update current-behaviour documentation only after functional code exists:
-   runtime deployment command, form capability and environment-variable setup.
-2. Run one owner-approved live smoke that creates a clearly identified test row
-   in the target Notion database.
-3. Run the full verification chain and hand over browser evidence and the diff
-   for review. Do not stage, commit, push or deploy.
+#### Confirmed delivery constraint
 
-Acceptance: code, docs and live configuration agree; tests are green and the
-owner can review the exact change before delivery.
+The refreshed `origin/main` confirms that production is live at
+`https://noash.net` as one static Caddy container. Its Dockerfile runs `nuxt
+generate` and copies only `.output/public`; the production Compose and Caddy
+configuration have no Node service or private runtime environment. The accepted
+contact-form ADR instead requires a running Nuxt/Nitro Node.js process behind a
+trusted proxy. A static release cannot serve `POST /api/contact` or keep the
+Notion token private. The owner resolved that conflict on 2026-10-04 by
+approving static Caddy page delivery plus one internal Nitro process for
+`/api/contact`. This branch owns the scoped Docker, Compose, Caddy, smoke,
+wrapper and documentation changes. Both services use one immutable image
+digest; existing publication and protected production approval remain in place.
+
+#### Execution plan
+
+1. **E4.1 — Confirm the production and release contract**
+   - [x] Approve static Caddy + internal Nitro and preserve `https://noash.net`
+         as the canonical public origin.
+   - [x] Amend the contact and VPS ADRs in this worktree, retaining the
+         historical static release records.
+   - [x] Prepare Caddy to overwrite `X-Forwarded-For` with its direct peer
+         address; Nitro has no published host port. Verify forged-header rate
+         limiting before accepting `NUXT_TRUST_PROXY=true` in this topology.
+   - GitHub SSH access is confirmed for the current account and `origin` points
+     to `git@github.com:Conspiracy-Dev/deploy-lab.git`; no remote change is
+     required for this epic.
+
+2. **E4.2 — Prepare the approved private runtime configuration**
+   - [ ] Provision `NUXT_NOTION_TOKEN` and `NUXT_NOTION_DATA_SOURCE_ID` only in
+         root-owned mode-0600 `/opt/deploy-lab/contact.env`, read for `api` only. Keep
+         `NUXT_PUBLIC_SITE_URL` equal to the final public origin in every build or
+         runtime location required by the selected deployment target.
+   - [ ] Confirm the Notion integration has access only to the target contact
+         data source and can insert content. Do not print, commit, paste into
+         a browser, or add any secret to `.env.example`.
+   - [x] Implement one image with Caddy, Node and Nuxt server/public output;
+         build it with `pnpm build` and explicit page prerendering.
+   - [x] Prepare Compose, exact-path Caddy routing, internal readiness,
+         configuration isolation and compatible-release checks. Add container
+         and browser smoke evidence before the first migration.
+   - [ ] After code review, perform the first owner-maintenance migration with
+         a complete static configuration/state backup. Establish the accepted
+         hybrid digest before using routine digest-only rollback.
+
+3. **E4.3 — Run one owner-approved, production live smoke**
+   - [ ] Before sending it, agree the exact clearly marked test values and whether
+         the resulting Notion page is retained. Do not invent a personal email or
+         delete a database entry automatically.
+   - [ ] Submit once through the real Contact UI at the canonical origin. Verify
+         one `201 { status: 'accepted' }` response, the success notice at 390 px
+         and 1440 px, and exactly one Notion page with the approved Name, Email,
+         Message, Status `New` and Submitted-at fields.
+   - Inspect application/proxy diagnostics only for safe request ID, duration
+     and error class. Stop if submitted text, email, token, IP, Notion response
+     body or forwarded-header spoofing appears in logs or browser output.
+
+4. **E4.4 — Align current-behaviour documentation after the live proof**
+   - [x] Update README, contact/VPS ADRs and runbook to distinguish source
+         behavior from the last accepted static production release. Document
+         private configuration and first-migration rollback.
+   - [ ] After live proof, record the accepted revision and actual delivery
+         evidence; do not claim functional production delivery prematurely.
+   - Preserve the historical Figma/homepage delivery record rather than
+     rewriting it as if it had always included form delivery. Link readers to
+     this ADR and roadmap for the superseding behaviour.
+   - Update the VPS ADR/roadmap only in the deployment workstream approved in
+     E4.1. Record actual commands, owner-managed secret locations and deployed
+     revision without recording secret values.
+
+5. **E4.5 — Final regression gate and owner handover**
+   - [x] On Node 24/pnpm 11, run intake and formatting checks,
+         `pnpm quality:static`, dependency/dead-code checks, `pnpm build`, Playwright,
+         `pnpm generate` and Lighthouse as homepage regression evidence,
+         `pnpm secrets:check`, `git diff --check`, and `git status --short`.
+   - Add a production-server smoke to the evidence; static generation alone
+     cannot verify the API. Re-run the real browser check after release rather
+     than pointing tests at Notion in CI.
+   - [x] Prepare the scoped diff, checks and remaining live tasks for handover. The owner
+         authorized a local Epic 4 commit; publication remains subject to code
+         review and the existing production approval. Do not proceed to another epic.
+
+Progress — 2026-10-04: Docker and Compose are available. Notion MCP confirmed
+the expected five-property target schema read-only. The owner confirmed that
+the production token is not yet provisioned and requested a test email without
+specifying its address or retention policy. Local verification uses synthetic
+configuration on an isolated Docker network and never creates a Notion page.
+
+Source delivery evidence — 2026-10-04: on Node 24.16.0/pnpm 11.5.2, the
+quality gate passed with all 64 Vitest tests and the existing 15 ESLint
+warnings. Dependency/cycle and dead-code checks passed; intake, full
+formatting, secret scan and diff checks passed. `pnpm build` retained Nitro;
+`pnpm generate` passed link inspection with no errors or warnings. The full
+Playwright suite passed 29 scenarios with 5 existing intentional skips; dev
+hydration/LCP hints remain baseline diagnostics. Lighthouse's current median
+homepage scores are performance 1.00, accessibility 0.96, best practices 0.96
+and SEO 1.00; Privacy Policy scores are 0.98/1.00/1.00/1.00. The homepage's
+DevTools CSP issue accounts for its non-perfect best-practices score; the
+existing assertion thresholds pass.
+
+Both linux/arm64 and linux/amd64 Docker builds passed. Image smokes verified
+pages, SEO, static assets/cache headers, 404, HTTPS healthcheck behavior,
+internal readiness, public-only contact routing, JSON/Origin rejection,
+honeypot acceptance, spoof-resistant rate limiting and safe missing-config
+failure, plus rejection of bodies over 8 KB. With Nitro stopped, pages stayed
+available. The built-image browser
+smoke at 390/1440 px proved field validation, real API 503/value retention,
+HTTP-mocked success and the reset action without overflow. Caddy/API log
+checks found no test email, message, forwarded address or synthetic token.
+The full Compose build/start/restart smoke passed with both services healthy.
+Production Compose isolation and the production Caddy configuration validated.
+Wrapper, status, candidate/release policy and public-smoke tests passed;
+`actionlint` passed. These are local acceptance results, not a live Notion
+delivery or a production migration.
+
+Read-only public verification on 2026-10-04 returned HTTP 200 for the homepage
+and HTTP 404 for `GET /api/contact`, consistent with the still-static live
+release. No production POST, VPS mutation, image publication or push occurred.
+
+Remaining Epic 4 work: provision the Insert Content integration and private
+VPS configuration; review and publish the source through the existing release
+gate; perform the first full-configuration migration; agree exact test values
+and retention; submit once and verify exactly one Notion row; then record the
+accepted production revision and close Epic 4. No next epic is authorized.
+
+Stop condition: stop production migration/live acceptance until private
+configuration, code review and exact live-test values/retention are resolved.
+Stop the live smoke on any secret or personal-data exposure,
+unexpected Notion schema/access result, or a result other than one clearly
+identifiable page.
+
+Acceptance: the approved Node/Nitro deployment is reachable at the canonical
+origin; private configuration and proxy trust match the API contract; one
+owner-approved request creates exactly one approved Notion page; documentation
+describes only delivered behaviour; and the owner has reviewed the scoped diff
+and evidence before any release-state change.
 
 ## Verification
 

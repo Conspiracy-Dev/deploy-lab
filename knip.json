@@ -2,6 +2,7 @@
   "entry": [
     "content.config.ts",
     "lighthouserc.cjs",
+    "scripts/deployment/smoke-contact-browser.mjs",
     "scripts/contour/agent-command-guard.mjs",
     "scripts/contour/agent-commit-gate.mjs",
     "scripts/contour/agent-stop-guard.mjs",

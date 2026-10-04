@@ -9,8 +9,9 @@
 DeployLab is the frontend foundation for a public company site. It favours
 server-rendered or prerendered content, explicit architecture boundaries, and
 small browser-only enhancements. The current route is the implemented Figma
-homepage; its contact form is deliberately visual-only until a separate delivery
-task is approved.
+homepage. The contact-form branch implements protected delivery to Notion;
+live delivery remains pending private configuration and the reviewed VPS
+runtime migration. See the [contact runbook](docs/runbooks/contact-form.md).
 
 | ✦ Product constraint | How the project responds                                                                     |
 | -------------------- | -------------------------------------------------------------------------------------------- |
@@ -49,8 +50,8 @@ origin is only a local and CI fallback.
 ## Verify the static container
 
 Docker Desktop is required for the container check. The smoke test builds the
-static image, exposes it only on a temporary loopback port, verifies generated
-routes, SEO files, headers, assets, a real 404, and restart recovery, then
+release image, exposes it only on a temporary loopback port, verifies generated
+routes, SEO files, headers, assets, a real 404, the protected contact API and restart recovery, then
 removes its test container and volumes.
 
 ```text
@@ -90,8 +91,11 @@ browser evidence; static checks alone do not prove visual behaviour. See
 - `content/` owns validated collection data. New fields begin in the collection
   schema.
 
-The deployment profile is static. Do not add SSR/hybrid route rules without
-updating the verification profile and documenting the reason.
+The source deployment profile serves prerendered pages with Caddy and routes
+`/api/contact` to one internal Nitro process. Both services use one release
+digest; private Notion configuration belongs only to Nitro. The live VPS remains
+on its previously verified static profile until the owner reviews and performs
+the migration described in the contact runbook.
 
 ## AI-assisted work
 

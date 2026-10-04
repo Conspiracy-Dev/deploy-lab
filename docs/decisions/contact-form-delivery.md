@@ -2,12 +2,13 @@
 
 - **Status:** Accepted — Epics 0–3 implemented
 - **Date:** 2026-08-13
+- **Last amended:** 2026-10-04 — Epic 4 source implementation; live delivery pending
 - **Decision owner:** Nikita Zinevich
 - **Design source:** [Contact desktop / 48:1595](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=48-1595&p=f&m=dev), [Contact mobile / 144:1236](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=144-1236&p=f&m=dev), [success / 153:75](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=153-75&p=f&m=dev)
 
 ## Context
 
-The homepage contact form is currently an intentionally visual-only client-side
+At the start of this task, the homepage contact form was an intentionally visual-only client-side
 composition. It collects name, email, message and Privacy Policy consent, but
 has no submit handler, validation, server route or delivery integration. The
 site was previously documented for static generation, which cannot execute a
@@ -15,8 +16,8 @@ server endpoint or protect a Notion credential.
 
 The owner approved Notion as the sole delivery destination. Email notifications,
 auto-replies, CRM workflow, CAPTCHA and analytics are not part of this change.
-Production will run a single Nuxt/Nitro Node.js process behind a trusted
-Nginx/Caddy reverse proxy.
+The source now implements the form and API. Production delivery requires the
+Epic 4 runtime profile described below and a separately reviewed live release.
 
 ## Decision
 
@@ -72,11 +73,50 @@ Nginx/Caddy reverse proxy.
     return `403`, `413`, `415`, `429` and `503` respectively. The route never
     exposes a Notion status, request ID, IP address, credential or request data.
 
+## Runtime amendment — 2026-10-04
+
+The owner approved keeping Caddy's static page delivery and adding one internal
+Node/Nitro service on the existing VPS. Caddy proxies only the exact
+`/api/contact` path, preserving its prefix; static rewrites stay in the other
+handler. Caddy overwrites `X-Forwarded-For` with the direct peer address before
+Nitro uses it. The API has no published host port and runs as the `node` user.
+The default runtime log removes Caddy's request object so proxy errors do not
+persist client IPs, request URLs or headers. Access logging remains disabled.
+
+One release image contains Caddy, prerendered pages and the Nitro output. Its
+default command runs Caddy; the `api` Compose service overrides the command to
+`node /app/.output/server/index.mjs`. Both services use the same immutable
+digest, retaining the existing GHCR publication and approval workflow. This
+costs some image space but avoids another registry package, separate release
+identifiers or a process supervisor. No runtime dependency is added.
+
+`pnpm build` retains the server while prerendering the public pages and SEO
+routes. `/contact-health` is an internal readiness route: it returns only a
+status, does not call Notion and checks configuration presence, not credential
+validity. Caddy does not proxy it. Missing configuration keeps the API
+unhealthy; the static pages remain available when the API is unavailable.
+
+Production credentials belong in root-owned mode-0600
+`/opt/deploy-lab/contact.env`, read by Docker Compose only for `api`; they are
+neither build arguments nor Caddy environment. The owner must provision the
+Notion integration and explicitly share the target database with it.
+
+The initial transition needs owner maintenance with backups of the static
+Compose, Caddy, wrapper and image-state files. Routine digest-only releases
+reject a static current/candidate image through the `contact-v1` runtime label.
+After the first hybrid release is accepted, updates and rollback use one
+compatible digest for both services and wait for both health checks. A return
+to the old static release restores its complete configuration bundle; merely
+replacing the digest is not a valid downgrade.
+
+Implementation and local acceptance do not establish production acceptance.
+The Notion token is not yet provisioned as of this amendment; the release and
+one approved live request remain open in the roadmap.
+
 ## Consequences
 
-- Production moves from static-only output to a Node/Nitro deployment. The
-  homepage may remain prerendered for performance and SEO, but its form needs a
-  running server at submit time.
+- The release gains a Node/Nitro service for form delivery; pages remain
+  prerendered and served by Caddy for performance and SEO.
 - The current visual-only Contact tests must be replaced with route, component
   and Playwright coverage for validation, loading, success, failure and retry.
 - The in-memory rate limit does not coordinate multiple Node processes. A future

@@ -88,6 +88,9 @@ export default defineNuxtConfig({
   },
   nitro: {
     routeRules: {
+      '/contact-health': {
+        security: { rateLimiter: false },
+      },
       '/api/contact': {
         security: {
           allowedMethodsRestricter: {
@@ -101,7 +104,9 @@ export default defineNuxtConfig({
       },
     },
     prerender: {
-      routes: ['/robots.txt', '/sitemap.xml'],
+      crawlLinks: true,
+      routes: ['/', '/privacy-policy', '/robots.txt', '/sitemap.xml', '/404.html'],
+      ignore: ['/api/contact', '/contact-health'],
     },
   },
 })

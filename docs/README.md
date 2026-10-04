@@ -13,6 +13,8 @@
   static site.
 - [Contact form → Notion plan](plans/contact-form-notion.md) — approved delivery
   contract, epic roadmap and verification gates for the homepage Contact form.
+- [Contact-form runbook](runbooks/contact-form.md) — private configuration,
+  first runtime migration, compatible rollback and live acceptance.
 - [AI-first onboarding](onboarding/README.md) — clean-clone setup, role context
   and prompts for programmers working through AI agents.
 - [AI contour decisions](decisions/ai-contour.md) — durable reasons behind the
@@ -24,6 +26,6 @@
 - [Privacy Policy architecture decision](decisions/privacy-policy-architecture.md) —
   legal-content ownership, indexability and the shared site-shell boundary.
 - [VPS deployment architecture decision](decisions/vps-deployment-architecture.md) —
-  static runtime, delivery, VPS access, TLS, and rollback boundaries.
+  static baseline, contact runtime amendment, VPS access, TLS, and rollback boundaries.
 - [Contact-form delivery decision](decisions/contact-form-delivery.md) — the
   approved Node/Nitro, Notion, privacy and anti-abuse contract.

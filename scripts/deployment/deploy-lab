@@ -42,7 +42,9 @@ verify_running_site() {
   local attempt
 
   for attempt in {1..18}; do
-    if curl --fail --silent --show-error --resolve "$domain:443:127.0.0.1" "https://$domain/" >/dev/null; then
+    if curl --fail --silent --show-error --resolve "$domain:443:127.0.0.1" "https://$domain/" >/dev/null \
+      && [[ $(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+        --resolve "$domain:443:127.0.0.1" "https://$domain/api/contact") == '405' ]]; then
       return 0
     fi
     sleep 5
@@ -57,6 +59,13 @@ verify_public_site() {
   for path in / /privacy-policy /robots.txt /sitemap.xml; do
     curl --fail --silent --show-error "https://$domain$path" >/dev/null
   done
+
+  [[ $(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+    "https://$domain/api/contact") == '405' ]]
+}
+
+verify_runtime_image() {
+  [[ $(docker image inspect "$1" --format '{{ index .Config.Labels "dev.deploy-lab.runtime" }}') == 'contact-v1' ]]
 }
 
 restore_previous_release() {
@@ -67,16 +76,27 @@ restore_previous_release() {
     return 1
   fi
 
+  local previous_image
+  previous_image="$(sed -n 's/^IMAGE_REF=//p' "$previous_env_file")"
+  if ! verify_runtime_image "$previous_image"; then
+    echo 'The previous image is not compatible with the contact runtime.' >&2
+    return 1
+  fi
+
   echo 'Restoring the previous image digest.' >&2
   install -m 0640 "$previous_env_file" "$current_env_file"
   compose "$current_env_file" pull site \
-    && compose "$current_env_file" up --detach --remove-orphans \
+    && compose "$current_env_file" up --detach --remove-orphans --wait --wait-timeout 120 \
     && verify_running_site \
     && verify_public_site
 }
 
 if [[ -f $current_env_file ]]; then
-  install -m 0640 "$current_env_file" "$previous_env_file"
+  current_image="$(sed -n 's/^IMAGE_REF=//p' "$current_env_file")"
+  if ! verify_runtime_image "$current_image"; then
+    echo 'The first contact-runtime migration requires owner maintenance; the current static release was not changed.' >&2
+    exit 78
+  fi
 fi
 
 if ! compose "$candidate_env_file" config --quiet; then
@@ -85,6 +105,7 @@ if ! compose "$candidate_env_file" config --quiet; then
 fi
 
 if ! compose "$candidate_env_file" pull site \
+  || ! verify_runtime_image "$image_ref" \
   || ! docker run --rm --network none -e "DOMAIN=$domain" \
     -v /opt/deploy-lab/Caddyfile:/etc/caddy/Caddyfile:ro \
     "$image_ref" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile; then
@@ -92,9 +113,13 @@ if ! compose "$candidate_env_file" pull site \
   exit 70
 fi
 
+if [[ -f $current_env_file ]]; then
+  install -m 0640 "$current_env_file" "$previous_env_file"
+fi
+
 install -m 0640 "$candidate_env_file" "$current_env_file"
 
-if compose "$current_env_file" up --detach --remove-orphans \
+if compose "$current_env_file" up --detach --remove-orphans --wait --wait-timeout 120 \
   && verify_running_site \
   && verify_public_site; then
   echo "Release is healthy: $image_ref"
