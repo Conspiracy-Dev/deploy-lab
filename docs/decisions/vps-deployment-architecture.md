@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-13
-- **Last amended:** 2026-10-04 — contact runtime source profile; live migration pending
+- **Last amended:** 2026-10-04 — contact rollout tested and restored; corrected acceptance pending
 - **Decision owner:** Igor Shavlovsky
 
 ## Context
@@ -186,8 +186,16 @@ configuration and image-state bundle before replacing the runtime files.
 The wrapper refuses a current static image and incompatible candidate images.
 After live acceptance, compatible hybrid releases update and roll back both
 services together. Downgrading to static requires restoring that full bundle.
-The initial live transition and Notion acceptance remain pending; the contact
-runbook and roadmap hold the actionable steps and current evidence.
+The first live transition ran on 2026-10-04 using reviewed main revision
+`adeaa7d84627d4229aff9ed45454f26d31589b8e` and the protected approved image.
+Both services were healthy, private runtime isolation passed and one real
+request reached Notion. The success UI still displayed the empty form, so
+final acceptance failed. The complete static configuration/state backup at
+`/var/backups/deploy-lab/contact-runtime.EMilP6` was restored; only the introduced
+API container was removed. Caddy volumes and private configuration were
+preserved. No compatible hybrid rollback baseline is accepted yet. The
+contact roadmap tracks review of the minimal UI correction and repeat rollout;
+the original deployment epics below remain historical evidence.
 
 ## Implementation record
 

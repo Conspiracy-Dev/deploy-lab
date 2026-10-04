@@ -2,7 +2,7 @@
 
 - **Status:** Accepted — Epics 0–3 implemented
 - **Date:** 2026-08-13
-- **Last amended:** 2026-10-04 — Epic 4 source implementation; live delivery pending
+- **Last amended:** 2026-10-04 — live insertion proven; UI correction and repeat rollout pending
 - **Decision owner:** Nikita Zinevich
 - **Design source:** [Contact desktop / 48:1595](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=48-1595&p=f&m=dev), [Contact mobile / 144:1236](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=144-1236&p=f&m=dev), [success / 153:75](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=153-75&p=f&m=dev)
 
@@ -16,8 +16,10 @@ server endpoint or protect a Notion credential.
 
 The owner approved Notion as the sole delivery destination. Email notifications,
 auto-replies, CRM workflow, CAPTCHA and analytics are not part of this change.
-The source now implements the form and API. Production delivery requires the
-Epic 4 runtime profile described below and a separately reviewed live release.
+The source now implements the form and API. One live request proved Notion
+delivery during Epic 4; the runtime was then restored to static configuration
+because the success UI failed acceptance. The correction needs a reviewed
+release and repeat rollout before final production acceptance.
 
 ## Decision
 
@@ -109,9 +111,31 @@ compatible digest for both services and wait for both health checks. A return
 to the old static release restores its complete configuration bundle; merely
 replacing the digest is not a valid downgrade.
 
-Implementation and local acceptance do not establish production acceptance.
-The Notion token is not yet provisioned as of this amendment; the release and
-one approved live request remain open in the roadmap.
+At the time of the source amendment, implementation and local acceptance did
+not establish production acceptance: the token had not been provisioned and
+the release and approved live request were still open. The record below
+supersedes that provisioning and delivery status.
+
+## Production acceptance record — 2026-10-04
+
+Reviewed PR #23 shipped revision `adeaa7d84627d4229aff9ed45454f26d31589b8e`
+through the existing quality/candidate/protected release chain. After a complete
+configuration/state backup, the approved hybrid profile ran successfully on
+the VPS. Private environment isolation, health, public page smoke and method
+restriction passed. Exactly one owner-approved Contact submission returned
+201 and created one matching Notion row with Status `New` and Submitted at.
+The row is retained; no test email, data source identifier or token is recorded
+here.
+
+The production browser revealed that the success notice and empty form were
+both displayed, contrary to decision 8. The complete static configuration/state
+bundle was restored under the first-migration runbook; only the new API
+container was removed. The private file and Caddy volumes remain intact.
+Final Epic 4 acceptance and a compatible hybrid baseline are still pending.
+The local correction restores the approved mutually exclusive form/success
+states, not a new product or architecture decision. Its reviewed release and
+repeat migration must precede closure; another live POST needs new owner
+authorization. See the roadmap for evidence and remaining tasks.
 
 ## Consequences
 

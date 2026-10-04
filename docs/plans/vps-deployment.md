@@ -8,9 +8,13 @@ Contact Epic 4 amendment: the owner approved a source profile with static Caddy
 pages and an internal Nitro API. Its implementation and verification are tracked
 in [the contact roadmap](contact-form-notion.md), with the initial migration and
 complete configuration rollback in [the contact runbook](../runbooks/contact-form.md).
-The live migration and Notion token provisioning remain pending. The static
-epics below retain their original acceptance evidence; the current repository
-Compose/Caddy files must not be installed as an ordinary static digest update.
+Private configuration was provisioned and one live request reached Notion
+during the first hybrid rollout on 2026-10-04. A success-state UI defect blocked
+final acceptance, so the complete static configuration/state bundle was
+restored. The contact roadmap tracks the correction review, repeat migration
+and compatible hybrid baseline. The static epics below retain their original
+acceptance evidence; repository Compose/Caddy files must not be installed as
+an ordinary static digest update.
 
 ## Goal
 

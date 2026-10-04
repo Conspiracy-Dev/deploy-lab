@@ -37,6 +37,7 @@ try {
     )
     await form.locator('button[type="submit"]').click()
     await page.locator('#contact [role="status"]').waitFor()
+    assert.equal(await form.count(), 0)
     await page.getByRole('button', { name: 'Start a new request' }).click()
     assert.equal(await form.locator('input[name="email"]').inputValue(), '')
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))

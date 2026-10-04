@@ -9,9 +9,10 @@
 DeployLab is the frontend foundation for a public company site. It favours
 server-rendered or prerendered content, explicit architecture boundaries, and
 small browser-only enhancements. The current route is the implemented Figma
-homepage. The contact-form branch implements protected delivery to Notion;
-live delivery remains pending private configuration and the reviewed VPS
-runtime migration. See the [contact runbook](docs/runbooks/contact-form.md).
+homepage. Protected contact delivery to Notion succeeded in the first live
+test. Production was restored to its static configuration after a success-state
+UI defect; the correction and repeat rollout remain pending review.
+See the [contact runbook](docs/runbooks/contact-form.md).
 
 | ✦ Product constraint | How the project responds                                                                     |
 | -------------------- | -------------------------------------------------------------------------------------------- |
@@ -94,8 +95,9 @@ browser evidence; static checks alone do not prove visual behaviour. See
 The source deployment profile serves prerendered pages with Caddy and routes
 `/api/contact` to one internal Nitro process. Both services use one release
 digest; private Notion configuration belongs only to Nitro. The live VPS remains
-on its previously verified static profile until the owner reviews and performs
-the migration described in the contact runbook.
+on its restored static profile pending review of the success-state correction
+and repeat migration described in the contact runbook. No API service is
+currently active on the VPS.
 
 ## AI-assisted work
 

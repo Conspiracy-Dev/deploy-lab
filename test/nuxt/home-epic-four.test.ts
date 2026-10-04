@@ -84,6 +84,7 @@ describe('Epic 4 home sections', () => {
     await flushPromises()
 
     expect(wrapper.get('[role="status"]').text()).toContain('Submitted successfully!')
+    expect(wrapper.find('form').exists()).toBe(false)
     await wrapper.get('button[type="button"]').trigger('click')
     await flushPromises()
     expect(wrapper.get('form')).toBeDefined()

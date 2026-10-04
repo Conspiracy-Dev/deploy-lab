@@ -1,10 +1,10 @@
 # Contact-form release and operation
 
-Status: source implementation locally verified; production migration and live
-Notion acceptance pending. On 2026-10-04 the owner provisioned private
-configuration; a subsequent read-only VPS check verified root ownership,
-mode 0600 and both configuration entries without revealing values. Token
-authorization and live delivery are not yet proven.
+Status: one real Notion delivery verified on 2026-10-04; final acceptance
+blocked by a success-state UI defect. The complete static runtime was restored
+after the first migration. Private configuration remains root-owned, mode 0600,
+and retained; no API service is currently active. The correction requires
+review and another protected release before repeat migration.
 
 ## Runtime
 
@@ -131,8 +131,9 @@ rollback. Verify both the successful path and failed-candidate restoration.
 The owner approved Name `DeployLab Epic 4 smoke`, Message
 `Тест контактной формы, Epic 4` and retaining the row. The exact test email
 address was supplied privately and must not be copied into repository
-documentation. All test values are agreed; production release approval is
-still required. Submit once
+documentation. The single authorized live request has already been sent and
+retained. Do not repeat it without new owner authorization. For any separately
+approved live acceptance, submit once
 through the real form. Confirm 201, the success notice at 390 and 1440 px, and
 exactly one Notion row with the agreed values, Status `New` and Submitted at.
 Do not create a substitute row with the Notion MCP: acceptance must prove the
