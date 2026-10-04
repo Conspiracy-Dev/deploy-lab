@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('renders the semantic home shell and its local hero visual', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/', { waitUntil: 'networkidle' })
 
   await expect(page).toHaveTitle(/DeployLab/)
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Full-cycle web')
@@ -19,7 +19,7 @@ test('keeps the desktop header as a distinct Figma-height band before Hero', asy
   )
 
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/')
+  await page.goto('/', { waitUntil: 'networkidle' })
 
   expect(
     await page.evaluate(() => {
@@ -39,7 +39,7 @@ test('keeps the desktop header as a distinct Figma-height band before Hero', asy
 test('renders the implemented Philosophy and Services landmarks with local Figma visuals', async ({
   page,
 }) => {
-  await page.goto('/')
+  await page.goto('/', { waitUntil: 'networkidle' })
 
   const philosophy = page.locator('#philosophy')
   const services = page.locator('#services')
@@ -78,7 +78,7 @@ test('renders the implemented Philosophy and Services landmarks with local Figma
 
 test('keeps the static local visual for reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/')
+  await page.goto('/', { waitUntil: 'networkidle' })
 
   await expect(page.locator('.home-hero-visual img')).toBeVisible()
   await expect(page.locator('canvas')).toHaveCount(0)
@@ -87,7 +87,7 @@ test('keeps the static local visual for reduced motion', async ({ page }) => {
 test('renders Projects and Process landmarks with manual project collection semantics', async ({
   page,
 }) => {
-  await page.goto('/')
+  await page.goto('/', { waitUntil: 'networkidle' })
 
   const projects = page.locator('#projects')
   const process = page.locator('#process')
@@ -130,8 +130,19 @@ test('renders Projects and Process landmarks with manual project collection sema
     .toBe(true)
 })
 
-test('renders Feedback and a visual-only Contact boundary', async ({ page }) => {
-  await page.goto('/')
+test('submits a Contact request with keyboard and shows an accessible success state', async ({
+  page,
+}) => {
+  let submittedRequest: unknown
+  await page.route('**/api/contact', async (route) => {
+    submittedRequest = route.request().postDataJSON()
+    await route.fulfill({
+      body: JSON.stringify({ status: 'accepted' }),
+      contentType: 'application/json',
+      status: 201,
+    })
+  })
+  await page.goto('/', { waitUntil: 'networkidle' })
 
   const feedback = page.locator('#feedback')
   const contact = page.locator('#contact')
@@ -145,20 +156,91 @@ test('renders Feedback and a visual-only Contact boundary', async ({ page }) => 
   await expect(contact.getByRole('heading', { level: 2 })).toHaveText('Start a Project')
   await contact.getByLabel('Name').fill('Ada Lovelace')
   await contact.getByLabel('Email').fill('ada@example.com')
-  await contact.getByLabel('Message').fill('A visual-only request.')
+  await contact.getByLabel('Message').fill('A request submitted with the keyboard.')
   await contact.getByLabel(/I agree to the Privacy Policy/).check()
   await expect(contact.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute(
     'href',
     '/privacy-policy',
   )
 
+  await contact.getByLabel('Email').press('Enter')
+
+  await expect(contact.getByRole('status')).toContainText('Submitted successfully!')
+  await expect(contact.getByRole('button', { name: 'Start a new request' })).toBeVisible()
+  expect(submittedRequest).toEqual({
+    consent: true,
+    email: 'ada@example.com',
+    message: 'A request submitted with the keyboard.',
+    name: 'Ada Lovelace',
+    website: '',
+  })
+})
+
+test('rejects invalid Contact input locally and focuses the first field', async ({ page }) => {
+  let requestCount = 0
+  await page.route('**/api/contact', async (route) => {
+    requestCount += 1
+    await route.fulfill({ status: 500 })
+  })
+  await page.goto('/', { waitUntil: 'networkidle' })
+
+  const contact = page.locator('#contact')
   await contact.getByRole('button', { name: 'Send request' }).click()
-  await expect(contact.getByRole('button', { name: 'Send request' })).toHaveAttribute(
-    'type',
-    'button',
-  )
-  await expect(contact.locator('[role="status"]')).toHaveCount(0)
-  await expect(page).toHaveURL(/\/$/)
+
+  await expect(contact.getByText('Enter your name using 2–100 characters.')).toBeVisible()
+  await expect(contact.getByLabel('Name')).toBeFocused()
+  await expect(contact.getByLabel('Name')).toHaveAttribute('aria-invalid', 'true')
+  expect(requestCount).toBe(0)
+})
+
+test('prevents duplicate Contact submit and retains values for retry after failure', async ({
+  page,
+}) => {
+  let requestCount = 0
+  let releaseFirstRequest: (() => void) | undefined
+  const firstRequest = new Promise<void>((resolve) => {
+    releaseFirstRequest = resolve
+  })
+
+  await page.route('**/api/contact', async (route) => {
+    requestCount += 1
+
+    if (requestCount === 1) {
+      await firstRequest
+      await route.fulfill({
+        body: JSON.stringify({ error: 'service_unavailable' }),
+        contentType: 'application/json',
+        status: 503,
+      })
+      return
+    }
+
+    await route.fulfill({
+      body: JSON.stringify({ status: 'accepted' }),
+      contentType: 'application/json',
+      status: 201,
+    })
+  })
+  await page.goto('/', { waitUntil: 'networkidle' })
+
+  const contact = page.locator('#contact')
+  await contact.getByLabel('Name').fill('Ada Lovelace')
+  await contact.getByLabel('Email').fill('ada@example.com')
+  await contact.getByLabel('Message').fill('Please contact me about a product build.')
+  await contact.getByLabel(/I agree to the Privacy Policy/).check()
+
+  const submitButton = contact.locator('button[type="submit"]')
+  await submitButton.click()
+  await expect(submitButton).toBeDisabled()
+  expect(requestCount).toBe(1)
+
+  releaseFirstRequest?.()
+  await expect(contact.getByRole('alert')).toContainText('We couldn’t send your request.')
+  await expect(contact.getByLabel('Name')).toHaveValue('Ada Lovelace')
+
+  await submitButton.click()
+  await expect(contact.getByRole('status')).toContainText('Submitted successfully!')
+  expect(requestCount).toBe(2)
 })
 
 test('keeps Feedback free of a widescreen canvas artifact', async ({ page }) => {

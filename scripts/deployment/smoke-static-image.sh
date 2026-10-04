@@ -18,6 +18,10 @@ expected_site_url="${EXPECTED_SITE_URL:?Set EXPECTED_SITE_URL to the canonical o
 project="deploy_lab_image_smoke_${RANDOM}_$$"
 site_container="${project}_site"
 health_container="${project}_healthcheck"
+api_container="${project}_api"
+network="${project}_network"
+api_network="${project}_api_network"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 data_volume="${project}_data"
 config_volume="${project}_config"
 port="$(python3 - <<'PY'
@@ -32,7 +36,9 @@ base_url="http://localhost:${port}"
 work_dir="$(mktemp -d)"
 
 cleanup() {
-  docker rm --force "$site_container" "$health_container" >/dev/null 2>&1 || true
+  docker rm --force "$site_container" "$health_container" "$api_container" >/dev/null 2>&1 || true
+  docker network rm "$network" >/dev/null 2>&1 || true
+  docker network rm "$api_network" >/dev/null 2>&1 || true
   docker volume rm --force "$data_volume" "$config_volume" >/dev/null 2>&1 || true
   rm -rf "$work_dir"
 }
@@ -40,9 +46,20 @@ cleanup() {
 trap cleanup EXIT
 
 docker image inspect "$image_ref" >/dev/null
+[[ $(docker image inspect "$image_ref" --format '{{ index .Config.Labels "dev.deploy-lab.runtime" }}') == 'contact-v1' ]]
+docker network create "$network" >/dev/null
+docker network create --internal "$api_network" >/dev/null
+docker run --detach --name "$api_container" --network "$api_network" --network-alias api \
+  --user node --read-only --tmpfs /tmp \
+  --env NITRO_HOST=0.0.0.0 --env NITRO_PORT=3000 \
+  --env "NUXT_PUBLIC_SITE_URL=$base_url" --env NUXT_TRUST_PROXY=true \
+  --env NUXT_NOTION_TOKEN=contact-smoke-placeholder \
+  --env NUXT_NOTION_DATA_SOURCE_ID=contact-smoke-placeholder \
+  "$image_ref" node /app/.output/server/index.mjs >/dev/null
 docker volume create "$data_volume" >/dev/null
 docker volume create "$config_volume" >/dev/null
 docker run --detach --name "$site_container" \
+  --network "$network" \
   --publish "127.0.0.1:${port}:80" \
   --read-only \
   --tmpfs /tmp \
@@ -50,6 +67,7 @@ docker run --detach --name "$site_container" \
   --volume "$config_volume:/config" \
   --env SITE_HOST=localhost \
   "$image_ref" >/dev/null
+docker network connect "$api_network" "$site_container"
 
 wait_for_site() {
   local attempt=0
@@ -120,13 +138,18 @@ not_found_status="$(curl --silent --show-error --output "$work_dir/not-found.bod
 grep -Fq 'noindex, nofollow' "$work_dir/not-found.body"
 
 docker run --rm --entrypoint sh "$image_ref" -c '
-  ! command -v node &&
+  command -v node &&
   command -v curl &&
-  test ! -d /app &&
+  test -f /app/.output/server/index.mjs &&
+  test ! -e /app/.env &&
   test ! -e /srv/.env &&
   test -f /srv/index.html &&
   test -f /srv/404.html
 '
+
+IMAGE_REF="$image_ref" CONTACT_SMOKE_URL="$base_url" \
+  CONTACT_SMOKE_NETWORK="$api_network" CONTACT_SMOKE_API="$api_container" CONTACT_SMOKE_SITE="$site_container" \
+  bash "$script_dir/smoke-contact-api.sh"
 
 printf '%s\n' \
   '{' \
@@ -169,4 +192,4 @@ if docker exec "$health_container" ps -eo stat=,comm= | grep -Eq '^Z.*ssl_client
   exit 1
 fi
 
-printf 'Static image smoke test passed for %s at %s\n' "$image_ref" "$base_url"
+printf 'Page and contact API image smoke passed for %s at %s\n' "$image_ref" "$base_url"

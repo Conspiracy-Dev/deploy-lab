@@ -37,10 +37,13 @@ trap cleanup EXIT
 export HTTP_PORT="$port"
 export NUXT_PUBLIC_SITE_URL="$base_url"
 export SITE_HOST=localhost
+# Synthetic configuration proves readiness without calling Notion.
+export NUXT_NOTION_TOKEN=contact-smoke-placeholder
+export NUXT_NOTION_DATA_SOURCE_ID=contact-smoke-placeholder
 
 docker compose -p "$project" up --build --wait --wait-timeout 120
 
-docker compose -p "$project" restart site
+docker compose -p "$project" restart site api
 docker compose -p "$project" up --wait --wait-timeout 60
 
 IMAGE_REF='deploy-lab-static:local' EXPECTED_SITE_URL="$base_url" \

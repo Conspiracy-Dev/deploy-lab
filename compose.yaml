@@ -1,4 +1,25 @@
 services:
+  api:
+    image: deploy-lab-static:local
+    command: ['node', '/app/.output/server/index.mjs']
+    user: node
+    environment:
+      NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:?Set NUXT_PUBLIC_SITE_URL for this build}
+      NUXT_NOTION_TOKEN: ${NUXT_NOTION_TOKEN:-}
+      NUXT_NOTION_DATA_SOURCE_ID: ${NUXT_NOTION_DATA_SOURCE_ID:-}
+      NUXT_TRUST_PROXY: 'true'
+      NITRO_HOST: '0.0.0.0'
+      NITRO_PORT: '3000'
+    healthcheck:
+      test: ['CMD', 'curl', '--fail', '--silent', 'http://127.0.0.1:3000/contact-health']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /tmp
   site:
     build:
       context: .
@@ -8,7 +29,7 @@ services:
     environment:
       SITE_HOST: ${SITE_HOST:-localhost}
     healthcheck:
-      test: ['CMD', 'wget', '--spider', '--quiet', 'http://127.0.0.1/']
+      test: ['CMD', 'curl', '--fail', '--silent', 'http://127.0.0.1/']
       interval: 5s
       timeout: 3s
       retries: 12

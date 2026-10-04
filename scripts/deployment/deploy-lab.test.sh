@@ -23,6 +23,15 @@ cat > "$stub_dir/docker" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ $1 == 'image' && $2 == 'inspect' ]]; then
+  if [[ $3 == "${STUB_INCOMPATIBLE_IMAGE:-}" ]]; then
+    printf 'static\n'
+  else
+    printf 'contact-v1\n'
+  fi
+  exit
+fi
+
 if [[ $1 == 'run' ]]; then
   [[ ${STUB_CADDY_FAIL:-0} != '1' ]]
   exit
@@ -66,9 +75,14 @@ set -euo pipefail
 image="$(sed -n 's/^IMAGE_REF=//p' "$STUB_STATE_DIR/current-image.env" 2>/dev/null || true)"
 
 if [[ " $* " == *' --resolve '* ]]; then
-  [[ $image != "${STUB_LOCAL_FAIL_IMAGE:-}" ]]
+  [[ $image != "${STUB_LOCAL_FAIL_IMAGE:-}" ]] || exit 1
 else
-  [[ $image != "${STUB_PUBLIC_FAIL_IMAGE:-}" ]]
+  [[ $image != "${STUB_PUBLIC_FAIL_IMAGE:-}" ]] || exit 1
+fi
+
+if [[ " $* " == *'/api/contact'* ]]; then
+  [[ $image != "${STUB_API_FAIL_IMAGE:-}" ]] || { printf '502'; exit; }
+  printf '405'
 fi
 EOF
 
@@ -89,6 +103,7 @@ new_case() {
   : > "$stub_log"
   unset STUB_CADDY_FAIL STUB_COMPOSE_CONFIG_FAIL STUB_PULL_FAIL_IMAGE
   unset STUB_UP_FAIL_IMAGE STUB_LOCAL_FAIL_IMAGE STUB_PUBLIC_FAIL_IMAGE
+  unset STUB_INCOMPATIBLE_IMAGE STUB_API_FAIL_IMAGE
 }
 
 set_current_image() {
@@ -115,6 +130,8 @@ invoke_wrapper() {
     STUB_UP_FAIL_IMAGE="${STUB_UP_FAIL_IMAGE:-}" \
     STUB_LOCAL_FAIL_IMAGE="${STUB_LOCAL_FAIL_IMAGE:-}" \
     STUB_PUBLIC_FAIL_IMAGE="${STUB_PUBLIC_FAIL_IMAGE:-}" \
+    STUB_INCOMPATIBLE_IMAGE="${STUB_INCOMPATIBLE_IMAGE:-}" \
+    STUB_API_FAIL_IMAGE="${STUB_API_FAIL_IMAGE:-}" \
     "$wrapper" "$image" 2>&1)"
   wrapper_status=$?
   set -e
@@ -162,6 +179,29 @@ assert_status 0
 [[ "$(state_image current)" == "$image_two" ]]
 [[ "$(state_image previous)" == "$image_one" ]]
 grep -Fqx "Release is healthy: $image_two" <<< "$wrapper_output"
+grep -Fq 'up --detach --remove-orphans --wait --wait-timeout 120' "$stub_log"
+
+new_case
+set_current_image "$image_one"
+STUB_INCOMPATIBLE_IMAGE="$image_one"
+invoke_wrapper "$image_two"
+assert_status 78
+[[ "$(state_image current)" == "$image_one" ]]
+[[ ! -e "$state_dir/previous-image.env" ]]
+
+new_case
+set_current_image "$image_one"
+STUB_INCOMPATIBLE_IMAGE="$image_two"
+invoke_wrapper "$image_two"
+assert_status 70
+[[ "$(state_image current)" == "$image_one" ]]
+
+new_case
+set_current_image "$image_one"
+STUB_API_FAIL_IMAGE="$image_two"
+invoke_wrapper "$image_two"
+assert_status 75
+[[ "$(state_image current)" == "$image_one" ]]
 
 new_case
 STUB_LOCAL_FAIL_IMAGE="$image_two"

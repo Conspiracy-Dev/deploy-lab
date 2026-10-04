@@ -1,6 +1,12 @@
 {
 	admin off
 	auto_https off
+	log default {
+		format filter {
+			wrap json
+			request delete
+		}
+	}
 }
 
 http://{$SITE_HOST:localhost} {
@@ -20,9 +26,18 @@ http://{$SITE_HOST:localhost} {
 	@html path / /privacy-policy /robots.txt /sitemap.xml
 	header @html Cache-Control "no-cache"
 
-	try_files {path} {path}/ {path}.html =404
-	file_server {
-		disable_canonical_uris
+	handle /api/contact {
+		header Cache-Control "no-store"
+		reverse_proxy api:3000 {
+			header_up X-Forwarded-For {remote_host}
+		}
+	}
+
+	handle {
+		try_files {path} {path}/ {path}.html =404
+		file_server {
+			disable_canonical_uris
+		}
 	}
 
 	handle_errors {

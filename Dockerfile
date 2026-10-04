@@ -12,6 +12,7 @@ COPY app ./app
 COPY content ./content
 COPY public ./public
 COPY shared ./shared
+COPY server ./server
 COPY content.config.ts nuxt.config.ts uno.config.ts ./
 
 ARG NUXT_PUBLIC_SITE_URL
@@ -20,11 +21,26 @@ RUN test -n "$NUXT_PUBLIC_SITE_URL"
 
 ENV NUXT_PUBLIC_SITE_URL=$NUXT_PUBLIC_SITE_URL
 
-RUN pnpm exec nuxt prepare && pnpm generate
+RUN pnpm exec nuxt prepare && pnpm build
 
-FROM caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+FROM caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d AS caddy
 
-RUN apk add --no-cache curl
+FROM node:24.16.0-bookworm-slim@sha256:2c87ef9bd3c6a3bd4b472b4bec2ce9d16354b0c574f736c476489d09f560a203
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /config/caddy /data/caddy
+
+ENV XDG_CONFIG_HOME=/config XDG_DATA_HOME=/data NODE_ENV=production
+
+LABEL dev.deploy-lab.runtime="contact-v1"
+
+COPY --from=caddy /usr/bin/caddy /usr/bin/caddy
 
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/.output/public /srv
+COPY --from=build --chown=node:node /app/.output /app/.output
+
+EXPOSE 80 443
+
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

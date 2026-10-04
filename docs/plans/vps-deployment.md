@@ -2,7 +2,15 @@
 
 Status: Epics 0–8 complete; production live on `194.87.83.103`
 
-Last updated: 2026-08-25
+Last updated: 2026-10-04
+
+Contact Epic 4 amendment: the owner approved a source profile with static Caddy
+pages and an internal Nitro API. Its implementation and verification are tracked
+in [the contact roadmap](contact-form-notion.md), with the initial migration and
+complete configuration rollback in [the contact runbook](../runbooks/contact-form.md).
+The live migration and Notion token provisioning remain pending. The static
+epics below retain their original acceptance evidence; the current repository
+Compose/Caddy files must not be installed as an ordinary static digest update.
 
 ## Goal
 

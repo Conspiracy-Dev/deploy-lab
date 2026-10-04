@@ -22,6 +22,9 @@ export default defineNuxtConfig({
   ],
   css: ['~/assets/styles/tokens.css', '~/assets/styles/base.css'],
   runtimeConfig: {
+    notionDataSourceId: '',
+    notionToken: '',
+    trustProxy: false,
     public: {
       siteUrl: '',
     },
@@ -84,8 +87,26 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
+    routeRules: {
+      '/contact-health': {
+        security: { rateLimiter: false },
+      },
+      '/api/contact': {
+        security: {
+          allowedMethodsRestricter: {
+            methods: ['POST'],
+          },
+          rateLimiter: false,
+          requestSizeLimiter: {
+            maxRequestSizeInBytes: 8_192,
+          },
+        },
+      },
+    },
     prerender: {
-      routes: ['/robots.txt', '/sitemap.xml'],
+      crawlLinks: true,
+      routes: ['/', '/privacy-policy', '/robots.txt', '/sitemap.xml', '/404.html'],
+      ignore: ['/api/contact', '/contact-health'],
     },
   },
 })
