@@ -166,6 +166,7 @@ test('submits a Contact request with keyboard and shows an accessible success st
   await contact.getByLabel('Email').press('Enter')
 
   await expect(contact.getByRole('status')).toContainText('Submitted successfully!')
+  await expect(contact.locator('form')).toHaveCount(0)
   await expect(contact.getByRole('button', { name: 'Start a new request' })).toBeVisible()
   expect(submittedRequest).toEqual({
     consent: true,

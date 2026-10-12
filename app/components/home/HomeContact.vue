@@ -158,7 +158,7 @@ async function submitForm() {
         </UiButton>
       </div>
 
-      <form class="home-contact__form" novalidate @submit.prevent="submitForm">
+      <form v-else class="home-contact__form" novalidate @submit.prevent="submitForm">
         <div class="home-contact__fields">
           <div class="home-contact__field">
             <label class="sr-only" for="contact-name">{{ homeContent.contact.nameLabel }}</label>
