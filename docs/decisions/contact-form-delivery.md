@@ -1,8 +1,8 @@
 # ADR: Contact-form delivery to Notion
 
-- **Status:** Accepted — Epics 0–3 implemented
+- **Status:** Accepted — Epics 0–4 implemented and live delivery verified
 - **Date:** 2026-08-13
-- **Last amended:** 2026-10-04 — live insertion proven; UI correction and repeat rollout pending
+- **Last amended:** 2026-10-13 — closure documentation; live acceptance and baseline verified on 2026-10-12
 - **Decision owner:** Nikita Zinevich
 - **Design source:** [Contact desktop / 48:1595](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=48-1595&p=f&m=dev), [Contact mobile / 144:1236](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=144-1236&p=f&m=dev), [success / 153:75](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=153-75&p=f&m=dev)
 
@@ -18,8 +18,9 @@ The owner approved Notion as the sole delivery destination. Email notifications,
 auto-replies, CRM workflow, CAPTCHA and analytics are not part of this change.
 The source now implements the form and API. One live request proved Notion
 delivery during Epic 4; the runtime was then restored to static configuration
-because the success UI failed acceptance. The correction needs a reviewed
-release and repeat rollout before final production acceptance.
+because the success UI failed acceptance. The correction is now reviewed,
+released and migrated. An explicitly authorized additional live request passed
+final acceptance on the current production revision.
 
 ## Decision
 
@@ -136,6 +137,40 @@ The local correction restores the approved mutually exclusive form/success
 states, not a new product or architecture decision. Its reviewed release and
 repeat migration must precede closure; another live POST needs new owner
 authorization. See the roadmap for evidence and remaining tasks.
+
+## Repeated migration record — 2026-10-12
+
+PR #24's reviewed main revision `abbd8507d7d2747218de287b2588c15fe11d0c75`
+passed quality/candidate verification and release attempt 2. The reviewed
+hybrid configuration was installed after a complete backup; Caddy and Nitro
+are healthy with one verified immutable digest. Private configuration is
+isolated to API, its port is not published and public page/API-method smoke
+passed. The GitHub gate history is `skipped` by the human account `f7one`,
+not `approved` by `iShavlovsky`; the agent did not alter or bypass the gate.
+This is an execution record, not a replacement release policy.
+
+Production success/reset is corrected at 390/1440 px with controlled,
+intercepted-response browser proof. The original live row is retained and
+server/runtime source is unchanged; a second live insertion was not performed.
+At that migration stage, final acceptance and the compatible baseline were
+still pending. The final acceptance record below supersedes that status; the
+roadmap records the separate proofs, deployed digest and backup.
+
+## Final acceptance record — 2026-10-12
+
+The owner separately authorized one final real submission and retaining its
+row. The site's current credential created exactly one matching Notion request
+with Status `New` and Submitted at after a real 201 response. The original
+marked row is retained as well; there was no automatic retry or duplicate
+final submission. The successful production UI was checked at 390/1440 px
+without another request: the form is absent, the reset button restores cleared
+values/consent, and no overflow or browser error occurs.
+
+The accepted current digest is also the initial compatible previous digest;
+the superseded image-state file is retained in the full recovery backup.
+This finalizes the existing first-migration rollback decision rather than
+introducing a new deployment mechanism. Epic 4 is complete; subsequent
+publication, release or epic work still requires explicit owner authorization.
 
 ## Consequences
 

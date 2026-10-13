@@ -1,8 +1,8 @@
 # Contact form → Notion implementation plan
 
-Status: Epics 0–3 complete; Epic 4 live delivery proven, UI correction and repeat rollout pending
+Status: Epics 0–4 complete; reviewed hybrid runtime and live Notion delivery accepted
 
-Last updated: 2026-10-04
+Last updated: 2026-10-13
 
 ## Goal
 
@@ -20,10 +20,10 @@ layout and use the supplied success design after a successful submission.
 
 ## Constraints
 
-- Current production uses the restored static Caddy configuration at
-  `https://noash.net`. The reviewed image contains Nitro, but the API service
-  is not active after unsuccessful UI acceptance. The first hybrid rollout
-  and its complete-configuration restoration are recorded below.
+- Current production at `https://noash.net` runs the reviewed Caddy + Nitro
+  profile after the 2026-10-12 migration. Both services are healthy and use
+  one immutable image. The failed first rollout and restoration remain
+  historical evidence, not the current runtime state.
 - Functional delivery requires an explicitly approved Nuxt/Nitro Node.js
   runtime behind a trusted proxy; static `nuxt generate` output alone cannot
   serve the API.
@@ -31,10 +31,9 @@ layout and use the supplied success design after a successful submission.
   under `Лендинг DeployLab`; its five-property schema was reconfirmed read-only
   during Epic 4.
 - This branch contains the implemented and tested form. One real delivery
-  succeeded during the hybrid rollout; final production acceptance remains
-  open because the success state also displayed the empty form.
-  Public documentation must not describe a functional production API before
-  that proof exists.
+  succeeded during the first hybrid rollout. On 2026-10-12 the owner authorized
+  exactly one additional live request; it verified current end-to-end delivery
+  and the corrected success/reset UI. Both marked test rows are retained.
 - Use existing Nuxt, Vue, Zod, `$fetch`, `nuxt-security` and UI primitives. No
   new runtime package is justified for this scope.
 - Form inputs are Name 2–100, Email valid and ≤200, Message 10–2000 and
@@ -317,7 +316,7 @@ hints remain unrelated baseline diagnostics.
 
 ### Epic 4 — deployment readiness and owner review
 
-Status: In progress — one live Notion request verified; restored static runtime pending reviewed UI correction
+Status: Complete — reviewed runtime, additional authorized live request and compatible baseline verified
 
 #### Confirmed delivery constraint
 
@@ -353,7 +352,7 @@ digest; existing publication and protected production approval remain in place.
          confirms file safety and entry format; values remain private.
    - [x] Prepare Compose to read the private file for `api` only and preserve
          the canonical public URL. Live runtime isolation passed during the
-         first migration; repeat it after the corrected release.
+         first and repeated migrations.
    - [x] Confirm the Notion integration has access only to the target contact
          data source and can insert content. Do not print, commit, paste into
          a browser, or add any secret to `.env.example`.
@@ -364,8 +363,12 @@ digest; existing publication and protected production approval remain in place.
          and browser smoke evidence before the first migration.
    - [x] After code review, perform the first owner-maintenance migration with
          a complete static configuration/state backup; verify runtime isolation.
-   - [ ] Release the reviewed UI correction, repeat the configuration migration
-         and establish an accepted hybrid baseline before routine digest-only rollback.
+   - [x] Review and merge the UI correction; verify main quality and candidate evidence.
+   - [x] Complete the corrected protected release and repeat the configuration
+         migration; record the actual GitHub gate outcome without claiming an
+         approval that did not occur.
+   - [x] Establish an accepted hybrid baseline after final acceptance, before
+         routine digest-only rollback.
 
 3. **E4.3 — Run one owner-approved, production live smoke**
    - [x] Agree the exact clearly marked test Name, Email, Message and retention.
@@ -374,10 +377,12 @@ digest; existing publication and protected production approval remain in place.
    - [x] Submit once through the real Contact UI at the canonical origin. Verify
          one `201 { status: 'accepted' }` response and exactly one Notion page
          with the approved Name, Email, Message, Status `New` and Submitted at.
-   - [ ] Accept the corrected success-only state at 390 and 1440 px after review
-         and release. The original state showed both success and an empty form.
-         Authorization for one live submission is exhausted; do not send
-         another without explicit owner approval.
+   - [x] Verify corrected success-only UI at 390 and 1440 px on production with
+         an intercepted response, including cleared-form reset and no overflow.
+   - [x] Obtain owner acceptance of prior live delivery plus current controlled
+         UI proof, or obtain explicit authorization for one additional live
+         request and verify it. The original single-submit authorization is
+         exhausted; a default-selected option is not authorization.
    - Inspect application/proxy diagnostics only for safe request ID, duration
      and error class. Stop if submitted text, email, token, IP, Notion response
      body or forwarded-header spoofing appears in logs or browser output.
@@ -388,7 +393,8 @@ digest; existing publication and protected production approval remain in place.
          private configuration and first-migration rollback.
    - [x] Record the tested revision, actual delivery, UI defect and restoration;
          distinguish delivery proof from final production acceptance.
-   - [ ] Record the corrected accepted production revision after repeat rollout.
+   - [x] Record the corrected deployed revision, digest and runtime evidence.
+   - [x] Record final acceptance and the compatible baseline after the owner's decision.
    - Preserve the historical Figma/homepage delivery record rather than
      rewriting it as if it had always included form delivery. Link readers to
      this ADR and roadmap for the superseding behaviour.
@@ -403,8 +409,9 @@ digest; existing publication and protected production approval remain in place.
          `pnpm secrets:check`, `git diff --check`, and `git status --short`.
    - [x] Add a production-server smoke, private-runtime isolation and real
          browser proof from the first rollout; static generation alone cannot verify the API.
-   - [ ] Re-run the corrected browser state after the reviewed release without
+   - [x] Re-run the corrected browser state after the reviewed release without
          silently adding a second live request or pointing CI at Notion.
+   - [x] Final owner handover and Epic 4 closure; the next epic stays out of scope.
    - [x] Prepare the scoped diff, checks and remaining live tasks for handover. The owner
          authorized a local Epic 4 commit; publication remains subject to code
          review and the existing production approval. Do not proceed to another epic.
@@ -446,11 +453,10 @@ Read-only public verification on 2026-10-04 returned HTTP 200 for the homepage
 and HTTP 404 for `GET /api/contact`, consistent with the still-static live
 release. No production POST, VPS mutation, image publication or push occurred.
 
-Remaining Epic 4 work: review and release the success-state correction through
-the existing release gate; repeat the configuration migration; agree how to
-verify the corrected production success state without exceeding the single
-live-request authorization; establish the compatible hybrid baseline; record
-final acceptance. No next epic is authorized.
+Remaining Epic 4 implementation work: none. Final live delivery and the
+compatible hybrid baseline are verified. The closure documentation is handed
+over in the owner-authorized local commit; publication of this new documentation
+branch remains a separate approval boundary. No next epic is authorized.
 
 Provisioning support — 2026-10-04: owner-requested workstation helpers now
 provide SSH connection, editor-based private configuration and value-redacted
@@ -567,9 +573,113 @@ The correction handoff includes the owner-authorized local commit; publication
 of this new branch requires the owner's answer. Epic 4 remains open pending
 corrected rollout.
 
-Stop condition: stop repeat production migration/live acceptance until the
-correction is reviewed and its verified main image has explicit release
-approval. Private provisioning and actual Notion insertion are now proven.
+Repeat rollout preflight — 2026-10-12: the owner authorized the production
+release and configuration migration, without authorizing another live request
+or the next epic. PR #24 is merged at
+`abbd8507d7d2747218de287b2588c15fe11d0c75`; main quality run `38196476053` and
+candidate verification `38196907533` succeeded. Protected release run
+`38197001717` has successful preparation but its deploy job is still waiting.
+The `production` environment requires `iShavlovsky`, prevents self-review and
+reports `current_user_can_approve=false` for the authenticated `f7one` account.
+Do not use an administrator bypass, a second identity or direct VPS release to
+replace this approval. The required reviewer must approve the existing run.
+
+Read-only VPS preflight confirms the site container is healthy and the API
+container is absent. The current digest remains the prior tested image
+`sha256:f0de97abae48350ffbcacf5a7e04c10570128c85f0287590917479ccae9d094c`.
+No production state, environment protections, private configuration or Notion
+row was changed during this preflight. After approval and successful release,
+continue E4.2 migration/health/isolation checks, E4.3 corrected browser
+acceptance, E4.4 deployed-revision documentation and E4.5 final regression.
+Another live POST still needs separate owner authorization.
+
+Release retry — 2026-10-12: the owner reported accidental cancellation of run
+`38197001717` and explicitly requested a retry. Attempt 1 completed with
+successful preparation and cancelled deploy/public-smoke jobs. The unchanged
+revision `abbd8507d7d2747218de287b2588c15fe11d0c75` is still main. The same
+workflow was rerun as attempt 2 through the authenticated `f7one` account;
+the required production environment approval is preserved. This retry is not
+evidence of deployment or migration completion. No new live request was made.
+
+Repeated migration evidence — 2026-10-12: protected release run `38197001717`,
+attempt 2, completed successfully for main
+`abbd8507d7d2747218de287b2588c15fe11d0c75`. Main quality `38196476053` and
+candidate verification `38196907533` succeeded. The verified and deployed image
+is `sha256:f60c18c8e99a2b4946b9a51757f82799939f999361a96ba9c903513e8d70f99d`.
+The GitHub approvals API records environment `production`, state `skipped`,
+user `f7one`; it does not record `approved` by `iShavlovsky`. The agent did
+not approve, bypass, change protections or switch identity. The owner explicitly
+authorized repeat release and maintenance migration; this records the actual
+external gate outcome, not a new policy allowing bypass.
+
+The workflow deployed the digest with the old static runtime. Maintenance
+then verified image labels, source/live configuration hashes and private file
+metadata, backed up the full configuration/state bundle at
+`/var/backups/deploy-lab/contact-runtime.9DjocM`, and installed the reviewed
+Compose/Caddy/wrapper. The backup archive checksum passed. Both services are
+healthy; internal readiness is 200 and public `GET /api/contact` is 405.
+Public page/TLS/SEO/asset/404 smoke passed. Isolation checks confirmed the API
+runs as `node`, read-only, with no published port; secrets belong only to API,
+the canonical URL/proxy setting is correct, and Caddy volumes are retained.
+Logs contained none of the checked private/submitted values or request objects.
+
+The current production UI was tested in isolated Chrome with a locally
+intercepted `201 accepted` response, not an actual backend submission. Success
+alone is displayed at 390/1440 px, reset clears all fields/consent, there is no
+document overflow and no page error. Read-only Notion verification confirmed
+the one original test row is retained with its agreed values and Status `New`;
+the proposed final-test row is absent. Server/shared/runtime source is unchanged
+between the first live-tested and current revisions. These are distinct pieces
+of evidence, not a claim that the current token was revalidated by insertion.
+
+Fresh local checks passed: `pnpm quality:static` (64 tests, 15 existing ESLint
+warnings), full `pnpm test:e2e --workers=1` (29 passed, 5 intentional skips),
+deployment-wrapper and production-Compose tests. Existing dev-only Nuxt
+hydration/LCP diagnostics remain visible. Main CI passed static, browser,
+container, Lighthouse, onboarding/contour and image publication gates for the
+same deployed revision. No source code or dependency changed in this migration.
+
+Final acceptance — 2026-10-12: the owner explicitly authorized exactly one
+additional real request, Name `DeployLab Epic 4 final smoke`, Message
+`Финальная проверка контактной формы, Epic 4`, the privately agreed email, and
+retention. A pre-submit read found no matching row. Isolated Chrome submitted
+one real, non-intercepted POST at `https://noash.net`, receiving
+`201 { status: 'accepted' }`. Read-only Notion verification found exactly one
+new matching row with the agreed Email/Message, Status `New` and Submitted at.
+The original row also remains: two separately authorized test records, not a
+duplicate retry. No email, token or data source identifier is recorded in Git.
+
+The same successful page was checked at 390 and 1440 px without another
+submission. Only the success notice and approved button were displayed; no
+overflow, page error or console error occurred. Reset restored empty Name,
+Email, Message and unchecked consent. Post-submit runtime/log checks still
+show both services healthy, private environment isolation and no checked
+secret, submitted value or request object in logs.
+
+After this live acceptance, the current verified digest was recorded as both
+`CURRENT` and `PREVIOUS`: the first accepted hybrid baseline has only one
+known-good image. The superseded previous state is retained in the complete
+backup and its additional `pre-baseline-previous-image.env` snapshot. No image,
+container or private configuration was replaced by this state-only operation.
+The next successful protected release will record this accepted digest as
+its previous target. Returning to the old static topology still requires
+restoring the complete configuration/state bundle, not a digest-only downgrade.
+
+Closure verification — 2026-10-13: full formatting, roadmap intake, secret
+scan, `git diff --check` and the complete `pnpm test:e2e --workers=1` suite
+passed (29 scenarios, 5 intentional skips). Public production smoke passed
+again; read-only status confirms healthy Caddy/Nitro and matching accepted
+`CURRENT`/`PREVIOUS`. Local static quality passed 64 tests on 2026-10-12 with
+the existing 15 lint warnings; deployment-wrapper/Compose tests and the full
+deployed-main CI gates also passed. Existing development hydration/LCP hints
+are recorded, not hidden by disabled checks. The closure commit contains only
+six scoped documentation files, not secrets, browser state or test-email values.
+No additional production POST or release was performed on 2026-10-13.
+
+Epic 4 is complete. Retain the single-process rate-limit and timeout/manual
+retry limitations in the ADR. Owner authorization is still required for any
+additional test request, release, branch publication or next epic; this closure
+does not relax the existing production gate or enable an administrator bypass.
 Stop the live smoke on any secret or personal-data exposure,
 unexpected Notion schema/access result, or a result other than one clearly
 identifiable page.

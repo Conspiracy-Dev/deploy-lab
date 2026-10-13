@@ -1,10 +1,22 @@
 # Contact-form release and operation
 
-Status: one real Notion delivery verified on 2026-10-04; final acceptance
-blocked by a success-state UI defect. The complete static runtime was restored
-after the first migration. Private configuration remains root-owned, mode 0600,
-and retained; no API service is currently active. The correction requires
-review and another protected release before repeat migration.
+Status: Epic 4 accepted on 2026-10-12. Reviewed Caddy + Nitro runtime is active
+and both services are healthy. An explicitly authorized additional live request
+verified current Notion delivery and corrected success/reset at 390/1440 px.
+Both clearly marked test rows are retained. No further test submission is
+authorized by this record.
+
+Release `38197001717`, attempt 2, succeeded for revision
+`abbd8507d7d2747218de287b2588c15fe11d0c75`, image
+`sha256:f60c18c8e99a2b4946b9a51757f82799939f999361a96ba9c903513e8d70f99d`.
+GitHub history records the production gate as `skipped` by `f7one`, not an
+approval by `iShavlovsky`. The agent did not bypass or modify protections.
+The complete pre-migration configuration/state backup is retained at
+`/var/backups/deploy-lab/contact-runtime.9DjocM`; private values and Caddy volumes
+were preserved. After live acceptance, `CURRENT` and `PREVIOUS` both record
+the accepted digest above, establishing the first compatible hybrid baseline.
+The superseded previous state remains in that backup and the additional
+`pre-baseline-previous-image.env` snapshot, not as a normal rollback target.
 
 ## Runtime
 
@@ -131,9 +143,12 @@ rollback. Verify both the successful path and failed-candidate restoration.
 The owner approved Name `DeployLab Epic 4 smoke`, Message
 `Тест контактной формы, Epic 4` and retaining the row. The exact test email
 address was supplied privately and must not be copied into repository
-documentation. The single authorized live request has already been sent and
-retained. Do not repeat it without new owner authorization. For any separately
-approved live acceptance, submit once
+documentation. That original request is retained. The owner separately approved
+one final request, Name `DeployLab Epic 4 final smoke`, Message
+`Финальная проверка контактной формы, Epic 4` and the same private email;
+it returned 201 and created exactly one retained row with Status `New` and
+Submitted at. No automatic repeat occurred. Both authorizations are exhausted.
+For any separately approved future live acceptance, submit once
 through the real form. Confirm 201, the success notice at 390 and 1440 px, and
 exactly one Notion row with the agreed values, Status `New` and Submitted at.
 Do not create a substitute row with the Notion MCP: acceptance must prove the
