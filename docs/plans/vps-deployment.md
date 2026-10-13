@@ -9,10 +9,12 @@ pages and an internal Nitro API. Its implementation and verification are tracked
 in [the contact roadmap](contact-form-notion.md), with the initial migration and
 complete configuration rollback in [the contact runbook](../runbooks/contact-form.md).
 Private configuration was provisioned and one live request reached Notion
-during the first hybrid rollout on 2026-10-04. A success-state UI defect blocked
-final acceptance, so the complete static configuration/state bundle was
-restored. The contact roadmap tracks the correction review, repeat migration
-and compatible hybrid baseline. The static epics below retain their original
+during the first hybrid rollout on 2026-10-04. That rollout was restored after
+a UI defect. The reviewed correction was released and migrated on 2026-10-12;
+Caddy and Nitro are healthy, runtime isolation and public smoke passed. The
+contact roadmap records the separately authorized successful final live request
+and accepted compatible hybrid baseline; contact Epic 4 is complete.
+The static epics below retain their original
 acceptance evidence; repository Compose/Caddy files must not be installed as
 an ordinary static digest update.
 

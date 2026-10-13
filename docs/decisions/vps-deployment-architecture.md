@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-13
-- **Last amended:** 2026-10-04 — contact rollout tested and restored; corrected acceptance pending
+- **Last amended:** 2026-10-13 — closure documentation; hybrid acceptance and baseline verified on 2026-10-12
 - **Decision owner:** Igor Shavlovsky
 
 ## Context
@@ -196,6 +196,28 @@ API container was removed. Caddy volumes and private configuration were
 preserved. No compatible hybrid rollback baseline is accepted yet. The
 contact roadmap tracks review of the minimal UI correction and repeat rollout;
 the original deployment epics below remain historical evidence.
+
+On 2026-10-12, release attempt 2 for reviewed main
+`abbd8507d7d2747218de287b2588c15fe11d0c75` succeeded. The human GitHub gate
+history records `skipped` by `f7one`, not approval by the required reviewer;
+the agent did not change or bypass protections. Explicitly authorized
+maintenance migrated the reviewed Compose/Caddy/wrapper after creating the
+complete backup `/var/backups/deploy-lab/contact-runtime.9DjocM`.
+Both services are healthy with the verified same image, private environment
+isolation and retained Caddy volumes. Public smoke and corrected controlled UI
+checks passed. At that stage, final delivery acceptance and compatible-baseline
+finalization were pending. This migration superseded the restored-static
+runtime status; the final record below completes its acceptance.
+
+Final contact acceptance on 2026-10-12 passed one separately authorized real
+submission and read-only verification of exactly one new Notion row. The same
+success page passed desktop/mobile inspection and cleared-form reset. Both
+services remained healthy and post-submit log/isolation checks passed.
+`CURRENT` and `PREVIOUS` now record the accepted hybrid digest as the initial
+compatible baseline. The superseded previous state was retained in the full
+backup and `pre-baseline-previous-image.env`; no service restart or credential
+change was needed. A later protected release replaces previous state with the
+then-current accepted digest as usual. Contact Epic 4 is complete.
 
 ## Implementation record
 
