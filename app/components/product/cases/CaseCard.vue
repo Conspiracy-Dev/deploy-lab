@@ -37,6 +37,7 @@ defineProps<CaseCardData>()
         format="webp"
         :height="image.height"
         loading="lazy"
+        :onerror="null"
         quality="80"
         :sizes="`310px lg:${image.desktopDeliveryWidth ?? 482}px`"
         :src="image.src"

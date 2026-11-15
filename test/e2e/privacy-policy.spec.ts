@@ -18,13 +18,17 @@ test('renders the approved Privacy Policy as an indexable semantic document', as
     /index, follow/,
   )
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Privacy Policy')
-  await expect(page.getByRole('heading', { level: 2 })).toHaveCount(11)
-  await expect(page.getByRole('heading', { level: 3 })).toHaveCount(2)
+  const article = page.getByRole('article')
+  await expect(article.getByRole('heading', { level: 2 })).toHaveCount(11)
+  await expect(article.getByRole('heading', { level: 3 })).toHaveCount(2)
   await expect(
     page.getByRole('banner').getByRole('link', { name: 'Deploy Lab home' }),
   ).toHaveAttribute('href', '/')
   await expect(page.getByRole('contentinfo')).toBeVisible()
-  await expect(page.getByText('Last updated: August 8, 2026')).toBeVisible()
+  await expect(page.getByText('Last updated: November 15, 2026')).toBeVisible()
+  await expect(
+    article.getByText(/set a session cookie to remember that you closed it/),
+  ).toBeVisible()
   await expect(page.getByText('We do not sell or rent your personal information')).toBeVisible()
   await expect(page.getByRole('link', { name: 'hello@deployteam.io' }).last()).toHaveAttribute(
     'href',

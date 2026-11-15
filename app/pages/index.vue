@@ -26,7 +26,7 @@ useSchemaOrg([
 <template>
   <div class="home-page">
     <HomeHeader />
-    <main>
+    <main tabindex="-1">
       <section :id="homeAnchorIds.home" class="home-hero" aria-labelledby="home-title">
         <HomeHeroVisual />
         <UiContainer class="home-hero__content">

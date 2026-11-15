@@ -24,7 +24,7 @@ useSeoMeta({
 <template>
   <div class="privacy-policy-page">
     <PrivacyHeader />
-    <main>
+    <main tabindex="-1">
       <section class="privacy-policy-page__title" aria-labelledby="privacy-policy-title">
         <UiContainer>
           <UiTypography id="privacy-policy-title" variant="h1">

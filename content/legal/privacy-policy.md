@@ -1,7 +1,7 @@
 ---
 title: Privacy Policy
 description: Learn how DeployLab collects, uses, shares, retains and protects personal information when you use deploylab.io or contact us.
-lastUpdated: August 8, 2026
+lastUpdated: November 15, 2026
 ---
 
 This Privacy Policy explains how DeployLab (“we”, “our”, “us”) collects, uses, and protects personal information when you interact with our website deploylab.io (“Website”) or contact us through the provided communication channels.
@@ -21,17 +21,7 @@ When you fill out the contact form, request a project, or communicate with us, w
 
 ### **1.2 Automatically Collected Data**
 
-When you visit our Website, we may automatically collect:
-
-- IP address
-- Browser type and version
-- Device information
-- Referring pages
-- Time and date of visit
-- Pages viewed
-- Basic analytics data
-
-This information is collected through cookies or similar technologies.
+When you submit our contact form, we use your IP address to limit repeated submissions and protect the form from abuse.
 
 ## **2. How We Use Your Information**
 
@@ -47,19 +37,13 @@ We do not sell or rent your personal information to third parties.
 
 ## **3. Cookies and Tracking Technologies**
 
-We may use cookies, analytics tools, or similar technologies to:
-
-- Understand Website performance
-- Analyze traffic and usage patterns
-- Enhance functionality
-
-You can disable cookies in your browser settings, but some features of the Website may not function properly.
+When you select OK on our cookie notice, we set a session cookie to remember that you closed it. You can clear this cookie in your browser settings.
 
 ## **4. Data Sharing**
 
 We may share your information only in the following cases:
 
-- **Service providers:** trusted partners who assist in website hosting, analytics, or communication
+- **Service providers:** trusted partners who help us host the Website or handle communications.
 - **Legal compliance:** if required to comply with applicable laws, regulations, or legal requests
 - **Business purposes:** in case of mergers, acquisitions or restructuring processes
 
