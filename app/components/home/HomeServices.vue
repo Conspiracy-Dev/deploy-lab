@@ -11,6 +11,7 @@ import { homeAnchorIds, homeContent, homeServiceItems } from './home.config'
         format="webp"
         height="1253"
         loading="lazy"
+        :onerror="null"
         quality="80"
         sizes="1536px"
         src="/images/home/services-wireframe.png"
