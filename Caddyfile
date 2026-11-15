@@ -26,6 +26,8 @@ http://{$SITE_HOST:localhost} {
 	@html path / /privacy-policy /robots.txt /sitemap.xml
 	header @html Cache-Control "no-cache"
 
+	header /favicon.ico Content-Type image/vnd.microsoft.icon
+
 	handle /api/contact {
 		header Cache-Control "no-store"
 		reverse_proxy api:3000 {

@@ -106,6 +106,7 @@ request / home
 request /privacy-policy privacy
 request /robots.txt robots
 request /sitemap.xml sitemap
+request /favicon.ico favicon
 
 docker restart "$site_container" >/dev/null
 wait_for_site
@@ -116,6 +117,7 @@ grep -Fq "$expected_site_url" "$work_dir/sitemap.body"
 grep -qi '^x-content-type-options: nosniff' "$work_dir/home.headers"
 grep -qi '^referrer-policy: strict-origin-when-cross-origin' "$work_dir/home.headers"
 grep -qi '^permissions-policy: camera=(), geolocation=(), microphone=()' "$work_dir/home.headers"
+grep -Eqi '^content-type:[[:space:]]+image/vnd\.microsoft\.icon[[:space:]]*$' "$work_dir/favicon.headers"
 
 [ "$(grep -ci '^content-security-policy:' "$work_dir/home.headers" || true)" -le 1 ]
 
