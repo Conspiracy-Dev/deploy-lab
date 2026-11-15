@@ -20,7 +20,8 @@ implementation.
 
 1. Figma desktop `31:6020` and mobile `144:233` are the visual endpoints. The
    visible Figma copy is accepted as production copy, including the testimonial
-   author labels `Testimonial #1` and `Testimonial #2` and footer year `2025`.
+   author labels `Testimonial #1` and `Testimonial #2`. The production footer
+   displays `2026`.
    The project-details textarea uses `Message`; this resolves the desktop
    instance's conflicting `Name` placeholder in favour of the matching mobile
    field and the field's actual purpose.

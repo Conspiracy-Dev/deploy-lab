@@ -5,7 +5,7 @@ export type SiteNavigationItem = {
 
 export const siteContent = Object.freeze({
   brand: '[Deploy Lab]',
-  footerYear: '2025',
+  footerYear: '2026',
   mobileMenuLabel: 'Open navigation',
   privacyHref: '/privacy-policy',
 } as const)

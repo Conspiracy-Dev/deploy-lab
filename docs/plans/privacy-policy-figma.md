@@ -71,7 +71,7 @@ Last updated: 2026-08-08
    по Figma.
 5. Утверждён SEO title `Privacy Policy | DeployLab`; description пересказывает
    только одобренный policy copy.
-6. Footer сохраняет утверждённый Figma year `2025`. Отдельный production
+6. Общий футер сайта показывает `2026`. Отдельный production
    canonical domain не подтверждён, поэтому сохраняется существующий runtime
    fallback до настройки окружения.
 
