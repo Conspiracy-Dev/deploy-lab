@@ -322,8 +322,8 @@ feedback, contact form и footer. Утверждённая композиция 
   `UiCheckbox`, `UiMenuToggle`, `UiSuccessNotice` и data-driven `CaseCard`.
   Не расширять их public API ради одного consumer без второго подтверждённого
   use case.
-- Figma copy принят как production copy, включая `Testimonial #1/#2` и footer
-  year `2025`. Textarea использует `Message`; case previews получают
+- Figma copy принят как production copy, включая `Testimonial #1/#2`. В футере
+  сайта указан `2026`. Textarea использует `Message`; case previews получают
   утверждённые generated placeholder alt texts из homepage ADR.
 - Статический deployment profile и текущий Lighthouse gate сохраняются:
   performance ≥ 0.90, accessibility ≥ 0.96 (owner-accepted debt), best
@@ -1100,8 +1100,9 @@ evidence и local commits, explicitly authorised by the owner. Push/PR оста�
 
 ### Approved decisions
 
-1. Figma copy is final; textarea uses `Message`, footer keeps `2025`, and case
-   previews use generated placeholder alt text recorded in the homepage ADR.
+1. Figma copy is final. The textarea uses `Message`, the production footer
+   displays `2026`, and case previews use generated placeholder alt text recorded
+   in the homepage ADR.
 2. Navigation and `Start a Project` use same-page anchors; Privacy Policy uses
    `/privacy-policy`.
 3. Mobile menu is an accessible overlay; Projects and Feedback use manual

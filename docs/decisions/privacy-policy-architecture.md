@@ -43,7 +43,7 @@ the brand, while mobile shows the menu control.
    behaviour may become site-owned. The distinct desktop homepage and Privacy
    headers remain page compositions; `default.vue` does not gain a universal
    header.
-8. Footer year remains the already approved Figma value `2025`. The unresolved
+8. The shared production footer displays `2026`. The unresolved
    production site origin remains the documented `deploylab.example` fallback
    until environment configuration supplies a canonical domain.
 9. No new runtime dependency, Figma write, commit, push or deployment is

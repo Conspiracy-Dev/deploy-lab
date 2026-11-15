@@ -19,6 +19,6 @@ describe('shared site shell', () => {
 
     expect(wrapper.get('footer').element.tagName).toBe('FOOTER')
     expect(wrapper.get('a[href="/privacy-policy"]').text()).toBe('Privacy Policy')
-    expect(wrapper.text()).toContain('2025')
+    expect(wrapper.get('footer').text()).toContain('2026')
   })
 })
