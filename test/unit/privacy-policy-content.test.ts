@@ -9,7 +9,7 @@ const privacyPolicySource = readFileSync(
 
 describe('Privacy Policy content contract', () => {
   it('keeps the approved date, contact and complete section outline', () => {
-    expect(privacyPolicySource).toContain('lastUpdated: August 8, 2026')
+    expect(privacyPolicySource).toContain('lastUpdated: November 15, 2026')
     expect(privacyPolicySource).toContain('hello@deployteam.io')
     expect(privacyPolicySource.match(/^## /gm)).toHaveLength(11)
     expect(privacyPolicySource.match(/^### /gm)).toHaveLength(2)

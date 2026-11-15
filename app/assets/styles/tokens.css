@@ -73,6 +73,11 @@
     --content-width: 80rem;
     --header-height: 4.5rem;
 
+    /* Cookie notice, Figma 2048:159 and 2048:181. */
+    --cookie-notice-max-width: 48rem;
+    --cookie-notice-button-height: 2.8125rem;
+    --cookie-notice-copy-line-height: 1.3;
+
     /* Homepage shell, Figma node 31:6021. */
     --space-shell-desktop: 5rem;
     --space-shell-mobile: 1.25rem;

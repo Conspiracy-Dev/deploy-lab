@@ -4,6 +4,7 @@
 - **Date:** 2026-08-08
 - **Decision owner:** Igor Shavlovsky
 - **Design source:** [desktop / 153:52](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=153-52&p=f&m=dev) and [mobile / 153:123](https://www.figma.com/design/0dto2dTdI7m3yyEelxxgDz/DeployLab--Copy-?node-id=153-123&p=f&m=dev)
+- **Content amendment (2026-11-15):** [Cookie notice and Privacy Policy](cookie-banner.md)
 
 ## Context
 
