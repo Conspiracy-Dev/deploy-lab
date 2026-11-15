@@ -28,6 +28,7 @@ import { homeAnchorIds, homeContent, homePhilosophyItems } from './home.config'
               format="webp"
               height="4096"
               loading="lazy"
+              :onerror="null"
               quality="80"
               sizes="540px"
               :src="item.artwork"
